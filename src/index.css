@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+@theme{
+  --color-*: initial;
+	--color-white: #ffffff;
+	--color-gray-100: #1F2523;
+	--color-gray-200: #4D5C57;
+	--color-gray-300: #CDD5D2;
+	--color-gray-400: #E4ECE9;
+	--color-gray-500: #F9FBFA;
+	--color-green-100: #1F8459;
+	--color-green-200: #2CB178;
+	
+
+	--font-sans: "Open Sans", sans-serif;
+}
