@@ -23,3 +23,7 @@ export const CATEGORY_OPTIONS = Object.entries(CATEGORIES).map(([value, { label 
   value: value as RefundCategory,
   label,
 }));
+
+// Tupla de valores (não só o tipo) — o z.enum do Zod precisa disso em tempo
+// de execução pra validar, não só o tipo RefundCategory em tempo de compilação.
+export const CATEGORY_VALUES = Object.keys(CATEGORIES) as [RefundCategory, ...RefundCategory[]];

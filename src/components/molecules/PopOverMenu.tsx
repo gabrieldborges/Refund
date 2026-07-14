@@ -1,62 +1,45 @@
 import { Popover } from "radix-ui";
 import Text from "../atoms/Text";
-import React, { useState } from "react";
+import { useState } from "react";
 import InputLabelWrapper from "./InputLabelWrapper";
 import CarrotDownIcon from "../../assets/icons/CaretDown.svg?react";
 import CheckIcon from "../../assets/icons/Check.svg?react";
 import Icon from "../atoms/Icon";
 
-export default function PopOverMenu() {
-  const popOverMenuOptions: PopOverMenuOption[] = [
-    {
-      label: "Alimentação",
-      value: "alimentacao",
-    },
-    {
-      label: "Transporte",
-      value: "transporte",
-    },
-    {
-      label: "Hospedagem",
-      value: "hospedagem",
-    },
-    {
-      label: "Serviços",
-      value: "servicos",
-    },
-    {
-      label: "Outros",
-      value: "outros",
-    },
-  ];
-  type PopOverMenuOption = {
-    label: string;
-    value: string;
-  };
+export interface PopOverMenuOption {
+  label: string;
+  value: string;
+}
 
-  const popOverMenuWidth = 450;
-  const [selectedOption, setSelectedOption] =
-    useState<PopOverMenuOption | null>(null);
-  const [focused, setFocused] = useState(false);
+interface PopOverMenuProps {
+  options: PopOverMenuOption[];
+  value?: string;
+  onChange?: (value: string) => void;
+  label?: string;
+  error?: string;
+}
+
+// Controlável por fora (value/onChange) pra dar pra plugar num
+// react-hook-form via <Controller>, mas o aberto/fechado do popover
+// continua sendo estado interno — isso é só apresentação, ninguém de
+// fora precisa saber se o menu está aberto.
+export default function PopOverMenu({ options, value, onChange, label = "Categoria", error }: PopOverMenuProps) {
+  const selectedOption = options.find((option) => option.value === value) ?? null;
   const [open, setOpen] = useState(false);
 
-  React.useEffect(() => {
-    setFocused(open);
-  }, [open]);
-
   function handleSelectOption(option: PopOverMenuOption) {
-    setSelectedOption(option);
-    setFocused(open);
+    onChange?.(option.value);
     setOpen(false);
   }
+
   return (
-    <div style={{ width: `${popOverMenuWidth}px` }}>
+    <div className="w-full flex flex-col gap-2">
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
           <InputLabelWrapper
-            className="w-full "
-            label="Categoria"
-            focused={focused}
+            className="w-full"
+            label={label}
+            focused={open}
             icon={CarrotDownIcon}
           >
             <Text variant="paragraph-medium" className="text-gray-200">
@@ -66,8 +49,10 @@ export default function PopOverMenu() {
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content
-            style={{ width: `${popOverMenuWidth}px` }}
-            className={` rounded-lg  shadow-lg bg-gray-400 my-2 outline-none border-1 border-gray-300 data-[state=open]:animate-in
+            // Radix expõe a largura do trigger via essa variável CSS, então
+            // o menu sempre fica do mesmo tamanho do campo que o abriu.
+            style={{ width: "var(--radix-popover-trigger-width)" }}
+            className={`rounded-lg shadow-lg bg-gray-400 my-2 outline-none border-1 border-gray-300 data-[state=open]:animate-in
                     data-[state=open]:fade-in-0
                     data-[state=open]:slide-in-from-top-[5%]
                     data-[state=closed]:animate-out
@@ -75,7 +60,7 @@ export default function PopOverMenu() {
                     data-[state=closed]:slide-out-to-top-[5%]`}
           >
             <ul className="py-2 ">
-              {popOverMenuOptions.map((option) => (
+              {options.map((option) => (
                 <div
                   className="flex items-center justify-between  hover:bg-gray-300 w-full cursor-pointer py-3 px-4"
                   onClick={() => handleSelectOption(option)}
@@ -98,6 +83,11 @@ export default function PopOverMenu() {
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
+      {error && (
+        <Text variant="label-small" className="text-error">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

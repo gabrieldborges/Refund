@@ -36,10 +36,17 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
   2. **Contexts**: só depois que as páginas com mock existirem, introduzir os
      contexts necessários (ex: estado do modal de nova solicitação, auth),
      de forma explicativa e por etapas — um context de cada vez.
-  3. **API**: consumo real via axios/React Query, substituindo os mocks.
+  3. **API**: consumo real via axios/React Query, substituindo os mocks. É
+     também aqui que entram `react-hook-form` + validação com **Zod** em cada
+     formulário (Login, Cadastro, Nova solicitação) — não faz sentido validar
+     antes de existir uma submissão de verdade pra rejeitar; as regras do
+     schema espelham o que o backend já exige (categoria dentro do enum,
+     arquivo JPG/PNG/PDF ≤ 4MB, senha com tamanho mínimo, valor > 0).
   4. **Decisão sobre testes**: ao final, decidir junto se e como testar (não
      é automático — pode ser que não valha a pena, dependendo do que sobrou).
-  Estamos na sub-fase 1.
+  Sub-fase 1 concluída (2026-07-14): as 7 telas existem e navegam entre si
+  com dados mock (Login, Cadastro, Home, Detalhes, Nova solicitação, exclusão,
+  Sucesso). Estamos começando a sub-fase 2 (Contexts).
 - **Um passo por vez**: propor a lista de etapas, implementar UMA etapa,
   mostrar o que mudou (problema → solução → implementação → o que mudou) e
   **esperar aprovação do Gabriel antes da próxima**. Não construir várias

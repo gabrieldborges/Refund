@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import Text from "../components/atoms/Text";
 import Icon from "../components/atoms/Icon";
+import Skeleton from "../components/atoms/Skeleton";
 import Button from "../components/molecules/Button";
 import InputText from "../components/molecules/InputText";
 import {
@@ -12,33 +13,31 @@ import {
 } from "../components/molecules/Dialog";
 import DialogContent from "../components/molecules/Dialog";
 import ReceiptIcon from "../assets/icons/Receipt.svg?react";
-import { CATEGORIES, type RefundCategory } from "../constants/categories";
+import { CATEGORIES } from "../constants/categories";
 import { formatCentsToBRL } from "../lib/format";
-
-// Mock só pra esta etapa (layout + navegação). Na sub-fase de API isso vira
-// um GET /refunds/:id real, e o Excluir chama DELETE /refunds/:id de verdade.
-interface MockRefundDetails {
-  name: string;
-  category: RefundCategory;
-  amount_in_cents: number;
-}
-
-const MOCK_REFUND: MockRefundDetails = {
-  name: "Rodrigo",
-  category: "food",
-  amount_in_cents: 3478,
-};
+import { getApiErrorMessage, getReceiptUrl } from "../lib/api";
+import { useRefund } from "../hooks/useRefund";
+import { useDeleteRefund } from "../hooks/useDeleteRefund";
 
 export default function PageRefundDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const category = CATEGORIES[MOCK_REFUND.category];
+  const { data: refund, isLoading, isError } = useRefund(id);
+  const { mutateAsync: deleteRefund, isPending: isDeleting } = useDeleteRefund();
 
-  function handleConfirmDelete() {
-    setIsDeleteOpen(false);
-    navigate("/");
+  async function handleConfirmDelete() {
+    if (!id) return;
+    setDeleteError(null);
+    try {
+      await deleteRefund(id);
+      setIsDeleteOpen(false);
+      navigate("/");
+    } catch (err) {
+      setDeleteError(getApiErrorMessage(err));
+    }
   }
 
   return (
@@ -49,31 +48,57 @@ export default function PageRefundDetails() {
             Solicitação de reembolso
           </Text>
           <Text variant="paragraph-medium" className="text-gray-200">
-            Dados da despesa para solicitar reembolso. (id: {id})
+            Dados da despesa para solicitar reembolso.
           </Text>
         </div>
 
-        <InputText label="Nome da solicitação" value={MOCK_REFUND.name} readOnly />
-
-        <div className="flex gap-4">
-          <InputText label="Categoria" value={category.label} readOnly/>
-          <InputText
-            label="Valor"
-            value={formatCentsToBRL(MOCK_REFUND.amount_in_cents)}
-            readOnly
-          />
-        </div>
-
-        <button type="button" className="flex items-center justify-center gap-2 cursor-pointer">
-          <Icon svg={ReceiptIcon} className="w-5 h-5 fill-green-100" />
-          <Text variant="label-medium" className="text-green-100">
-            Abrir comprovante
+        {isError && (
+          <Text variant="paragraph-medium" className="text-error text-center py-4">
+            Não foi possível encontrar essa solicitação.
           </Text>
-        </button>
+        )}
 
-        <Button variant="primary" className="w-full" onClick={() => setIsDeleteOpen(true)}>
-          Excluir
-        </Button>
+        {isLoading && (
+          <>
+            <Skeleton className="w-full h-12" />
+            <div className="flex gap-4">
+              <Skeleton className="w-full h-12" />
+              <Skeleton className="w-full h-12" />
+            </div>
+            <Skeleton className="w-32 h-5 mx-auto" />
+          </>
+        )}
+
+        {refund && !isLoading && (
+          <>
+            <InputText label="Nome da solicitação" value={refund.name} readOnly />
+
+            <div className="flex gap-4">
+              <InputText label="Categoria" value={CATEGORIES[refund.category].label} readOnly />
+              <InputText
+                label="Valor"
+                value={formatCentsToBRL(refund.amount_in_cents)}
+                readOnly
+              />
+            </div>
+
+            <a
+              href={getReceiptUrl(refund.filename)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Icon svg={ReceiptIcon} className="w-5 h-5 fill-green-100" />
+              <Text variant="label-medium" className="text-green-100">
+                Abrir comprovante
+              </Text>
+            </a>
+
+            <Button variant="primary" className="w-full" onClick={() => setIsDeleteOpen(true)}>
+              Excluir
+            </Button>
+          </>
+        )}
       </div>
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -89,6 +114,11 @@ export default function PageRefundDetails() {
                 Tem certeza que deseja excluir essa solicitação? Essa ação é irreversível.
               </Text>
             </DialogDescription>
+            {deleteError && (
+              <Text variant="paragraph-medium" className="text-error">
+                {deleteError}
+              </Text>
+            )}
             <div className="flex items-center justify-end gap-4">
               <DialogClose asChild>
                 <button type="button" className="cursor-pointer">
@@ -97,7 +127,13 @@ export default function PageRefundDetails() {
                   </Text>
                 </button>
               </DialogClose>
-              <Button variant="primary" size="fit" onClick={handleConfirmDelete}>
+              <Button
+                variant="primary"
+                size="fit"
+                onClick={handleConfirmDelete}
+                handling={isDeleting}
+                disabled={isDeleting}
+              >
                 Confirmar
               </Button>
             </div>
