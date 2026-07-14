@@ -1,5 +1,5 @@
 import React from "react";
-import Icon from "./Icon";
+import Icon from "../atoms/Icon";
 import {tv, type VariantProps} from "tailwind-variants";
 import SpinnerIcon from "../../assets/icons/Spinner.svg?react";
 

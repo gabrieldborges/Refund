@@ -1,6 +1,6 @@
 import React from "react";
-import Icon from "./Icon";
-import Text from "./Text";
+import Icon from "../atoms/Icon";
+import Text from "../atoms/Text";
 import {tv, type VariantProps} from "tailwind-variants";
 import cx from "classnames";
 import SpinnerIcon from "../../assets/icons/Spinner.svg?react";
@@ -14,7 +14,7 @@ export const buttonVariants = tv({
 		},
 		size: {
 			sm: "h-12 w-88 py-4 px-5",
-			
+			fit: "h-11 w-fit py-2.5 px-5",
 		},
 		disabled: {
 			true: "opacity-50 pointer-events-none",
@@ -39,7 +39,7 @@ export const buttonTextVariants = tv({
 		},
 		size: {
 			sm: "text-sm",
-			
+			fit: "text-sm",
 		},
 	},
 	defaultVariants: {
@@ -52,10 +52,11 @@ export const buttonIconVariants = tv({
 	variants: {
 		variant: {
 			primary: "fill-white",
-			
+
 		},
 		size: {
 			sm: "w-4 h-4",
+			fit: "w-4 h-4",
 		},
 		handling: {
 			true: "w-4 h-4",

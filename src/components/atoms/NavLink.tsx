@@ -13,7 +13,7 @@ export default function NavLink({
   const isActive = pathname === to;
 
   return (
-    <Link to={to} className={isActive ? "text-green-100" : "text-gray-200"}>
+    <Link to={to} className={isActive ? "text-gray-200" : "text-green-100"}>
       <Text variant="label-medium">{children}</Text>
     </Link>
   );
