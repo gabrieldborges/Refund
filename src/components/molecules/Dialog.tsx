@@ -17,7 +17,11 @@ export default function DialogContent({ children, className, ref, ...props }: Di
             <DialogPrimitive.Overlay className="fixed inset-0 bg-gray-100/50" />
             <DialogPrimitive.Content
                 className={cn(
-                    "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-lg p-6 bg-white shadow-lg outline-none",
+                    // w-[calc(100%-4px)]: deixa 2px de respiro de cada lado da tela.
+                    // Não dá pra usar margin aqui — a largura já é 100% do viewport
+                    // (position: fixed), margin só somaria por cima e voltaria a
+                    // estourar; o jeito certo é encolher a própria largura.
+                    "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-4px)] max-w-md rounded-lg p-6 bg-white shadow-lg outline-none",
                     className
                 )}
                 ref={ref}

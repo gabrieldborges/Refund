@@ -13,7 +13,12 @@ export const buttonVariants = tv({
 		
 		},
 		size: {
-			sm: "h-12 w-88 py-4 px-5",
+			// w-full (não uma largura fixa): todo lugar que usa esse tamanho
+			// hoje (Login, Cadastro, Sucesso, Excluir) quer ocupar a largura
+			// do próprio contêiner, não um valor fixo em pixels — que estourava
+			// em telas estreitas. Onde o botão deve ter largura pelo conteúdo,
+			// já existe a variante "fit" (cabeçalho, "Confirmar" do modal).
+			sm: "h-12 w-full py-4 px-5",
 			fit: "h-11 w-fit py-2.5 px-5",
 		},
 		disabled: {

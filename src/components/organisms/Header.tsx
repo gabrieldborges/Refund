@@ -20,7 +20,7 @@ export default function Header({ onNewRefund }: HeaderProps) {
   }
 
   return (
-    <header className="w-full h-16 bg-white border-b border-gray-300 flex items-center justify-between px-6">
+    <header className="w-full bg-white border-b border-gray-300 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3">
       <Link to="/" className="flex items-center gap-2">
         <Icon svg={ReceiptIcon} className="w-6 h-6 fill-green-100" />
         <Text variant="heading-medium" className="text-green-100">
@@ -28,8 +28,12 @@ export default function Header({ onNewRefund }: HeaderProps) {
         </Text>
       </Link>
 
-      <div className="flex items-center gap-6">
-        <NavLink to="/">Solicitações de reembolso</NavLink>
+      <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-end">
+        {/* Some no mobile: é redundante com o título da própria página, e
+            "Nova solicitação"/"Sair" já cabem melhor sozinhos no espaço estreito. */}
+        <div className="hidden sm:block">
+          <NavLink to="/">Solicitações de reembolso</NavLink>
+        </div>
         <Button variant="primary" size="fit" onClick={onNewRefund}>
           Nova solicitação
         </Button>

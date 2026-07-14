@@ -1,4 +1,5 @@
 import { tv, type VariantProps } from "tailwind-variants";
+import cx from "classnames";
 import Icon from "../atoms/Icon";
 import Text from "../atoms/Text";
 import type { ComponentProps, ReactNode } from "react";
@@ -33,8 +34,11 @@ export default function InputText({
   ...props
 }: InputTextProps) {
   return (
-    <div className="w-full">
-      
+    // min-w-0 é necessário pra este campo conseguir encolher quando está
+    // lado a lado com outro num flex row (ex: Categoria + Valor) — sem
+    // isso, o <input> nativo nunca encolhe abaixo da sua largura mínima
+    // padrão do navegador (~190px), e os dois campos somados estouram a linha.
+    <div className={cx("w-full min-w-0", className)}>
       <InputLabelWrapper label={label} icon={icon}>
         
         <input

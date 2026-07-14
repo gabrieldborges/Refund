@@ -44,9 +44,12 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
      arquivo JPG/PNG/PDF ≤ 4MB, senha com tamanho mínimo, valor > 0).
   4. **Decisão sobre testes**: ao final, decidir junto se e como testar (não
      é automático — pode ser que não valha a pena, dependendo do que sobrou).
-  Sub-fase 1 concluída (2026-07-14): as 7 telas existem e navegam entre si
-  com dados mock (Login, Cadastro, Home, Detalhes, Nova solicitação, exclusão,
-  Sucesso). Estamos começando a sub-fase 2 (Contexts).
+  Sub-fases 1, 2 e 3 concluídas (2026-07-14): as 7 telas existem, navegam
+  entre si e consomem a API real (auth, Home paginada/com busca, criação com
+  upload, detalhes, exclusão) — com `Skeleton` nos estados de carregamento.
+  Entre a sub-fase 3 e a decisão sobre testes (sub-fase 4), paramos pra tratar
+  responsividade (ver seção própria abaixo) — não estava no plano original,
+  foi pedido à parte.
 - **Um passo por vez**: propor a lista de etapas, implementar UMA etapa,
   mostrar o que mudou (problema → solução → implementação → o que mudou) e
   **esperar aprovação do Gabriel antes da próxima**. Não construir várias
@@ -58,6 +61,31 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
 - Textos de UI em português; código/identificadores em inglês.
 - Se/quando testes voltarem (sub-fase 4): comentários de teste sempre
   descritivos e em inglês (mesma regra do backend).
+
+## Responsividade (2026-07-14, referência: iPhone 12 Pro, 390×844)
+
+Auditoria feita medindo overflow de verdade (`scrollWidth` vs `clientWidth`
+via `preview_eval`), não só olhando screenshot — o screenshot sozinho enganou
+em pelo menos um caso. Três bugs reais encontrados e corrigidos:
+
+- **`Header`**: não tinha `flex-wrap`, texto/botões se sobrepunham em telas
+  estreitas. Corrigido com `flex-wrap` + esconder o link "Solicitações de
+  reembolso" abaixo de `sm:` (é redundante com o título da própria página).
+- **`Button`**: o tamanho padrão (`sm`) usava largura fixa em pixels (`w-88`,
+  352px) em vez de `w-full` — estourava em qualquer contêiner mais estreito
+  que isso. Trocado pra `w-full` (a variante `fit`, usada de propósito onde
+  se quer largura pelo conteúdo, não foi afetada).
+- **`InputText`**: dois bugs. (1) A prop `className` era recebida e nunca
+  aplicada em lugar nenhum — corrigido com `classnames`. (2) Faltava
+  `min-w-0`: um `<input>` nativo tem uma largura mínima padrão do navegador
+  (~190px) que não encolhe dentro de um flex row sem isso, então dois campos
+  lado a lado (Categoria + Valor) nunca dividiam o espaço direito, mesmo
+  ambos sendo `w-full`. Essa é a causa mais sutil das três — vale lembrar se
+  aparecer de novo em outro par de campos lado a lado.
+
+Se notar algo cortado/sobrepondo em tela estreita no futuro, o primeiro
+suspeito é sempre "será que é um `<input>`/elemento com largura mínima do
+navegador que não tem `min-w-0` em algum ponto da cadeia de flex?".
 
 ## Referência útil
 
