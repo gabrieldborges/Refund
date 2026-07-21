@@ -28,7 +28,7 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
 
 - Trabalhe de forma incremental: proponha as etapas, implemente uma etapa por
   vez e explique brevemente o problema, a solução, a implementação e o que
-  mudou antes de avançar.
+  mudou. Espere a aprovação do Gabriel antes de avançar para a próxima etapa.
 - Prefira soluções simples, nomes claros e código legível. Não crie abstrações
   prematuras.
 - Explique e alinhe antes de introduzir infraestrutura transversal, como setup
