@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import { refundKeys } from "./refundQueries";
 
 export function useDeleteRefund() {
   const queryClient = useQueryClient();
@@ -8,9 +9,10 @@ export function useDeleteRefund() {
     mutationFn: async (id: string) => {
       await api.delete(`/refunds/${id}`);
     },
-    // A lista da Home (chave "refunds") não deve mais mostrar o item excluído.
+    // A lista da Home não deve mais mostrar o item excluído. refundKeys.all
+    // (prefixo ["refunds"]) invalida todas as páginas/buscas da lista.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["refunds"] });
+      queryClient.invalidateQueries({ queryKey: refundKeys.all });
     },
   });
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import { refundKeys } from "./refundQueries";
 import type { RefundCreateFormData } from "../schemas/refund";
 import type { Refund } from "../types/refund";
 
@@ -17,12 +18,12 @@ export function useCreateRefund() {
       const response = await api.post<{ attributes: Refund }>("/refunds", formData);
       return response.data.attributes;
     },
-    // O cache da Home (chave "refunds") fica desatualizado assim que um
-    // reembolso novo é criado — invalidateQueries diz ao React Query "da
-    // próxima vez que alguém pedir esses dados, busque de novo, não use
-    // o que já está guardado".
+    // O cache da Home fica desatualizado assim que um reembolso novo é criado —
+    // invalidateQueries diz ao React Query "da próxima vez que alguém pedir esses
+    // dados, busque de novo, não use o que já está guardado". refundKeys.all é o
+    // prefixo ["refunds"], então isso atinge todas as páginas/buscas da lista.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["refunds"] });
+      queryClient.invalidateQueries({ queryKey: refundKeys.all });
     },
   });
 }
