@@ -26,6 +26,9 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
 
 ## Como trabalhar neste projeto
 
+- Quando o trabalho fizer parte do Learning Path, leia e siga o
+  [fluxo permanente da trilha](../Refund-api/docs/plans/learning-path-workflow.md)
+  antes de propor ou implementar o item.
 - Trabalhe de forma incremental: proponha as etapas, implemente uma etapa por
   vez e explique brevemente o problema, a solução, a implementação e o que
   mudou. Espere a aprovação do Gabriel antes de avançar para a próxima etapa.
