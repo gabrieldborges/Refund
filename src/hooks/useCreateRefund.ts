@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { refundKeys } from "./refundQueries";
-import type { RefundCreateFormData } from "../schemas/refund";
-import type { Refund } from "../types/refund";
+import { refundCreateResponseSchema, type RefundCreateFormData } from "../schemas/refund";
 
 export function useCreateRefund() {
   const queryClient = useQueryClient();
@@ -15,8 +14,8 @@ export function useCreateRefund() {
       formData.append("amount", String(data.amount));
       formData.append("file", data.file[0]);
 
-      const response = await api.post<{ attributes: Refund }>("/refunds", formData);
-      return response.data.attributes;
+      const { data: responseData } = await api.post<unknown>("/refunds", formData);
+      return refundCreateResponseSchema.parse(responseData).attributes;
     },
     // O cache da Home fica desatualizado assim que um reembolso novo é criado —
     // invalidateQueries diz ao React Query "da próxima vez que alguém pedir esses

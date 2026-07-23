@@ -22,8 +22,47 @@ export const refundCreateSchema = z.object({
     ),
 });
 
+const refundBaseSchema = z.object({
+  id: z.number().int().positive(),
+  user_id: z.number().int().positive(),
+  name: z.string().min(1),
+  category: z.enum(CATEGORY_VALUES),
+  amount_in_cents: z.number().int().positive(),
+  filename: z.string().min(1),
+});
+
+export const refundSchema = refundBaseSchema.extend({
+  created_at: z.string().nullable(),
+});
+
+export const refundsListResponseSchema = z.object({
+  type: z.literal("Refund"),
+  count: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  per_page: z.number().int().min(1).max(100),
+  total_pages: z.number().int().nonnegative(),
+  attributes: z.array(refundSchema),
+});
+
+export const refundDetailResponseSchema = z.object({
+  type: z.literal("Refund"),
+  count: z.literal(1),
+  attributes: refundSchema,
+});
+
+// A criação não devolve `created_at`, por isso possui um contrato próprio em
+// vez de afirmar que a resposta já contém um Refund completo.
+export const refundCreateResponseSchema = z.object({
+  type: z.literal("Refund"),
+  count: z.literal(1),
+  attributes: refundBaseSchema,
+});
+
 // Saída (depois de validar/coagir — amount já é number): o que o onSubmit recebe.
 export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 // Entrada (o que o campo do formulário realmente digita — amount ainda cru):
 // é esse tipo que o useForm precisa pra tipar os campos antes da validação.
 export type RefundCreateFormInput = z.input<typeof refundCreateSchema>;
+export type Refund = z.output<typeof refundSchema>;
+export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import type { Refund, RefundsListResponse } from "../types/refund";
+import { refundDetailResponseSchema, refundsListResponseSchema } from "../schemas/refund";
 
 interface RefundListParams {
   page: number;
@@ -26,11 +26,11 @@ export function refundListQuery(params: RefundListParams) {
     // `signal` vem do React Query: se a query for cancelada (parâmetros mudaram,
     // componente desmontou), o Axios aborta a requisição em vez de terminá-la à toa.
     queryFn: async ({ signal }) => {
-      const { data } = await api.get<RefundsListResponse>("/refunds", {
+      const { data } = await api.get<unknown>("/refunds", {
         params: { page: params.page, per_page: params.perPage, name: params.name || undefined },
         signal,
       });
-      return data;
+      return refundsListResponseSchema.parse(data);
     },
   });
 }
@@ -39,8 +39,8 @@ export function refundDetailQuery(id: string) {
   return queryOptions({
     queryKey: refundKeys.detail(id),
     queryFn: async ({ signal }) => {
-      const { data } = await api.get<{ attributes: Refund }>(`/refunds/${id}`, { signal });
-      return data.attributes;
+      const { data } = await api.get<unknown>(`/refunds/${id}`, { signal });
+      return refundDetailResponseSchema.parse(data).attributes;
     },
   });
 }

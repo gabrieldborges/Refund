@@ -1,14 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { AuthContext, type AuthUser } from "./auth-context";
 import { api, TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "../lib/api";
-
-interface LoginResponse {
-  access: boolean;
-  name: string;
-  email: string;
-  role: "standard" | "admin";
-  token: string;
-}
+import { loginResponseSchema } from "../schemas/auth";
 
 function loadStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_STORAGE_KEY);
@@ -21,9 +14,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Se der erro, deixa o axios rejeitar a Promise — quem chama login() decide
   // como mostrar isso na tela (é responsabilidade de UI, não de sessão).
   async function login(email: string, password: string) {
-    const { data } = await api.post<LoginResponse>("/auth/login", { email, password });
-    const loggedUser: AuthUser = { name: data.name, email: data.email, role: data.role };
-    localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+    const { data } = await api.post<unknown>("/auth/login", { email, password });
+    const loginResponse = loginResponseSchema.parse(data);
+    const loggedUser: AuthUser = {
+      name: loginResponse.name,
+      email: loginResponse.email,
+      role: loginResponse.role,
+    };
+    localStorage.setItem(TOKEN_STORAGE_KEY, loginResponse.token);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedUser));
     setUser(loggedUser);
   }
