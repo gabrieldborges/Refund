@@ -59,6 +59,15 @@ export const refundCreateResponseSchema = z.object({
   attributes: refundBaseSchema,
 });
 
+export const refundListSearchParamsSchema = z.object({
+  page: z.coerce.number().int().positive().catch(1),
+  name: z
+    .string()
+    .trim()
+    .transform((value) => value || undefined)
+    .optional(),
+});
+
 // Saída (depois de validar/coagir — amount já é number): o que o onSubmit recebe.
 export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 // Entrada (o que o campo do formulário realmente digita — amount ainda cru):
@@ -66,3 +75,4 @@ export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 export type RefundCreateFormInput = z.input<typeof refundCreateSchema>;
 export type Refund = z.output<typeof refundSchema>;
 export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
+export type RefundListSearchParams = z.output<typeof refundListSearchParamsSchema>;

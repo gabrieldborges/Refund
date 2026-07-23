@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import Text from "../components/atoms/Text";
 import Icon from "../components/atoms/Icon";
 import Skeleton from "../components/atoms/Skeleton";
@@ -12,6 +12,7 @@ import { CATEGORIES } from "../constants/categories";
 import { formatCentsToBRL } from "../lib/format";
 import { useRefunds } from "../hooks/useRefunds";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import type { homeLoader } from "../router-loaders";
 
 function RefundRowSkeleton() {
   return (
@@ -28,17 +29,78 @@ function RefundRowSkeleton() {
   );
 }
 
-export default function PageHome() {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+interface RefundSearchProps {
+  initialSearch: string;
+  updateListLocation: (nextName: string, nextPage: number, replace?: boolean) => void;
+}
+
+function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) {
+  const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebouncedValue(search);
 
-  const { data, isLoading, isError } = useRefunds({ page, name: debouncedSearch });
+  useEffect(() => {
+    if (debouncedSearch.trim() !== initialSearch) {
+      updateListLocation(debouncedSearch, 1, true);
+    }
+  }, [debouncedSearch, initialSearch, updateListLocation]);
 
-  function handleSearchChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value);
-    setPage(1);
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    updateListLocation(search, 1);
   }
+
+  return (
+    <form className="flex items-end gap-3" onSubmit={handleSearchSubmit}>
+      <div className="flex-1">
+        <InputText
+          placeholder="Pesquisar pelo nome"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </div>
+      <ButtonIcon
+        type="submit"
+        icon={MagnifyingGlassIcon}
+        variant="primary"
+        size="sm"
+        aria-label="Pesquisar"
+      />
+    </form>
+  );
+}
+
+export default function PageHome() {
+  const { page, perPage, name } = useLoaderData<typeof homeLoader>();
+  const [, setSearchParams] = useSearchParams();
+
+  const { data, isLoading, isError } = useRefunds({ page, perPage, name });
+
+  const updateListLocation = useCallback(
+    (nextName: string, nextPage: number, replace = false) => {
+      setSearchParams(
+        (currentParams) => {
+          const nextParams = new URLSearchParams(currentParams);
+          const normalizedName = nextName.trim();
+
+          if (normalizedName) {
+            nextParams.set("name", normalizedName);
+          } else {
+            nextParams.delete("name");
+          }
+
+          if (nextPage > 1) {
+            nextParams.set("page", String(nextPage));
+          } else {
+            nextParams.delete("page");
+          }
+
+          return nextParams;
+        },
+        { replace }
+      );
+    },
+    [setSearchParams]
+  );
 
   return (
     <div className="w-full min-h-screen bg-gray-500 flex justify-center py-10 px-4">
@@ -47,16 +109,11 @@ export default function PageHome() {
           Solicitações
         </Text>
 
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <InputText
-              placeholder="Pesquisar pelo nome"
-              value={search}
-              onChange={handleSearchChange}
-            />
-          </div>
-          <ButtonIcon icon={MagnifyingGlassIcon} variant="primary" size="sm" />
-        </div>
+        <RefundSearch
+          key={name ?? ""}
+          initialSearch={name ?? ""}
+          updateListLocation={updateListLocation}
+        />
 
         {isError && (
           <Text variant="paragraph-medium" className="text-error text-center py-4">
@@ -117,7 +174,7 @@ export default function PageHome() {
               variant="primary"
               size="sm"
               disabled={data.page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
             />
             <Text variant="paragraph-medium" className="text-gray-200">
               {data.page}/{data.total_pages}
@@ -127,7 +184,9 @@ export default function PageHome() {
               variant="primary"
               size="sm"
               disabled={data.page === data.total_pages}
-              onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
+              onClick={() =>
+                updateListLocation(name ?? "", Math.min(data.total_pages, data.page + 1))
+              }
             />
           </div>
         )}
