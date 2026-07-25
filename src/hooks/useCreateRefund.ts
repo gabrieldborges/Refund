@@ -17,12 +17,12 @@ export function useCreateRefund() {
       const { data: responseData } = await api.post<unknown>("/refunds", formData);
       return refundCreateResponseSchema.parse(responseData).attributes;
     },
-    // O cache da Home fica desatualizado assim que um reembolso novo é criado —
-    // invalidateQueries diz ao React Query "da próxima vez que alguém pedir esses
-    // dados, busque de novo, não use o que já está guardado". refundKeys.all é o
-    // prefixo ["refunds"], então isso atinge todas as páginas/buscas da lista.
+    // O cache da Home fica desatualizado assim que um reembolso novo é criado.
+    // Mesmo alvo do useDeleteRefund: refundKeys.lists() (só as listas) com
+    // refetchType: "all", que refaz também as listas inativas e mantém a
+    // consistência sem tocar em nenhuma query de detalhe.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.all });
+      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" });
     },
   });
 }

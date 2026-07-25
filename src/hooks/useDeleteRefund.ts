@@ -9,10 +9,17 @@ export function useDeleteRefund() {
     mutationFn: async (id: string) => {
       await api.delete(`/refunds/${id}`);
     },
-    // A lista da Home não deve mais mostrar o item excluído. refundKeys.all
-    // (prefixo ["refunds"]) invalida todas as páginas/buscas da lista.
+    // A lista da Home não deve mais mostrar o item excluído.
+    // Dois cuidados aqui:
+    // 1) Alvo refundKeys.lists() (só as listas), NÃO refundKeys.all — porque a
+    //    exclusão parte da página de detalhe, cuja query (do item apagado) está
+    //    ativa. Invalidar o detalhe faria um GET de algo que não existe mais.
+    // 2) refetchType: "all" porque, ao excluir do detalhe, a lista da Home está
+    //    INATIVA. O padrão ("active") só refaz queries ativas — a lista inativa
+    //    ficaria só marcada como velha e, por causa do staleTime de 30s, não
+    //    seria refeita na próxima montagem. "all" força o refetch mesmo inativa.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.all });
+      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" });
     },
   });
 }

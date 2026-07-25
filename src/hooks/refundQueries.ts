@@ -13,7 +13,11 @@ interface RefundListParams {
 // E detalhe de uma vez, porque o React Query casa chaves por prefixo.
 export const refundKeys = {
   all: ["refunds"] as const,
-  list: (params: RefundListParams) => [...refundKeys.all, "list", params] as const,
+  // Prefixo só das listas (["refunds", "list"]). Serve para invalidar todas as
+  // páginas/buscas SEM atingir o detalhe — importante ao excluir: não queremos
+  // rebuscar o detalhe de um item que acabou de ser apagado.
+  lists: () => [...refundKeys.all, "list"] as const,
+  list: (params: RefundListParams) => [...refundKeys.lists(), params] as const,
   detail: (id: string) => [...refundKeys.all, "detail", id] as const,
 };
 
