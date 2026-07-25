@@ -2,14 +2,28 @@
 // Vitest's expect, and augments their TypeScript types.
 import "@testing-library/jest-dom/vitest";
 
-import { afterEach } from "vitest";
+import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
+import { server } from "./msw/server";
 
-// Unmount rendered components and reset the jsdom document after each test.
-// Testing Library only auto-registers this when Vitest runs with globals: true;
-// since we use explicit imports (globals: false), we wire it up here so one
-// test's DOM never leaks into the next. Loaded once per test file via
-// `test.setupFiles` in vite.config.ts.
+// Start the MSW server before any test. `onUnhandledRequest: "error"` makes a
+// forgotten handler fail loudly instead of hitting the real network.
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+// After each test: unmount rendered components, drop any per-test handler
+// overrides (server.use), and clear localStorage. Cleanup is wired manually
+// because we run with explicit imports (globals: false); localStorage is
+// cleared because the real AuthProvider persists a token/session there and one
+// test's session must not leak into the next.
 afterEach(() => {
   cleanup();
+  server.resetHandlers();
+  localStorage.clear();
+});
+
+// Stop the server once the whole suite is done.
+afterAll(() => {
+  server.close();
 });
