@@ -41,6 +41,20 @@ export default function PopOverMenu({ options, value, onChange, label = "Categor
             label={label}
             focused={open}
             icon={CarrotDownIcon}
+            // O Radix injeta os atributos de botão (aria-haspopup/expanded) neste
+            // elemento via asChild. Sem role="button" eles seriam inválidos num
+            // <div> (aria-allowed-attr). tabIndex o torna focável pelo teclado.
+            role="button"
+            tabIndex={0}
+            // Um <div role="button"> não converte Enter/Espaço em clique como um
+            // <button> nativo. Sintetizamos o clique, que o onClick do Radix já
+            // trata (abre/fecha o menu).
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.currentTarget.click();
+              }
+            }}
           >
             <Text variant="paragraph-medium" className="text-gray-200">
               {selectedOption?.label ? selectedOption.label : "Selecione"}

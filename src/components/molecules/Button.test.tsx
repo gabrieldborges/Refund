@@ -37,13 +37,20 @@ describe("Button", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  // While handling, a spinner is shown. Note: the spinner has no accessible
-  // role/name yet (an Item 7 gap), so we detect it by its spin animation class;
-  // and the pointer-events block that stops the click is CSS-only, so jsdom
-  // (which loads no CSS) can't observe it — hence we don't assert on the click.
-  it("shows a spinner while handling", () => {
-    const { container } = render(<Button handling>Entrar</Button>);
+  // While handling, the button announces itself as busy (aria-busy), and its
+  // accessible name stays "Entrar" because the spinner is decorative
+  // (aria-hidden) and does not leak into the name.
+  it("announces loading via aria-busy while handling", () => {
+    render(<Button handling>Entrar</Button>);
 
-    expect(container.querySelector(".animate-spin")).not.toBeNull();
+    const button = screen.getByRole("button", { name: "Entrar" });
+    expect(button).toHaveAttribute("aria-busy", "true");
+  });
+
+  // With no handling, aria-busy is absent.
+  it("is not busy by default", () => {
+    render(<Button>Entrar</Button>);
+
+    expect(screen.getByRole("button", { name: "Entrar" })).not.toHaveAttribute("aria-busy");
   });
 });

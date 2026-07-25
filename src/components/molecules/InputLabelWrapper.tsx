@@ -65,6 +65,9 @@ interface InputLabelWrapperProps extends React.ComponentProps<"div"> {
   label?: string;
   icon?: ComponentProps<typeof Icon>["svg"];
   focused?: boolean;
+  // Id do input que esta label descreve. Renderiza a label como <label htmlFor>,
+  // associando-a ao campo para leitores de tela e clique.
+  htmlFor?: string;
 }
 
 export default function InputLabelWrapper({
@@ -73,6 +76,7 @@ export default function InputLabelWrapper({
   children,
   icon,
   focused = false,
+  htmlFor,
   ...props
 }: InputLabelWrapperProps) {
   return (
@@ -82,6 +86,8 @@ export default function InputLabelWrapper({
     >
       {label && (
         <Text
+          as="label"
+          htmlFor={htmlFor}
           variant="label-small"
           className={InputLabelWrapperLabelVariants({ focused })}
         >

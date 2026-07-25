@@ -107,6 +107,9 @@ export default function Button({
 				),
 			})}
 			disabled={disabled as boolean}
+			// Anuncia o estado "ocupado" para leitores de tela enquanto processa,
+			// sem precisar mudar o texto do botão.
+			aria-busy={handling ? true : undefined}
 			{...props}
 		>
 			<Text
@@ -119,6 +122,9 @@ export default function Button({
 				<Icon
 					svg={handling ? SpinnerIcon : icon!}
 					animate={handling}
+					// Ícone/spinner é decorativo: aria-hidden evita que ele entre no
+					// nome acessível do botão. O loading é comunicado pelo aria-busy.
+					aria-hidden
 					className={buttonIconVariants({variant, size, handling})}
 				/>
 			)}

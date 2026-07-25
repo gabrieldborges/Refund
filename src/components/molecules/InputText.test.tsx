@@ -3,35 +3,43 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import InputText from "./InputText";
 
-// Component-level tests for InputText in isolation. Note: the label is not
-// associated with the <input> (no htmlFor/id), so getByLabelText would not find
-// it — an accessibility gap tracked for Item 7. We query by placeholder instead.
+// Component-level tests for InputText. The label is now associated with the
+// input (htmlFor/id), so getByLabelText works — the query Testing Library
+// recommends first, and the one a screen reader relies on.
 
 describe("InputText", () => {
-  // Typing reaches the underlying input and fires onChange.
-  it("forwards typing to the input", async () => {
+  // The label points at the input, and typing reaches it and fires onChange.
+  it("associates the label with the input and forwards typing", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<InputText placeholder="Nome" onChange={onChange} />);
+    render(<InputText label="Nome" onChange={onChange} />);
 
-    const input = screen.getByPlaceholderText("Nome");
+    const input = screen.getByLabelText("Nome");
     await user.type(input, "Ana");
 
     expect(input).toHaveValue("Ana");
     expect(onChange).toHaveBeenCalled();
   });
 
-  // The label text is rendered next to the field (even if not yet linked to it).
-  it("renders the label text", () => {
-    render(<InputText label="E-mail" placeholder="voce@exemplo.com" />);
+  // An error marks the field invalid and links the message via aria-describedby,
+  // so a screen reader announces which field failed and why.
+  it("marks the field invalid and links the error message", () => {
+    render(<InputText label="E-mail" error="E-mail inválido" />);
 
-    expect(screen.getByText("E-mail")).toBeInTheDocument();
+    const input = screen.getByLabelText("E-mail");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+
+    const describedBy = input.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    expect(screen.getByText("E-mail inválido")).toHaveAttribute("id", describedBy);
   });
 
-  // When an error is provided, its message is shown.
-  it("shows the error message when provided", () => {
-    render(<InputText placeholder="Nome" error="Campo obrigatório" />);
+  // Without an error, no aria error wiring is added.
+  it("has no error wiring when there is no error", () => {
+    render(<InputText label="Nome" />);
 
-    expect(screen.getByText("Campo obrigatório")).toBeInTheDocument();
+    const input = screen.getByLabelText("Nome");
+    expect(input).not.toHaveAttribute("aria-invalid");
+    expect(input).not.toHaveAttribute("aria-describedby");
   });
 });

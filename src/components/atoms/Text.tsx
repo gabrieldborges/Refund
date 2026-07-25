@@ -24,6 +24,10 @@ interface TextProps extends VariantProps<typeof textVariants> {
 	as?: keyof React.JSX.IntrinsicElements;
 	className?: string;
 	children?: React.ReactNode;
+	// Permite usar Text como <label as="label" htmlFor="..."> para associar a
+	// label ao input (acessibilidade). Só faz sentido quando as="label".
+	htmlFor?: string;
+	id?: string;
 }
 
 export default function Text({
