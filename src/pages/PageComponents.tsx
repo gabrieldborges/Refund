@@ -5,7 +5,7 @@ import MagnifyingGlassIcon from "../assets/icons/MagnifyingGlass.svg?react";
 import InputText from "../components/molecules/InputText";
 import PopOverMenu from "../components/molecules/PopOverMenu";
 import InputLabelWrapper from "../components/molecules/InputLabelWrapper";
-import { CATEGORY_OPTIONS } from "../constants/categories";
+import { CATEGORY_OPTIONS } from "../features/refunds";
 
 export default function PageComponents() {
   return (

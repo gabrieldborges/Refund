@@ -13,11 +13,9 @@ import {
 } from "../components/molecules/Dialog";
 import DialogContent from "../components/molecules/Dialog";
 import ReceiptIcon from "../assets/icons/Receipt.svg?react";
-import { CATEGORIES } from "../constants/categories";
+import { CATEGORIES, useRefund, useDeleteRefund } from "../features/refunds";
 import { formatCentsToBRL } from "../lib/format";
 import { getApiErrorMessage, getReceiptUrl } from "../lib/api";
-import { useRefund } from "../hooks/useRefund";
-import { useDeleteRefund } from "../hooks/useDeleteRefund";
 
 export default function PageRefundDetails() {
   const { id } = useParams();

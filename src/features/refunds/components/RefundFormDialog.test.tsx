@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { QueryWrapper } from "../../test/utils";
+import { QueryWrapper } from "../../../test/utils";
 import RefundFormDialog from "./RefundFormDialog";
 
 describe("RefundFormDialog", () => {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router";
 import Header from "../organisms/Header";
-import RefundFormDialog from "../organisms/RefundFormDialog";
+import { RefundFormDialog } from "../../features/refunds";
 
 export default function MainLayout() {
   const [isNewRefundOpen, setIsNewRefundOpen] = useState(false);

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
-import { refundKeys } from "./refundQueries";
+import { api } from "../../../lib/api";
+import { refundKeys } from "../api/refundQueries";
 
 export function useDeleteRefund() {
   const queryClient = useQueryClient();

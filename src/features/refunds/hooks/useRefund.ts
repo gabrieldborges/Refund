@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { refundDetailQuery } from "./refundQueries";
+import { refundDetailQuery } from "../api/refundQueries";
 
 export function useRefund(id: string | undefined) {
   return useQuery({

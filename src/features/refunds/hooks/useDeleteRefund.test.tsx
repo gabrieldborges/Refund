@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw";
-import { server } from "../test/msw/server";
-import { refundFixture } from "../test/msw/handlers";
-import { refundKeys, refundListQuery, refundDetailQuery } from "./refundQueries";
+import { server } from "../../../test/msw/server";
+import { refundFixture } from "../../../test/msw/handlers";
+import { refundKeys, refundListQuery, refundDetailQuery } from "../api/refundQueries";
 import type { RefundsListResponse } from "../schemas/refund";
 import { useDeleteRefund } from "./useDeleteRefund";
 

@@ -1,8 +1,11 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "./lib/api";
 import { queryClient } from "./lib/query-client";
-import { refundDetailQuery, refundListQuery } from "./hooks/refundQueries";
-import { refundListSearchParamsSchema } from "./schemas/refund";
+import {
+  refundDetailQuery,
+  refundListQuery,
+  refundListSearchParamsSchema,
+} from "./features/refunds";
 
 const REFUNDS_PER_PAGE = 6;
 

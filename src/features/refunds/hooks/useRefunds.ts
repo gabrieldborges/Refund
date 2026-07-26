@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { refundListQuery } from "./refundQueries";
+import { refundListQuery } from "../api/refundQueries";
 
 interface UseRefundsParams {
   page: number;

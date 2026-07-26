@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { axe } from "vitest-axe";
-import { QueryWrapper } from "../../test/utils";
+import { QueryWrapper } from "../../../test/utils";
 import RefundFormDialog from "./RefundFormDialog";
 
 // Accessibility audit of the create-refund form (react-hook-form + Zod) while
