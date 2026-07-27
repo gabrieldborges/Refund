@@ -56,10 +56,21 @@ describe("MainLayout", () => {
     expect(screen.getByText("@gabriel")).toBeInTheDocument();
   });
 
-  it("collapses the sidebar in the store when the trigger is clicked", async () => {
-    // Exercises the controlled SidebarProvider wiring end to end: clicking
-    // the trigger must reach the store via setSidebarCollapsed, not the
-    // argument-less toggleSidebar (see src/stores/ui.ts).
+  // SidebarInset already renders a <main> internally; the content area must
+  // not add a second one, or there would be two competing "main" landmarks
+  // for assistive tech to navigate. getByRole throws if more than one matches.
+  it("renders exactly one main landmark", () => {
+    renderShell();
+    expect(screen.getByRole("main")).toBeInTheDocument();
+  });
+
+  it("reaches the store when the trigger is clicked", async () => {
+    // Confirms the trigger click flows through to the persisted store value
+    // (a wiring smoke test). A single click flips to the opposite state
+    // either way, so it can't by itself distinguish setSidebarCollapsed from
+    // the argument-less toggleSidebar — that idempotency property (repeated
+    // calls with the same explicit value don't flip) is proven separately in
+    // src/stores/ui.test.ts.
     const user = userEvent.setup();
     renderShell();
     expect(useUiStore.getState().sidebarCollapsed).toBe(false);

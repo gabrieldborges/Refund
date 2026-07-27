@@ -31,9 +31,12 @@ export default function MainLayout() {
       <AppSidebar />
       <SidebarInset>
         <Topbar title={title} onNewRefund={() => setIsNewRefundOpen(true)} />
-        <main className="flex-1 overflow-auto">
+        {/* A plain div, not <main>: SidebarInset already renders as <main>
+            (src/components/ui/sidebar.tsx), so a second <main> here would be
+            a nested landmark — invalid HTML5 and confusing for AT navigation. */}
+        <div className="flex-1 overflow-auto">
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
       <RefundFormDialog open={isNewRefundOpen} onOpenChange={setIsNewRefundOpen} />
     </SidebarProvider>
