@@ -6,13 +6,13 @@ import {
   Dialog,
   DialogTitle,
   DialogDescription,
-} from "../../../components/molecules/Dialog";
-import DialogContent from "../../../components/molecules/Dialog";
-import Text from "../../../components/atoms/Text";
-import InputText from "../../../components/molecules/InputText";
-import InputFile from "../../../components/molecules/InputFile";
-import PopOverMenu from "../../../components/molecules/PopOverMenu";
-import Button from "../../../components/molecules/Button";
+} from "@/components/molecules/Dialog";
+import DialogContent from "@/components/molecules/Dialog";
+import Text from "@/components/atoms/Text";
+import InputText from "@/components/molecules/InputText";
+import InputFile from "@/components/molecules/InputFile";
+import PopOverMenu from "@/components/molecules/PopOverMenu";
+import Button from "@/components/molecules/Button";
 import { CATEGORY_OPTIONS } from "../constants/categories";
 import {
   refundCreateSchema,
@@ -20,7 +20,7 @@ import {
   type RefundCreateFormInput,
 } from "../schemas/refund";
 import { useCreateRefund } from "../hooks/useCreateRefund";
-import { getApiErrorMessage } from "../../../lib/api";
+import { getApiErrorMessage } from "@/lib/api";
 
 interface RefundFormDialogProps {
   open: boolean;

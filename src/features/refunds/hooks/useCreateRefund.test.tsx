@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { server } from "../../../test/msw/server";
-import { refundFixture } from "../../../test/msw/handlers";
-import { QueryWrapper } from "../../../test/utils";
-import { getApiErrorMessage } from "../../../lib/api";
+import { server } from "@/test/msw/server";
+import { refundFixture } from "@/test/msw/handlers";
+import { QueryWrapper } from "@/test/utils";
+import { getApiErrorMessage } from "@/lib/api";
 import { useCreateRefund } from "./useCreateRefund";
 import type { RefundCreateFormData } from "../schemas/refund";
 

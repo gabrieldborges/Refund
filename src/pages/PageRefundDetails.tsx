@@ -13,7 +13,7 @@ import {
 } from "../components/molecules/Dialog";
 import DialogContent from "../components/molecules/Dialog";
 import ReceiptIcon from "../assets/icons/Receipt.svg?react";
-import { CATEGORIES, useRefund, useDeleteRefund } from "../features/refunds";
+import { CATEGORIES, useRefund, useDeleteRefund } from "@/features/refunds";
 import { formatCentsToBRL } from "../lib/format";
 import { getApiErrorMessage, getReceiptUrl } from "../lib/api";
 

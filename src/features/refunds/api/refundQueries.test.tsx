@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { server } from "../../../test/msw/server";
-import { refundFixture } from "../../../test/msw/handlers";
-import { QueryWrapper } from "../../../test/utils";
+import { server } from "@/test/msw/server";
+import { refundFixture } from "@/test/msw/handlers";
+import { QueryWrapper } from "@/test/utils";
 import { useRefunds } from "../hooks/useRefunds";
 import { useRefund } from "../hooks/useRefund";
 

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../lib/api";
+import { api } from "@/lib/api";
 import { refundKeys } from "../api/refundQueries";
 import { refundCreateResponseSchema, type RefundCreateFormData } from "../schemas/refund";
 

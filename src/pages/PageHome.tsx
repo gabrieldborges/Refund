@@ -8,7 +8,7 @@ import ButtonIcon from "../components/molecules/ButtonIcon";
 import MagnifyingGlassIcon from "../assets/icons/MagnifyingGlass.svg?react";
 import CaretLeftIcon from "../assets/icons/CaretLeft.svg?react";
 import CaretRightIcon from "../assets/icons/CaretRight.svg?react";
-import { CATEGORIES, useRefunds } from "../features/refunds";
+import { CATEGORIES, useRefunds } from "@/features/refunds";
 import { formatCentsToBRL } from "../lib/format";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import type { homeLoader } from "../router-loaders";

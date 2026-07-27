@@ -5,7 +5,7 @@ import {
   refundDetailQuery,
   refundListQuery,
   refundListSearchParamsSchema,
-} from "./features/refunds";
+} from "@/features/refunds";
 
 const REFUNDS_PER_PAGE = 6;
 
