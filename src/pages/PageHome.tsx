@@ -161,7 +161,7 @@ export default function PageHome() {
       )}
 
       {!isLoading && !isError && (
-        <ul className="flex flex-col rounded-xl border">
+        <ul className="flex flex-col rounded-xl border overflow-hidden">
           {data?.attributes.length === 0 && (
             <li className="py-4 text-center text-sm text-muted-foreground">
               Nenhuma solicitação encontrada.
