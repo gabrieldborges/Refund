@@ -42,10 +42,10 @@ describe("PageLogin", () => {
     const login = vi.fn().mockResolvedValue(undefined);
     renderLogin(login);
 
-    // Labels are not associated with the inputs (accessibility is Item 7), so
-    // we query by the visible placeholder text instead.
-    await user.type(screen.getByPlaceholderText("voce@exemplo.com"), "ana@exemplo.com");
-    await user.type(screen.getByPlaceholderText("••••••••"), "secret123");
+    // The shadcn Form associates each label with its input via aria, so we
+    // query by accessible name instead of the visible placeholder text.
+    await user.type(screen.getByLabelText("E-mail"), "ana@exemplo.com");
+    await user.type(screen.getByLabelText("Senha"), "secret123");
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(login).toHaveBeenCalledWith("ana@exemplo.com", "secret123");
@@ -62,13 +62,28 @@ describe("PageLogin", () => {
     const login = vi.fn().mockRejectedValue(new Error("network down"));
     renderLogin(login);
 
-    await user.type(screen.getByPlaceholderText("voce@exemplo.com"), "ana@exemplo.com");
-    await user.type(screen.getByPlaceholderText("••••••••"), "secret123");
+    await user.type(screen.getByLabelText("E-mail"), "ana@exemplo.com");
+    await user.type(screen.getByLabelText("Senha"), "secret123");
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(
       await screen.findByText("Algo deu errado. Tente novamente.")
     ).toBeInTheDocument();
     expect(screen.queryByText("home page")).not.toBeInTheDocument();
+  });
+
+  // The shadcn Form wires aria-invalid and aria-describedby on its own: an
+  // invalid field must announce itself and point at its message. This is the
+  // Item 7 accessibility work, now handled by the component instead of by hand.
+  it("marks an invalid field and links it to its message", async () => {
+    const user = userEvent.setup();
+    const login = vi.fn().mockResolvedValue(undefined);
+    renderLogin(login);
+
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+
+    const email = await screen.findByLabelText("E-mail");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAccessibleDescription("E-mail é obrigatório");
   });
 });

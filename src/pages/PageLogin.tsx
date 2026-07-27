@@ -1,82 +1,106 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import Text from "../components/atoms/Text";
-import Icon from "../components/atoms/Icon";
-import InputText from "../components/molecules/InputText";
-import Button from "../components/molecules/Button";
-import ReceiptIcon from "../assets/icons/Receipt.svg?react";
-import { useAuth } from "../context/useAuth";
-import { getApiErrorMessage } from "../lib/api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import ReceiptIcon from "@/assets/icons/Receipt.svg?react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/context/useAuth";
+import { getApiErrorMessage } from "@/lib/api";
+
+const loginFormSchema = z.object({
+  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
+type LoginFormData = z.output<typeof loginFormSchema>;
 
 export default function PageLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  async function onSubmit(data: LoginFormData) {
+    setSubmitError(null);
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       navigate("/");
     } catch (err) {
-      setError(getApiErrorMessage(err));
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(getApiErrorMessage(err));
     }
   }
 
   return (
-    <div className="w-full min-h-screen bg-app flex items-center justify-center py-10 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-surface rounded-lg p-8 flex flex-col gap-4"
-      >
-        <div className="flex flex-col items-center gap-2 mb-2">
-          <Icon svg={ReceiptIcon} className="w-8 h-8 text-accent" />
-          <Text as="h1" variant="heading-medium" className="text-accent">
-            refund
-          </Text>
+    <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-sm rounded-xl border bg-card p-8 text-card-foreground shadow-sm">
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <ReceiptIcon className="h-8 w-8 text-foreground" aria-hidden />
+          <h1 className="text-2xl font-semibold tracking-tight">refund</h1>
         </div>
 
-        <InputText
-          label="E-mail"
-          type="email"
-          placeholder="voce@exemplo.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-        <InputText
-          label="Senha"
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-mail</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="voce@exemplo.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {error && (
-          <Text variant="paragraph-medium" className="text-error">
-            {error}
-          </Text>
-        )}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <Button type="submit" variant="primary" handling={isSubmitting} disabled={isSubmitting}>
-          Entrar
-        </Button>
+            {submitError && (
+              <p role="alert" className="text-sm text-destructive">
+                {submitError}
+              </p>
+            )}
 
-        <Text variant="paragraph-medium" className="text-muted text-center">
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Entrando…" : "Entrar"}
+            </Button>
+          </form>
+        </Form>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Não tem uma conta?{" "}
-          <Link to="/register" className="text-accent font-semibold">
+          <Link to="/register" className="font-semibold text-foreground underline-offset-4 hover:underline">
             Cadastre-se
           </Link>
-        </Text>
-      </form>
+        </p>
+      </div>
     </div>
   );
 }

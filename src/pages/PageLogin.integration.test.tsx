@@ -37,8 +37,8 @@ describe("PageLogin (integration)", () => {
     const user = userEvent.setup();
     renderLoginApp();
 
-    await user.type(screen.getByPlaceholderText("voce@exemplo.com"), "ana@exemplo.com");
-    await user.type(screen.getByPlaceholderText("••••••••"), "secret123");
+    await user.type(screen.getByLabelText("E-mail"), "ana@exemplo.com");
+    await user.type(screen.getByLabelText("Senha"), "secret123");
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(await screen.findByText("home page")).toBeInTheDocument();
@@ -58,8 +58,8 @@ describe("PageLogin (integration)", () => {
     const user = userEvent.setup();
     renderLoginApp();
 
-    await user.type(screen.getByPlaceholderText("voce@exemplo.com"), "ana@exemplo.com");
-    await user.type(screen.getByPlaceholderText("••••••••"), "wrong-pass");
+    await user.type(screen.getByLabelText("E-mail"), "ana@exemplo.com");
+    await user.type(screen.getByLabelText("Senha"), "wrong-pass");
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(await screen.findByText("E-mail ou senha inválidos")).toBeInTheDocument();
