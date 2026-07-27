@@ -106,24 +106,33 @@ export default defineConfig([
       ],
     },
   },
-  // Components under src/components/ui, plus src/hooks/use-mobile.ts (the
-  // hook the shadcn sidebar generator drops next to the component in Item 7),
-  // are copied verbatim from the shadcn registry and are not hand-edited.
-  // That vendored code trips three rules that exist to catch mistakes in code
-  // we author ourselves:
-  //   - react-refresh/only-export-components: some files export their cva
-  //     variants next to the component (Button + buttonVariants), which is
-  //     exactly what the rule forbids.
-  //   - react-hooks/purity and react-hooks/set-state-in-effect: newer React
-  //     Compiler rules bundled with eslint-plugin-react-hooks 7 that postdate
-  //     this generated code (sidebar.tsx's randomized skeleton width,
-  //     use-mobile.ts's effect-driven setState).
-  // Since none of this is ours to fix by hand-editing generated code, the
-  // rules are off for exactly these files.
+  // Registry components under src/components/ui co-locate their cva variant
+  // export next to the component (Button + buttonVariants, badge, form,
+  // sidebar), which is structurally exactly what react-refresh/only-export-
+  // components forbids. That pattern has no runtime effect — it only affects
+  // whether Vite can hot-swap the component in isolation — and it applies to
+  // the whole registry surface regardless of which specific component was
+  // added, so the rule is off for the whole directory.
   {
-    files: ['src/components/ui/**/*.{ts,tsx}', 'src/hooks/use-mobile.ts'],
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  // react-hooks/purity and react-hooks/set-state-in-effect are React Compiler
+  // rules bundled with eslint-plugin-react-hooks 7 that catch real runtime
+  // bugs, not a structural pattern — so, unlike the rule above, they are not
+  // silenced tree-wide. Components under src/components/ui are copied from
+  // the shadcn registry but are hand-edited when the project needs it (see
+  // the Zustand-persistence comment in sidebar.tsx), so "vendored" doesn't
+  // mean "never touched" or "exempt from correctness checks". These two
+  // specific files carry violations that shipped with the registry code
+  // itself (sidebar.tsx's Math.random() inside useMemo for a skeleton width;
+  // use-mobile.ts's setState called synchronously inside a useEffect body).
+  // They're silenced per-file, by name, so a new or edited component that
+  // trips either rule still surfaces normally; this list is expected to
+  // shrink if upstream fixes them.
+  {
+    files: ['src/components/ui/sidebar.tsx', 'src/hooks/use-mobile.ts'],
     rules: {
-      'react-refresh/only-export-components': 'off',
       'react-hooks/purity': 'off',
       'react-hooks/set-state-in-effect': 'off',
     },
