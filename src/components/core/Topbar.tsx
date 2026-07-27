@@ -17,10 +17,10 @@ export default function Topbar({ title, onNewRefund }: TopbarProps) {
   return (
     // h-17.5 matches SidebarHeader's height in Sidebar.tsx so the two bottom
     // borders line up across the sidebar/topbar seam.
-    <header className="flex h-17.5 shrink-0 items-center gap-3 border-b ">
+    <header className="flex h-17.5 shrink-0 items-center gap-3 border-b pr-6 ">
       {/* shadcn's built-in accessible name is English ("Toggle Sidebar"); this
           project's UI text is Portuguese, so it is overridden explicitly. */}
-      <SidebarTrigger aria-label="Alternar menu" className=" h-17.5 w-17.5 border-r "/>
+      <SidebarTrigger aria-label="Alternar menu" className=" h-17.5 w-17.5 border-r rounded-l-none"/>
       
       <h1 className="truncate text-base font-semibold sm:text-lg">{title}</h1>
 
