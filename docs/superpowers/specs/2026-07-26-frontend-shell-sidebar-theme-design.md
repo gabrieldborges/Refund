@@ -36,8 +36,8 @@ trilha").
 
 ### Fora deste ciclo (cada um no seu próprio ciclo depois)
 
-- **Data Grid** (`@mui/x-data-grid`) para a lista de reembolsos — será o veículo
-  do Item 13, em ciclo próprio.
+- **Tabela de dados** (**TanStack Table**) para a lista de reembolsos — será o
+  veículo do Item 13, em ciclo próprio.
 - **Foto e username reais** no backend (avatar upload + coluna) — junto do backend
   do workflow.
 - As páginas **Dashboard / Time / Calendário** em si (aqui só entram como itens
@@ -215,8 +215,8 @@ Ordem recomendada, cada um com seu próprio spec → plano:
 2. **Workflow de aprovação** (backend primeiro: status + aprovar/rejeitar +
    autorização; depois frontend). Puxa Alembic (Item 18) e Unit of Work (Item 20).
    Resolve de brinde "nome do emissor + data" na listagem.
-3. **Lista de reembolsos com Data Grid** (`@mui/x-data-grid`, modo servidor +
-   toolbar de filtro). Veículo do Item 13.
+3. **Lista de reembolsos com TanStack Table** (paginação/ordenação em modo
+   servidor + toolbar de filtro). Veículo do Item 13.
 4. **Dashboard + calendário** (dependem de status e emissor/data).
 5. **Página de time/organização.**
 6. **Fórum e mensagens** (domínios novos, bem mais à frente).
