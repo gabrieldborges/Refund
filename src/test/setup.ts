@@ -6,6 +6,21 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "./msw/server";
 
+// jsdom has no matchMedia; the theme store queries it. Default to light.
+if (!window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+}
+
 // Start the MSW server before any test. `onUnhandledRequest: "error"` makes a
 // forgotten handler fail loudly instead of hitting the real network.
 beforeAll(() => {
