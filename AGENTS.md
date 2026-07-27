@@ -52,15 +52,17 @@ ocultar o problema.
 
 Lições que devem ser preservadas:
 
-- **`Header`**: use `flex-wrap` para impedir sobreposição em telas estreitas. O
-  link "Solicitações de reembolso" fica oculto abaixo de `sm:` por ser
-  redundante com o título da página.
-- **`Button`**: o tamanho padrão deve usar `w-full`, e não largura fixa. A
-  variante `fit` continua reservada aos casos em que a largura acompanha o
-  conteúdo.
-- **`InputText`**: aplique a prop `className` e preserve `min-w-0`. Inputs
-  nativos têm largura mínima do navegador e, sem `min-w-0` na cadeia flex,
-  campos lado a lado podem causar overflow mesmo com `w-full`.
+- **`Topbar`**: use `truncate` no título e agrupe as ações à direita com
+  `ml-auto` para impedir sobreposição em telas estreitas, sem precisar quebrar
+  linha.
+- **`Button`** (shadcn): não tem largura padrão `w-full` nem variante `fit` —
+  o componente do registry sempre acompanha o conteúdo. Quando um botão
+  precisa ocupar a largura total, isso é decidido pelo chamador via
+  `className="w-full"`, não pelo componente.
+- **`Input`** (shadcn): preserve `min-w-0` na classe base (`ui/input.tsx:11`).
+  Inputs nativos têm largura mínima do navegador e, sem `min-w-0` em algum
+  ponto da cadeia flex, campos lado a lado podem causar overflow mesmo com
+  `w-full`.
 
 Ao encontrar conteúdo cortado ou sobreposto em telas estreitas, verifique
 primeiro se um input ou outro elemento flexível mantém uma largura mínima do
