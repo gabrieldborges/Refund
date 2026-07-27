@@ -21,6 +21,23 @@ if (!window.matchMedia) {
     }) as unknown as MediaQueryList;
 }
 
+// jsdom implements neither the Pointer Capture API nor scrollIntoView. Radix
+// Select (and other Radix primitives using pointer events) calls these during
+// open/close and keyboard navigation, so without a stub every interaction
+// throws in tests even though the real browser behaviour is unaffected.
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {};
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {};
+}
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 // Start the MSW server before any test. `onUnhandledRequest: "error"` makes a
 // forgotten handler fail loudly instead of hitting the real network.
 beforeAll(() => {

@@ -1,18 +1,32 @@
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import {
   Dialog,
-  DialogTitle,
+  DialogContent,
   DialogDescription,
-} from "@/components/molecules/Dialog";
-import DialogContent from "@/components/molecules/Dialog";
-import Text from "@/components/atoms/Text";
-import InputText from "@/components/molecules/InputText";
-import InputFile from "@/components/molecules/InputFile";
-import PopOverMenu from "@/components/molecules/PopOverMenu";
-import Button from "@/components/molecules/Button";
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import InputFile from "@/components/ui/input-file";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { CATEGORY_OPTIONS } from "../constants/categories";
 import {
   refundCreateSchema,
@@ -32,13 +46,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
   const { mutateAsync, isPending } = useCreateRefund();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors },
-  } = useForm<RefundCreateFormInput, unknown, RefundCreateFormData>({
+  const form = useForm<RefundCreateFormInput, unknown, RefundCreateFormData>({
     resolver: zodResolver(refundCreateSchema),
   });
 
@@ -46,7 +54,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
     setSubmitError(null);
     try {
       await mutateAsync(data);
-      reset();
+      form.reset();
       onOpenChange(false);
       navigate("/success");
     } catch (err) {
@@ -56,67 +64,105 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div>
-            <DialogTitle asChild>
-              <Text as="h2" variant="heading-medium">
-                Nova solicitação de reembolso
-              </Text>
-            </DialogTitle>
-            <DialogDescription asChild>
-              <Text variant="paragraph-medium" className="text-muted">
-                Dados da despesa para solicitar reembolso.
-              </Text>
-            </DialogDescription>
-          </div>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nova solicitação de reembolso</DialogTitle>
+          <DialogDescription>Dados da despesa para solicitar reembolso.</DialogDescription>
+        </DialogHeader>
 
-          <InputText
-            label="Nome da solicitação"
-            placeholder="Nome"
-            error={errors.name?.message}
-            {...register("name")}
-          />
-
-          <div className="flex gap-4">
-            <Controller
-              name="category"
-              control={control}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="name"
               render={({ field }) => (
-                <PopOverMenu
-                  options={CATEGORY_OPTIONS}
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.category?.message}
-                />
+                <FormItem>
+                  <FormLabel>Nome da solicitação</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nome" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
-            <InputText
-              label="Valor"
-              type="number"
-              step="0.01"
-              placeholder="0,00"
-              error={errors.amount?.message}
-              {...register("amount")}
+
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      {/* `amount` is `z.coerce.number()`, whose zod-v4 input type is
+                          `unknown` (it accepts anything pre-coercion) — react-hook-form
+                          types `field.value` from that, but the native input only
+                          accepts string | number | undefined as a value. The cast is
+                          safe: this field always holds what the user typed, a string,
+                          until submit coerces it. */}
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        {...field}
+                        value={field.value as string | number | undefined}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="file"
+              render={() => (
+                <FormItem>
+                  <FormControl>
+                    <InputFile accept=".jpg,.jpeg,.png,.pdf" {...form.register("file")} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <InputFile
-            accept=".jpg,.jpeg,.png,.pdf"
-            error={errors.file?.message as string | undefined}
-            {...register("file")}
-          />
+            {submitError && (
+              <p role="alert" className="text-sm text-destructive">
+                {submitError}
+              </p>
+            )}
 
-          {submitError && (
-            <Text variant="paragraph-medium" className="text-error">
-              {submitError}
-            </Text>
-          )}
-
-          <Button type="submit" variant="primary" handling={isPending} disabled={isPending}>
-            Enviar
-          </Button>
-        </form>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Enviando…" : "Enviar"}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
