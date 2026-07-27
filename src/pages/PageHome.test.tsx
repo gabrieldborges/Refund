@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
@@ -41,11 +42,13 @@ function renderPageHome() {
     { initialEntries: ["/"] }
   );
 
-  return render(
+  const view = render(
     <QueryWrapper>
       <RouterProvider router={router} />
     </QueryWrapper>
   );
+
+  return { ...view, router };
 }
 
 describe("PageHome", () => {
@@ -70,5 +73,25 @@ describe("PageHome", () => {
 
     expect(await screen.findByRole("button", { name: "Página anterior" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Próxima página" })).toBeEnabled();
+  });
+
+  // RefundSearch debounces typing before pushing it to the URL. Typing must
+  // eventually update the `name` search param and reset `page` back to 1 (the
+  // page param is dropped entirely, since page 1 has no page param by design).
+  it("updates the search param on the URL after debounce and resets the page", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+    const user = userEvent.setup();
+
+    const { router } = renderPageHome();
+
+    const searchField = await screen.findByRole("textbox", { name: "Pesquisar pelo nome" });
+    await user.type(searchField, "Ana");
+
+    await waitFor(
+      () => {
+        expect(router.state.location.search).toBe("?name=Ana");
+      },
+      { timeout: 2000 }
+    );
   });
 });
