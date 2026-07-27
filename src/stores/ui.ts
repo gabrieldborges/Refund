@@ -19,6 +19,7 @@ interface UiState {
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -32,6 +33,10 @@ export const useUiStore = create<UiState>()(
         set({ theme: resolveTheme(get().theme) === "dark" ? "light" : "dark" }),
       toggleSidebar: () =>
         set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      // Setter-shaped action: takes the explicit next value instead of flipping.
+      // Needed to wire shadcn's `onOpenChange(open: boolean)` callback, which
+      // passes an explicit boolean rather than requesting a flip.
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
     }),
     { name: "refund-ui" },
   ),

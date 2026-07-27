@@ -1,20 +1,16 @@
-import type { ReactNode } from "react";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import GroupIcon from "@mui/icons-material/Group";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import { CalendarDays, LayoutDashboard, ReceiptText, Users, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   label: string;
   to: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   enabled: boolean;
 }
 
 // Only "Solicitações" is live now; the rest are placeholders for future cycles.
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Solicitações", to: "/", icon: <ReceiptLongIcon fontSize="small" />, enabled: true },
-  { label: "Dashboard", to: "/dashboard", icon: <DashboardIcon fontSize="small" />, enabled: false },
-  { label: "Time", to: "/team", icon: <GroupIcon fontSize="small" />, enabled: false },
-  { label: "Calendário", to: "/calendar", icon: <CalendarMonthIcon fontSize="small" />, enabled: false },
+  { label: "Solicitações", to: "/", icon: ReceiptText, enabled: true },
+  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: false },
+  { label: "Time", to: "/team", icon: Users, enabled: false },
+  { label: "Calendário", to: "/calendar", icon: CalendarDays, enabled: false },
 ];

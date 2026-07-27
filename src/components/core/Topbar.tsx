@@ -1,45 +1,34 @@
-import MenuIcon from "@mui/icons-material/Menu";
-import LightModeIcon from "@mui/icons-material/LightMode";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
+import { Moon, Sun } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useUiStore, resolveTheme } from "@/stores/ui";
-import Button from "../molecules/Button";
 
 interface TopbarProps {
   title: string;
   onNewRefund: () => void;
-  onOpenSidebar: () => void;
 }
 
-export default function Topbar({ title, onNewRefund, onOpenSidebar }: TopbarProps) {
+export default function Topbar({ title, onNewRefund }: TopbarProps) {
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const isDark = resolveTheme(theme) === "dark";
 
   return (
-    <header className="flex items-center gap-3 border-b border-line bg-surface px-4 sm:px-6 h-14">
-      <button
-        type="button"
-        onClick={onOpenSidebar}
-        aria-label="Abrir menu"
-        className="md:hidden text-content cursor-pointer flex items-center"
-      >
-        <MenuIcon aria-hidden fontSize="small" />
-      </button>
+    // h-17.5 matches SidebarHeader's height in Sidebar.tsx so the two bottom
+    // borders line up across the sidebar/topbar seam.
+    <header className="flex h-17.5 shrink-0 items-center gap-3 border-b px-4 sm:px-6">
+      {/* shadcn's built-in accessible name is English ("Toggle Sidebar"); this
+          project's UI text is Portuguese, so it is overridden explicitly. */}
+      <SidebarTrigger aria-label="Alternar menu" />
+      <Separator orientation="vertical" className="h-6" />
+      <h1 className="truncate text-base font-semibold sm:text-lg">{title}</h1>
 
-      <h1 className="text-content font-semibold text-base sm:text-lg truncate">{title}</h1>
-
-      <div className="ml-auto flex items-center gap-3">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label="Alternar tema"
-          className="text-content cursor-pointer flex items-center"
-        >
-          {isDark ? <DarkModeIcon aria-hidden fontSize="small" /> : <LightModeIcon aria-hidden fontSize="small" />}
-        </button>
-        <Button variant="primary" size="fit" onClick={onNewRefund}>
-          Nova solicitação
+      <div className="ml-auto flex items-center gap-2">
+        <Button variant="ghost" size="icon" aria-label="Alternar tema" onClick={toggleTheme}>
+          {isDark ? <Moon className="size-4" aria-hidden /> : <Sun className="size-4" aria-hidden />}
         </Button>
+        <Button onClick={onNewRefund}>Nova solicitação</Button>
       </div>
     </header>
   );

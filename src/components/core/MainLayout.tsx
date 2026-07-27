@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Outlet, useMatches } from "react-router";
-import Sidebar from "./Sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import AppSidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { useUiStore } from "@/stores/ui";
 import { RefundFormDialog } from "@/features/refunds";
 
 // Reads the deepest route handle that defines a title.
@@ -15,23 +17,25 @@ function useRouteTitle(): string {
 
 export default function MainLayout() {
   const [isNewRefundOpen, setIsNewRefundOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const collapsed = useUiStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useUiStore((s) => s.setSidebarCollapsed);
   const title = useRouteTitle();
 
   return (
-    <div className="flex h-screen bg-app">
-      <Sidebar toggled={drawerOpen} onBackdropClick={() => setDrawerOpen(false)} />
-      <div className="flex flex-col flex-1 min-w-0">
-        <Topbar
-          title={title}
-          onNewRefund={() => setIsNewRefundOpen(true)}
-          onOpenSidebar={() => setDrawerOpen(true)}
-        />
+    // The provider is driven by the Zustand store instead of shadcn's cookie:
+    // the store is already the single source of truth for UI preferences and is
+    // persisted to localStorage (Item 12). `open` is the inverse of `collapsed`.
+    // `onOpenChange` receives the explicit next open state (not a request to
+    // flip), so it is wired to the setter action, not `toggleSidebar`.
+    <SidebarProvider open={!collapsed} onOpenChange={(open) => setSidebarCollapsed(!open)}>
+      <AppSidebar />
+      <SidebarInset>
+        <Topbar title={title} onNewRefund={() => setIsNewRefundOpen(true)} />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
-      </div>
+      </SidebarInset>
       <RefundFormDialog open={isNewRefundOpen} onOpenChange={setIsNewRefundOpen} />
-    </div>
+    </SidebarProvider>
   );
 }

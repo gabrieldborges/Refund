@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import MainLayout from "./MainLayout";
@@ -53,5 +54,16 @@ describe("MainLayout", () => {
   it("shows the profile from the sidebar", () => {
     renderShell();
     expect(screen.getByText("@gabriel")).toBeInTheDocument();
+  });
+
+  it("collapses the sidebar in the store when the trigger is clicked", async () => {
+    // Exercises the controlled SidebarProvider wiring end to end: clicking
+    // the trigger must reach the store via setSidebarCollapsed, not the
+    // argument-less toggleSidebar (see src/stores/ui.ts).
+    const user = userEvent.setup();
+    renderShell();
+    expect(useUiStore.getState().sidebarCollapsed).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Alternar menu" }));
+    expect(useUiStore.getState().sidebarCollapsed).toBe(true);
   });
 });

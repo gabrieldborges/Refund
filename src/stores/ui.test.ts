@@ -27,6 +27,18 @@ describe("useUiStore", () => {
     expect(useUiStore.getState().sidebarCollapsed).toBe(true);
   });
 
+  it("setSidebarCollapsed sets the explicit value regardless of the current one", () => {
+    // Unlike toggleSidebar, this must be idempotent: setting the same value
+    // twice in a row must not flip it back. This is what shadcn's
+    // onOpenChange(open: boolean) callback relies on.
+    useUiStore.getState().setSidebarCollapsed(true);
+    expect(useUiStore.getState().sidebarCollapsed).toBe(true);
+    useUiStore.getState().setSidebarCollapsed(true);
+    expect(useUiStore.getState().sidebarCollapsed).toBe(true);
+    useUiStore.getState().setSidebarCollapsed(false);
+    expect(useUiStore.getState().sidebarCollapsed).toBe(false);
+  });
+
   it("persists to localStorage under 'refund-ui'", () => {
     useUiStore.getState().setTheme("dark");
     expect(localStorage.getItem("refund-ui")).toContain("dark");
