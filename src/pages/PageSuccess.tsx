@@ -1,32 +1,24 @@
 import { useNavigate } from "react-router";
-import Text from "../components/atoms/Text";
-import Icon from "../components/atoms/Icon";
-import Button from "../components/molecules/Button";
-import CheckIcon from "../assets/icons/Check.svg?react";
+import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function PageSuccess() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full min-h-screen bg-app flex justify-center py-10 px-4">
-      <div className="w-full max-w-md h-fit bg-surface rounded-lg p-8 flex flex-col items-center gap-4 text-center">
-        <Text as="h1" variant="heading-medium">
-          Solicitação enviada!
-        </Text>
-        <span className="w-20 h-20 rounded-full border-4 border-accent flex items-center justify-center">
-          <Icon svg={CheckIcon} className="w-10 h-10 text-accent" />
-        </span>
-        <Text variant="paragraph-medium" className="text-muted">
-          Agora é apenas aguardar! Sua solicitação será analisada e, em breve, o
-          setor financeiro irá entrar em contato com você.
-        </Text>
-        {/* Reabrir o modal direto daqui pede estado compartilhado entre
-            páginas — fica pra quando entrarmos na sub-fase de contexts. Por
-            enquanto, só volta pra Home. */}
-        <Button variant="primary" onClick={() => navigate("/")}>
-          Nova solicitação
-        </Button>
-      </div>
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
+      <span className="flex size-20 items-center justify-center rounded-full border-4 border-primary">
+        <Check className="size-10 text-primary" aria-hidden />
+      </span>
+      <h1 className="text-2xl font-semibold tracking-tight">Solicitação enviada!</h1>
+      <p className="text-sm text-muted-foreground">
+        Agora é apenas aguardar! Sua solicitação será analisada e, em breve, o setor
+        financeiro irá entrar em contato com você.
+      </p>
+      {/* Reabrir o modal direto daqui pede estado compartilhado entre páginas —
+          fica pra quando entrarmos na sub-fase de contexts. Por enquanto, só
+          volta pra Home. */}
+      <Button onClick={() => navigate("/")}>Nova solicitação</Button>
     </div>
   );
 }

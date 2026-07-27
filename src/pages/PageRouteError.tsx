@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, Link, useRouteError } from "react-router";
-import Text from "../components/atoms/Text";
+import { Button } from "@/components/ui/button";
 
 function getErrorMessage(error: unknown): string {
   if (isRouteErrorResponse(error)) {
@@ -19,18 +19,12 @@ export default function PageRouteError() {
   const error = useRouteError();
 
   return (
-    <main className="w-full min-h-screen bg-app flex items-center justify-center py-10 px-4">
-      <div className="w-full max-w-md bg-surface rounded-lg p-8 flex flex-col items-center gap-4 text-center">
-        <Text as="h1" variant="heading-medium">
-          Algo deu errado
-        </Text>
-        <Text variant="paragraph-medium" className="text-muted">
-          {getErrorMessage(error)}
-        </Text>
-        <Link to="/" className="text-accent font-semibold">
-          Voltar para solicitações
-        </Link>
-      </div>
-    </main>
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
+      <h1 className="text-2xl font-semibold tracking-tight">Algo deu errado</h1>
+      <p className="text-sm text-muted-foreground">{getErrorMessage(error)}</p>
+      <Button asChild variant="outline">
+        <Link to="/">Voltar para solicitações</Link>
+      </Button>
+    </div>
   );
 }

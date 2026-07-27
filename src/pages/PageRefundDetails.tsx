@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import Text from "../components/atoms/Text";
-import Icon from "../components/atoms/Icon";
-import Skeleton from "../components/atoms/Skeleton";
-import Button from "../components/molecules/Button";
-import InputText from "../components/molecules/InputText";
+import { Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
-  DialogTitle,
+  DialogContent,
   DialogDescription,
-} from "../components/molecules/Dialog";
-import DialogContent from "../components/molecules/Dialog";
-import ReceiptIcon from "../assets/icons/Receipt.svg?react";
-import { CATEGORIES, useRefund, useDeleteRefund } from "@/features/refunds";
-import { formatCentsToBRL } from "../lib/format";
-import { getApiErrorMessage, getReceiptUrl } from "../lib/api";
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CATEGORIES, useDeleteRefund, useRefund } from "@/features/refunds";
+import { getApiErrorMessage, getReceiptUrl } from "@/lib/api";
+import { formatCentsToBRL } from "@/lib/format";
 
 export default function PageRefundDetails() {
   const { id } = useParams();
@@ -39,103 +41,89 @@ export default function PageRefundDetails() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-app flex justify-center py-10 px-4">
-      <div className="max-w-[512px] w-full h-fit bg-surface rounded-lg p-8 flex flex-col gap-4">
-        <div>
-          <Text as="h1" variant="heading-medium">
-            Solicitação de reembolso
-          </Text>
-          <Text variant="paragraph-medium" className="text-muted">
-            Dados da despesa para solicitar reembolso.
-          </Text>
-        </div>
-
-        {isError && (
-          <Text variant="paragraph-medium" className="text-error text-center py-4">
-            Não foi possível encontrar essa solicitação.
-          </Text>
-        )}
-
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-6 p-6">
+      <Card>
         {isLoading && (
           <>
-            <Skeleton className="w-full h-12" />
-            <div className="flex gap-4">
-              <Skeleton className="w-full h-12" />
-              <Skeleton className="w-full h-12" />
-            </div>
-            <Skeleton className="w-32 h-5 mx-auto" />
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="mx-auto h-4 w-32" />
+            </CardContent>
           </>
+        )}
+
+        {isError && !isLoading && (
+          <CardContent>
+            <p className="py-4 text-center text-sm text-destructive">
+              Não foi possível encontrar essa solicitação.
+            </p>
+          </CardContent>
         )}
 
         {refund && !isLoading && (
           <>
-            <InputText label="Nome da solicitação" value={refund.name} readOnly />
+            <CardHeader>
+              <CardTitle>{refund.name}</CardTitle>
+              <CardDescription>{CATEGORIES[refund.category].label}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="refund-amount">Valor</Label>
+                <Input
+                  id="refund-amount"
+                  readOnly
+                  value={formatCentsToBRL(refund.amount_in_cents)}
+                />
+              </div>
 
-            <div className="flex gap-4">
-              <InputText label="Categoria" value={CATEGORIES[refund.category].label} readOnly />
-              <InputText
-                label="Valor"
-                value={formatCentsToBRL(refund.amount_in_cents)}
-                readOnly
-              />
-            </div>
-
-            <a
-              href={getReceiptUrl(refund.filename)}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Icon svg={ReceiptIcon} className="w-5 h-5 text-accent" />
-              <Text variant="label-medium" className="text-accent">
+              <a
+                href={getReceiptUrl(refund.filename)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
+              >
+                <Receipt className="size-5" aria-hidden />
                 Abrir comprovante
-              </Text>
-            </a>
-
-            <Button variant="primary" className="w-full" onClick={() => setIsDeleteOpen(true)}>
-              Excluir
-            </Button>
+              </a>
+            </CardContent>
+            <CardFooter>
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                Excluir
+              </Button>
+            </CardFooter>
           </>
         )}
-      </div>
+      </Card>
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent aria-describedby={undefined}>
-          <div className="flex flex-col gap-4">
-            <DialogTitle asChild>
-              <Text as="h2" variant="heading-medium">
-                Excluir solicitação
-              </Text>
-            </DialogTitle>
-            <DialogDescription asChild>
-              <Text variant="paragraph-medium" className="text-muted">
-                Tem certeza que deseja excluir essa solicitação? Essa ação é irreversível.
-              </Text>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir solicitação</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir essa solicitação? Essa ação é irreversível.
             </DialogDescription>
-            {deleteError && (
-              <Text variant="paragraph-medium" className="text-error">
-                {deleteError}
-              </Text>
-            )}
-            <div className="flex items-center justify-end gap-4">
-              <DialogClose asChild>
-                <button type="button" className="cursor-pointer">
-                  <Text variant="label-medium" className="text-accent">
-                    Cancelar
-                  </Text>
-                </button>
-              </DialogClose>
-              <Button
-                variant="primary"
-                size="fit"
-                onClick={handleConfirmDelete}
-                handling={isDeleting}
-                disabled={isDeleting}
-              >
-                Confirmar
-              </Button>
-            </div>
-          </div>
+          </DialogHeader>
+          {deleteError && (
+            <p role="alert" className="text-sm text-destructive">
+              {deleteError}
+            </p>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? "Excluindo…" : "Confirmar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
