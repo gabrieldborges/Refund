@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORIES, useRefunds } from "@/features/refunds";
-import { formatCentsToBRL } from "../lib/format";
-import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import type { homeLoader } from "../router-loaders";
+import { formatCentsToBRL } from "@/lib/format";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import type { homeLoader } from "@/router-loaders";
 
 function RefundRowSkeleton() {
   return (
@@ -54,6 +54,7 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
         />
         <Input
           placeholder="Pesquisar pelo nome"
+          aria-label="Pesquisar pelo nome"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="pl-9"
@@ -144,7 +145,7 @@ export default function PageHome() {
       <RefundSearch key={name ?? ""} initialSearch={name ?? ""} updateListLocation={updateListLocation} />
 
       {isError && (
-        <p className="py-4 text-center text-sm text-destructive">
+        <p role="alert" className="py-4 text-center text-sm text-destructive">
           Não foi possível carregar as solicitações. Tente novamente.
         </p>
       )}
