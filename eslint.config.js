@@ -40,7 +40,7 @@ export default defineConfig([
         // A whole feature is one element; "featureName" captures which one, so
         // we can tell same-feature imports apart from cross-feature ones.
         { type: 'feature', pattern: 'src/features/*', capture: ['featureName'] },
-        { type: 'ui', pattern: ['src/components/ui', 'src/components/atoms', 'src/components/molecules'] },
+        { type: 'ui', pattern: ['src/components/ui'] },
         { type: 'shared', pattern: ['src/lib', 'src/hooks', 'src/stores'] },
         {
           type: 'app',
@@ -104,6 +104,28 @@ export default defineConfig([
           ],
         },
       ],
+    },
+  },
+  // Components under src/components/ui, plus src/hooks/use-mobile.ts (the
+  // hook the shadcn sidebar generator drops next to the component in Item 7),
+  // are copied verbatim from the shadcn registry and are not hand-edited.
+  // That vendored code trips three rules that exist to catch mistakes in code
+  // we author ourselves:
+  //   - react-refresh/only-export-components: some files export their cva
+  //     variants next to the component (Button + buttonVariants), which is
+  //     exactly what the rule forbids.
+  //   - react-hooks/purity and react-hooks/set-state-in-effect: newer React
+  //     Compiler rules bundled with eslint-plugin-react-hooks 7 that postdate
+  //     this generated code (sidebar.tsx's randomized skeleton width,
+  //     use-mobile.ts's effect-driven setState).
+  // Since none of this is ours to fix by hand-editing generated code, the
+  // rules are off for exactly these files.
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/hooks/use-mobile.ts'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])

@@ -15,11 +15,11 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
 
 - Frontend do sistema de reembolso Refund. A API fica no repositório irmão
   `../Refund-api` e, durante o desenvolvimento, roda em `localhost:3333`.
-- Stack atual: React 19, TypeScript, Vite, Tailwind CSS 4, tailwind-variants,
+- Stack atual: React 19, TypeScript, Vite, Tailwind CSS 4, class-variance-authority,
   Radix UI, React Router 7, Axios, TanStack Query, react-hook-form e Zod.
-- Estrutura baseada em Atomic Design:
-  `src/components/{atoms,molecules,organisms,core}`. As páginas ficam em
-  `src/pages` e usam o prefixo `Page`.
+- Design system em `src/components/ui` (shadcn/ui, código copiado do registry e
+  versionado aqui); `src/components/core` guarda a composição do shell. As
+  páginas ficam em `src/pages` e usam o prefixo `Page`.
 - Tokens de cor e tipografia ficam em `src/index.css`.
 - Textos de UI devem ser escritos em português; código e identificadores, em
   inglês.
@@ -36,7 +36,9 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
   prematuras.
 - Explique e alinhe antes de introduzir infraestrutura transversal, como setup
   de testes, clientes HTTP, contexts globais ou bibliotecas novas.
-- Preserve a organização em Atomic Design ao criar ou mover componentes.
+- Componentes novos do design system vêm do registry (`npx shadcn@latest add
+  <componente>`) e ficam em `src/components/ui`. Só escreva um componente de
+  UI à mão quando o registry não tiver equivalente.
 - Rode `npx tsc -b --noEmit` depois de qualquer mudança.
 - Se forem adicionados testes, escreva os comentários descritivos em inglês.
 - Consulte a documentação canônica em vez de inferir ou repetir regras
