@@ -41,7 +41,7 @@ export default defineConfig([
         // we can tell same-feature imports apart from cross-feature ones.
         { type: 'feature', pattern: 'src/features/*', capture: ['featureName'] },
         { type: 'ui', pattern: ['src/components/atoms', 'src/components/molecules'] },
-        { type: 'shared', pattern: ['src/lib', 'src/hooks'] },
+        { type: 'shared', pattern: ['src/lib', 'src/hooks', 'src/stores'] },
         {
           type: 'app',
           pattern: [
