@@ -1,22 +1,13 @@
-import ForkKnifeIcon from "@/assets/icons/ForkKnife.svg?react";
-import BedIcon from "@/assets/icons/Bed.svg?react";
-import PoliceCarIcon from "@/assets/icons/PoliceCar.svg?react";
-import WrenchIcon from "@/assets/icons/Wrench.svg?react";
-import DesktopTowerIcon from "@/assets/icons/DesktopTower.svg?react";
-import type Icon from "@/components/atoms/Icon";
-import type { ComponentProps } from "react";
+import { UtensilsCrossed, Bed, Car, Monitor, Wrench, type LucideIcon } from "lucide-react";
 
 export type RefundCategory = "food" | "lodging" | "transport" | "service" | "others";
 
-export const CATEGORIES: Record<
-  RefundCategory,
-  { label: string; icon: ComponentProps<typeof Icon>["svg"] }
-> = {
-  food: { label: "Alimentação", icon: ForkKnifeIcon },
-  lodging: { label: "Hospedagem", icon: BedIcon },
-  transport: { label: "Transporte", icon: PoliceCarIcon },
-  service: { label: "Serviços", icon: WrenchIcon },
-  others: { label: "Outros", icon: DesktopTowerIcon },
+export const CATEGORIES: Record<RefundCategory, { label: string; icon: LucideIcon }> = {
+  food: { label: "Alimentação", icon: UtensilsCrossed },
+  lodging: { label: "Hospedagem", icon: Bed },
+  transport: { label: "Transporte", icon: Car },
+  service: { label: "Serviços", icon: Wrench },
+  others: { label: "Outros", icon: Monitor },
 };
 
 export const CATEGORY_OPTIONS = Object.entries(CATEGORIES).map(([value, { label }]) => ({

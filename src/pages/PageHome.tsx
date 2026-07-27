@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useLoaderData, useSearchParams } from "react-router";
-import Text from "../components/atoms/Text";
-import Icon from "../components/atoms/Icon";
-import Skeleton from "../components/atoms/Skeleton";
-import InputText from "../components/molecules/InputText";
-import ButtonIcon from "../components/molecules/ButtonIcon";
-import MagnifyingGlassIcon from "../assets/icons/MagnifyingGlass.svg?react";
-import CaretLeftIcon from "../assets/icons/CaretLeft.svg?react";
-import CaretRightIcon from "../assets/icons/CaretRight.svg?react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORIES, useRefunds } from "@/features/refunds";
 import { formatCentsToBRL } from "../lib/format";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -15,15 +12,15 @@ import type { homeLoader } from "../router-loaders";
 
 function RefundRowSkeleton() {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 px-2">
+    <div className="flex items-center justify-between gap-4 px-2 py-3">
       <div className="flex items-center gap-3">
-        <Skeleton shape="circle" className="w-6 h-6" />
+        <Skeleton className="size-6 rounded-full" />
         <div className="flex flex-col gap-1.5">
-          <Skeleton className="w-24 h-3.5" />
-          <Skeleton className="w-16 h-3" />
+          <Skeleton className="h-3.5 w-24" />
+          <Skeleton className="h-3 w-16" />
         </div>
       </div>
-      <Skeleton className="w-14 h-4" />
+      <Skeleton className="h-4 w-14" />
     </div>
   );
 }
@@ -49,21 +46,19 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
   }
 
   return (
-    <form className="flex items-end gap-3" onSubmit={handleSearchSubmit}>
-      <div className="flex-1">
-        <InputText
+    <form onSubmit={handleSearchSubmit}>
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
           placeholder="Pesquisar pelo nome"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
+          className="pl-9"
         />
       </div>
-      <ButtonIcon
-        type="submit"
-        icon={MagnifyingGlassIcon}
-        variant="primary"
-        size="sm"
-        aria-label="Pesquisar"
-      />
     </form>
   );
 }
@@ -102,94 +97,124 @@ export default function PageHome() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-app flex justify-center py-10 px-4">
-      <div className="w-full max-w-2xl h-fit bg-surface rounded-lg p-8 flex flex-col gap-6">
-        <Text as="h1" variant="heading-medium">
-          Solicitações
-        </Text>
-
-        <RefundSearch
-          key={name ?? ""}
-          initialSearch={name ?? ""}
-          updateListLocation={updateListLocation}
-        />
-
-        {isError && (
-          <Text variant="paragraph-medium" className="text-error text-center py-4">
-            Não foi possível carregar as solicitações. Tente novamente.
-          </Text>
-        )}
-
-        {isLoading && (
-          <ul className="flex flex-col">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <li key={index} className="border-b border-subtle last:border-b-0">
-                <RefundRowSkeleton />
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {!isLoading && !isError && (
-          <ul className="flex flex-col">
-            {data?.attributes.length === 0 && (
-              <Text variant="paragraph-medium" className="text-muted py-4 text-center">
-                Nenhuma solicitação encontrada.
-              </Text>
-            )}
-            {data?.attributes.map((refund) => {
-              const category = CATEGORIES[refund.category];
-              return (
-                <li key={refund.id} className="border-b border-subtle last:border-b-0">
-                  <Link
-                    to={`/refunds/${refund.id}`}
-                    className="flex items-center justify-between gap-4 py-3 hover:bg-app transition rounded px-2 -mx-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon svg={category.icon} className="w-6 h-6 text-accent" />
-                      <div className="flex flex-col">
-                        <Text variant="label-medium" className="text-content">
-                          {refund.name}
-                        </Text>
-                        <Text variant="paragraph-small" className="text-muted">
-                          {category.label}
-                        </Text>
-                      </div>
-                    </div>
-                    <Text variant="paragraph-medium" className="text-content">
-                      {formatCentsToBRL(refund.amount_in_cents)}
-                    </Text>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {data && data.total_pages > 0 && (
-          <div className="flex items-center justify-center gap-4">
-            <ButtonIcon
-              icon={CaretLeftIcon}
-              variant="primary"
-              size="sm"
-              disabled={data.page === 1}
-              onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
-            />
-            <Text variant="paragraph-medium" className="text-muted">
-              {data.page}/{data.total_pages}
-            </Text>
-            <ButtonIcon
-              icon={CaretRightIcon}
-              variant="primary"
-              size="sm"
-              disabled={data.page === data.total_pages}
-              onClick={() =>
-                updateListLocation(name ?? "", Math.min(data.total_pages, data.page + 1))
-              }
-            />
-          </div>
-        )}
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Solicitações</h1>
+          <p className="text-sm text-muted-foreground">
+            {data ? `${data.total} ${data.total === 1 ? "solicitação" : "solicitações"}` : " "}
+          </p>
+        </div>
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Solicitações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <p className="text-2xl font-semibold">{data?.total ?? 0}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Total
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-28" />
+            ) : (
+              <p className="text-2xl font-semibold">
+                {formatCentsToBRL(data?.sum_amount_in_cents ?? 0)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <RefundSearch key={name ?? ""} initialSearch={name ?? ""} updateListLocation={updateListLocation} />
+
+      {isError && (
+        <p className="py-4 text-center text-sm text-destructive">
+          Não foi possível carregar as solicitações. Tente novamente.
+        </p>
+      )}
+
+      {isLoading && (
+        <ul className="flex flex-col rounded-xl border">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <li key={index} className="border-b last:border-b-0">
+              <RefundRowSkeleton />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!isLoading && !isError && (
+        <ul className="flex flex-col rounded-xl border">
+          {data?.attributes.length === 0 && (
+            <li className="py-4 text-center text-sm text-muted-foreground">
+              Nenhuma solicitação encontrada.
+            </li>
+          )}
+          {data?.attributes.map((refund) => {
+            const category = CATEGORIES[refund.category];
+            const CategoryIcon = category.icon;
+            return (
+              <li key={refund.id} className="border-b last:border-b-0">
+                <Link
+                  to={`/refunds/${refund.id}`}
+                  className="flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-accent/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <CategoryIcon className="size-5 text-muted-foreground" aria-hidden />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{refund.name}</span>
+                      <span className="text-xs text-muted-foreground">{category.label}</span>
+                    </div>
+                  </div>
+                  <span className="text-sm">{formatCentsToBRL(refund.amount_in_cents)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {data && data.total_pages > 0 && (
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Página anterior"
+            disabled={data.page === 1}
+            onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Página {data.page} de {data.total_pages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Próxima página"
+            disabled={data.page === data.total_pages}
+            onClick={() => updateListLocation(name ?? "", Math.min(data.total_pages, data.page + 1))}
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

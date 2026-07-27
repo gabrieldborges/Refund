@@ -39,6 +39,7 @@ export const refundsListResponseSchema = z.object({
   type: z.literal("Refund"),
   count: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
+  sum_amount_in_cents: z.number().int().nonnegative(),
   page: z.number().int().positive(),
   per_page: z.number().int().min(1).max(100),
   total_pages: z.number().int().nonnegative(),

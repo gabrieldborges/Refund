@@ -32,16 +32,20 @@ export const handlers = [
     return HttpResponse.json(loginFixture);
   }),
 
-  // Refund list: a single-item, single-page response.
+  // Refund list: a single-item, single-page response. `sum_amount_in_cents` is
+  // derived from the returned `attributes`, so it always stays coherent with
+  // the fixture data instead of being an independent hardcoded number.
   http.get("*/refunds", () => {
+    const attributes = [refundFixture];
     return HttpResponse.json({
       type: "Refund",
-      count: 1,
-      total: 1,
+      count: attributes.length,
+      total: attributes.length,
+      sum_amount_in_cents: attributes.reduce((sum, refund) => sum + refund.amount_in_cents, 0),
       page: 1,
       per_page: 6,
       total_pages: 1,
-      attributes: [refundFixture],
+      attributes,
     });
   }),
 

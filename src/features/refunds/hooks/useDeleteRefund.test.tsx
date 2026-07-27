@@ -10,11 +10,12 @@ import type { RefundsListResponse } from "../schemas/refund";
 import { useDeleteRefund } from "./useDeleteRefund";
 
 // Builds a list response body from a set of items.
-function listBody(items: Array<{ name: string }>) {
+function listBody(items: Array<{ name: string; amount_in_cents: number }>) {
   return {
     type: "Refund",
     count: items.length,
     total: items.length,
+    sum_amount_in_cents: items.reduce((sum, item) => sum + item.amount_in_cents, 0),
     page: 1,
     per_page: 6,
     total_pages: 1,
