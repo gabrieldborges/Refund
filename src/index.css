@@ -8,6 +8,8 @@
   --content: #1F2523;  --muted: #4D5C57;
   --accent: #1F8459;   --accent-strong: #2CB178;  --on-accent: #ffffff;
   --accent-soft: #E5F4EE;  --error: #D14343;
+  /* Modal scrim — intentionally dark in both themes (not overridden below). */
+  --overlay: #1F2523;
 }
 :root[data-theme="dark"] {
   --surface: #161B20;  --app: #0F1215;  --subtle: #20262C;  --line: #242A30;
@@ -30,17 +32,8 @@
   --color-accent-strong: var(--accent-strong);
   --color-on-accent: var(--on-accent);
   --color-accent-soft: var(--accent-soft);
+  --color-overlay: var(--overlay);
   --color-error: var(--error);
-
-  /* Legacy palette — kept only until Task 8 migrates the components. */
-  --color-white: #ffffff;
-  --color-gray-100: #1F2523;
-  --color-gray-200: #4D5C57;
-  --color-gray-300: #CDD5D2;
-  --color-gray-400: #E4ECE9;
-  --color-gray-500: #F9FBFA;
-  --color-green-100: #1F8459;
-  --color-green-200: #2CB178;
 
   --font-sans: "Open Sans", sans-serif;
 }

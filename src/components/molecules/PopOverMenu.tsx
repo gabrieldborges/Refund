@@ -56,7 +56,7 @@ export default function PopOverMenu({ options, value, onChange, label = "Categor
               }
             }}
           >
-            <Text variant="paragraph-medium" className="text-gray-200">
+            <Text variant="paragraph-medium" className="text-muted">
               {selectedOption?.label ? selectedOption.label : "Selecione"}
             </Text>
           </InputLabelWrapper>
@@ -66,7 +66,7 @@ export default function PopOverMenu({ options, value, onChange, label = "Categor
             // Radix expõe a largura do trigger via essa variável CSS, então
             // o menu sempre fica do mesmo tamanho do campo que o abriu.
             style={{ width: "var(--radix-popover-trigger-width)" }}
-            className={`rounded-lg shadow-lg bg-gray-400 my-2 outline-none border-1 border-gray-300 data-[state=open]:animate-in
+            className={`rounded-lg shadow-lg bg-subtle my-2 outline-none border-1 border-line data-[state=open]:animate-in
                     data-[state=open]:fade-in-0
                     data-[state=open]:slide-in-from-top-[5%]
                     data-[state=closed]:animate-out
@@ -76,20 +76,20 @@ export default function PopOverMenu({ options, value, onChange, label = "Categor
             <ul className="py-2 ">
               {options.map((option) => (
                 <div
-                  className="flex items-center justify-between  hover:bg-gray-300 w-full cursor-pointer py-3 px-4"
+                  className="flex items-center justify-between  hover:bg-line w-full cursor-pointer py-3 px-4"
                   onClick={() => handleSelectOption(option)}
                   key={option.value}
                 >
                   <li className="">
                     <Text
                       variant="paragraph-medium"
-                      className={`${option.value === selectedOption?.value ? "text-gray-100" : "text-gray-200"}`}
+                      className={`${option.value === selectedOption?.value ? "text-content" : "text-muted"}`}
                     >
                       {option.label}
                     </Text>
                   </li>
                   {option.value === selectedOption?.value && (
-                    <Icon svg={CheckIcon} className="w-4 h-4 text-green-100" />
+                    <Icon svg={CheckIcon} className="w-4 h-4 text-accent" />
                   )}
                 </div>
               ))}

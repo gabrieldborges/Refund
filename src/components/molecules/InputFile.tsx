@@ -26,18 +26,18 @@ export default function InputFile({
 
   return (
     <div className="w-full flex flex-col gap-2">
-      <Text variant="label-small" className="text-gray-200 uppercase">
+      <Text variant="label-small" className="text-muted uppercase">
         {label}
       </Text>
       <label
         htmlFor={inputId}
-        className="border border-solid border-gray-300 rounded-lg flex items-center justify-between gap-3 h-12 py-2 pl-4 pr-2 cursor-pointer hover:border-green-100 transition"
+        className="border border-solid border-line rounded-lg flex items-center justify-between gap-3 h-12 py-2 pl-4 pr-2 cursor-pointer hover:border-accent transition"
       >
-        <Text variant="paragraph-medium" className={fileName ? "text-gray-100" : "text-gray-200"}>
+        <Text variant="paragraph-medium" className={fileName ? "text-content" : "text-muted"}>
           {fileName ?? placeholder}
         </Text>
-        <span className="w-9 h-9 rounded bg-green-100 hover:bg-green-200 transition flex items-center justify-center">
-          <Icon svg={CloudArrowUpIcon} className="w-5 h-5 fill-white" />
+        <span className="w-9 h-9 rounded bg-accent hover:bg-accent-strong transition flex items-center justify-center">
+          <Icon svg={CloudArrowUpIcon} className="w-5 h-5 fill-on-accent" />
         </span>
       </label>
       <input id={inputId} type="file" className="hidden" onChange={handleChange} {...props} />

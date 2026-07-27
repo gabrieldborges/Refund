@@ -39,13 +39,13 @@ export default function PageRefundDetails() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-500 flex justify-center py-10 px-4">
-      <div className="max-w-[512px] w-full h-fit bg-white rounded-lg p-8 flex flex-col gap-4">
+    <div className="w-full min-h-screen bg-app flex justify-center py-10 px-4">
+      <div className="max-w-[512px] w-full h-fit bg-surface rounded-lg p-8 flex flex-col gap-4">
         <div>
           <Text as="h1" variant="heading-medium">
             Solicitação de reembolso
           </Text>
-          <Text variant="paragraph-medium" className="text-gray-200">
+          <Text variant="paragraph-medium" className="text-muted">
             Dados da despesa para solicitar reembolso.
           </Text>
         </div>
@@ -86,8 +86,8 @@ export default function PageRefundDetails() {
               rel="noreferrer"
               className="flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Icon svg={ReceiptIcon} className="w-5 h-5 fill-green-100" />
-              <Text variant="label-medium" className="text-green-100">
+              <Icon svg={ReceiptIcon} className="w-5 h-5 fill-accent" />
+              <Text variant="label-medium" className="text-accent">
                 Abrir comprovante
               </Text>
             </a>
@@ -108,7 +108,7 @@ export default function PageRefundDetails() {
               </Text>
             </DialogTitle>
             <DialogDescription asChild>
-              <Text variant="paragraph-medium" className="text-gray-200">
+              <Text variant="paragraph-medium" className="text-muted">
                 Tem certeza que deseja excluir essa solicitação? Essa ação é irreversível.
               </Text>
             </DialogDescription>
@@ -120,7 +120,7 @@ export default function PageRefundDetails() {
             <div className="flex items-center justify-end gap-4">
               <DialogClose asChild>
                 <button type="button" className="cursor-pointer">
-                  <Text variant="label-medium" className="text-green-100">
+                  <Text variant="label-medium" className="text-accent">
                     Cancelar
                   </Text>
                 </button>

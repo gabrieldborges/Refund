@@ -65,7 +65,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               </Text>
             </DialogTitle>
             <DialogDescription asChild>
-              <Text variant="paragraph-medium" className="text-gray-200">
+              <Text variant="paragraph-medium" className="text-muted">
                 Dados da despesa para solicitar reembolso.
               </Text>
             </DialogDescription>

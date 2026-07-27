@@ -102,8 +102,8 @@ export default function PageHome() {
   );
 
   return (
-    <div className="w-full min-h-screen bg-gray-500 flex justify-center py-10 px-4">
-      <div className="w-full max-w-2xl h-fit bg-white rounded-lg p-8 flex flex-col gap-6">
+    <div className="w-full min-h-screen bg-app flex justify-center py-10 px-4">
+      <div className="w-full max-w-2xl h-fit bg-surface rounded-lg p-8 flex flex-col gap-6">
         <Text as="h1" variant="heading-medium">
           Solicitações
         </Text>
@@ -123,7 +123,7 @@ export default function PageHome() {
         {isLoading && (
           <ul className="flex flex-col">
             {Array.from({ length: 6 }).map((_, index) => (
-              <li key={index} className="border-b border-gray-400 last:border-b-0">
+              <li key={index} className="border-b border-subtle last:border-b-0">
                 <RefundRowSkeleton />
               </li>
             ))}
@@ -133,30 +133,30 @@ export default function PageHome() {
         {!isLoading && !isError && (
           <ul className="flex flex-col">
             {data?.attributes.length === 0 && (
-              <Text variant="paragraph-medium" className="text-gray-200 py-4 text-center">
+              <Text variant="paragraph-medium" className="text-muted py-4 text-center">
                 Nenhuma solicitação encontrada.
               </Text>
             )}
             {data?.attributes.map((refund) => {
               const category = CATEGORIES[refund.category];
               return (
-                <li key={refund.id} className="border-b border-gray-400 last:border-b-0">
+                <li key={refund.id} className="border-b border-subtle last:border-b-0">
                   <Link
                     to={`/refunds/${refund.id}`}
-                    className="flex items-center justify-between gap-4 py-3 hover:bg-gray-500 transition rounded px-2 -mx-2"
+                    className="flex items-center justify-between gap-4 py-3 hover:bg-app transition rounded px-2 -mx-2"
                   >
                     <div className="flex items-center gap-3">
-                      <Icon svg={category.icon} className="w-6 h-6 fill-green-100" />
+                      <Icon svg={category.icon} className="w-6 h-6 fill-accent" />
                       <div className="flex flex-col">
-                        <Text variant="label-medium" className="text-gray-100">
+                        <Text variant="label-medium" className="text-content">
                           {refund.name}
                         </Text>
-                        <Text variant="paragraph-small" className="text-gray-200">
+                        <Text variant="paragraph-small" className="text-muted">
                           {category.label}
                         </Text>
                       </div>
                     </div>
-                    <Text variant="paragraph-medium" className="text-gray-100">
+                    <Text variant="paragraph-medium" className="text-content">
                       {formatCentsToBRL(refund.amount_in_cents)}
                     </Text>
                   </Link>
@@ -175,7 +175,7 @@ export default function PageHome() {
               disabled={data.page === 1}
               onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
             />
-            <Text variant="paragraph-medium" className="text-gray-200">
+            <Text variant="paragraph-medium" className="text-muted">
               {data.page}/{data.total_pages}
             </Text>
             <ButtonIcon

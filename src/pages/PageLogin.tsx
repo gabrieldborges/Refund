@@ -31,14 +31,14 @@ export default function PageLogin() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-500 flex items-center justify-center py-10 px-4">
+    <div className="w-full min-h-screen bg-app flex items-center justify-center py-10 px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white rounded-lg p-8 flex flex-col gap-4"
+        className="w-full max-w-sm bg-surface rounded-lg p-8 flex flex-col gap-4"
       >
         <div className="flex flex-col items-center gap-2 mb-2">
-          <Icon svg={ReceiptIcon} className="w-8 h-8 fill-green-100" />
-          <Text as="h1" variant="heading-medium" className="text-green-100">
+          <Icon svg={ReceiptIcon} className="w-8 h-8 fill-accent" />
+          <Text as="h1" variant="heading-medium" className="text-accent">
             refund
           </Text>
         </div>
@@ -70,9 +70,9 @@ export default function PageLogin() {
           Entrar
         </Button>
 
-        <Text variant="paragraph-medium" className="text-gray-200 text-center">
+        <Text variant="paragraph-medium" className="text-muted text-center">
           Não tem uma conta?{" "}
-          <Link to="/register" className="text-green-100 font-semibold">
+          <Link to="/register" className="text-accent font-semibold">
             Cadastre-se
           </Link>
         </Text>

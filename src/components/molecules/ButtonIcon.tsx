@@ -7,7 +7,7 @@ export const buttonIconVariants = tv({
 	base: "inline-flex items-center justify-center cursor-pointer transition",
 	variants: {
 		variant: {
-			primary: "bg-green-100 hover:bg-green-200",
+			primary: "bg-accent hover:bg-accent-strong",
 		},
 		size: {
 			sm: "w-12 h-12 p-2 rounded",
@@ -30,7 +30,7 @@ export const buttonIconVariants = tv({
 export const buttonIconIconVariants = tv({
 	variants: {
 		variant: {
-			primary: "fill-white",
+			primary: "fill-on-accent",
 		},
 		size: {
 			sm: "w-12 h-12",

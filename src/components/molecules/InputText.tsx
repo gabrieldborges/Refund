@@ -9,7 +9,7 @@ import InputLabelWrapper from "./InputLabelWrapper";
 
 export const inputTextVariants = tv({
   base: `
-    bg-transparent outline-none placeholder:text-gray-200
+    bg-transparent outline-none placeholder:text-muted
     text-accent-paragraph flex-1 text-sm leading-[180%] font-regular
   `,
 });

@@ -9,7 +9,7 @@ export const buttonVariants = tv({
 	base: "flex items-center justify-center cursor-pointer transition rounded group gap-1",
 	variants: {
 		variant: {
-			primary: "bg-green-100 hover:bg-green-200",
+			primary: "bg-accent hover:bg-accent-strong",
 		
 		},
 		size: {
@@ -39,7 +39,7 @@ export const buttonVariants = tv({
 export const buttonTextVariants = tv({
 	variants: {
 		variant: {
-			primary: "text-white",
+			primary: "text-on-accent",
 			
 		},
 		size: {
@@ -56,7 +56,7 @@ export const buttonTextVariants = tv({
 export const buttonIconVariants = tv({
 	variants: {
 		variant: {
-			primary: "fill-white",
+			primary: "fill-on-accent",
 
 		},
 		size: {

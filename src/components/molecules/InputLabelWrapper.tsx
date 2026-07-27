@@ -10,10 +10,10 @@ export const InputLabelWrapperContainerVariants = tv({
 
 export const InputLabelWrapperVariants = tv({
   base: `
-    border border-solid border-gray-300 
+    border border-solid border-line 
      bg-transparent 
     rounded-lg flex items-center justify-between gap-3
-    focus-within:border-green-100 transition-all duration-200
+    focus-within:border-accent transition-all duration-200
   `,
   variants: {
     size: {
@@ -23,7 +23,7 @@ export const InputLabelWrapperVariants = tv({
       true: "pointer-events-none",
     },
     focused: {
-      true: "border-green-100",
+      true: "border-accent",
     },
   },
   defaultVariants: {
@@ -34,13 +34,13 @@ export const InputLabelWrapperVariants = tv({
 });
 
 export const InputLabelWrapperIconVariants = tv({
-  base: "fill-gray-200 group-focus-within:fill-green-100 transition-colors duration-200",
+  base: "fill-muted group-focus-within:fill-accent transition-colors duration-200",
   variants: {
     size: {
       md: "w-6 h-6",
     },
     focused: {
-      true: "fill-green-100",
+      true: "fill-accent",
     },
   },
   defaultVariants: {
@@ -50,10 +50,10 @@ export const InputLabelWrapperIconVariants = tv({
 });
 
 export const InputLabelWrapperLabelVariants = tv({
-  base: "text-gray-200 uppercase group-focus-within:text-green-100 transition-colors duration-200 pointer-events-none",
+  base: "text-muted uppercase group-focus-within:text-accent transition-colors duration-200 pointer-events-none",
   variants: {
     focused: {
-      true: "text-green-100",
+      true: "text-accent",
     },
   },
   defaultVariants: {
