@@ -1,18 +1,52 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 
+/* Raw palette per theme. These are the single source of truth for color;
+   both Tailwind utilities and react-pro-sidebar read them via var(). */
+:root {
+  --surface: #ffffff;  --app: #F9FBFA;  --subtle: #E4ECE9;  --line: #CDD5D2;
+  --content: #1F2523;  --muted: #4D5C57;
+  --accent: #1F8459;   --accent-strong: #2CB178;  --on-accent: #ffffff;
+  --accent-soft: #E5F4EE;  --error: #D14343;
+}
+:root[data-theme="dark"] {
+  --surface: #161B20;  --app: #0F1215;  --subtle: #20262C;  --line: #242A30;
+  --content: #E6E8EA;  --muted: #9AA4AD;
+  --accent: #2FAE7C;   --accent-strong: #34D399;  --on-accent: #06231A;
+  --accent-soft: #12352A;  --error: #E4756B;
+}
 
-@theme{
+@theme {
   --color-*: initial;
-	--color-white: #ffffff;
-	--color-gray-100: #1F2523;
-	--color-gray-200: #4D5C57;
-	--color-gray-300: #CDD5D2;
-	--color-gray-400: #E4ECE9;
-	--color-gray-500: #F9FBFA;
-	--color-green-100: #1F8459;
-	--color-green-200: #2CB178;
-	--color-error: #D14343;
 
-	--font-sans: "Open Sans", sans-serif;
+  /* Semantic, theme-aware tokens (chained var() resolves at runtime). */
+  --color-surface: var(--surface);
+  --color-app: var(--app);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-content: var(--content);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-error: var(--error);
+
+  /* Legacy palette — kept only until Task 8 migrates the components. */
+  --color-white: #ffffff;
+  --color-gray-100: #1F2523;
+  --color-gray-200: #4D5C57;
+  --color-gray-300: #CDD5D2;
+  --color-gray-400: #E4ECE9;
+  --color-gray-500: #F9FBFA;
+  --color-green-100: #1F8459;
+  --color-green-200: #2CB178;
+
+  --font-sans: "Open Sans", sans-serif;
+}
+
+/* App-level base so background/text follow the theme everywhere. */
+body {
+  background-color: var(--app);
+  color: var(--content);
 }
