@@ -25,21 +25,25 @@ export const router = createBrowserRouter([
               {
                 index: true,
                 loader: homeLoader,
+                handle: { title: "Solicitações de reembolso" },
                 lazy: async () => ({ Component: (await import("./pages/PageHome")).default }),
               },
               {
                 path: "/refunds/:id",
                 loader: refundDetailLoader,
+                handle: { title: "Detalhe da solicitação" },
                 lazy: async () => ({
                   Component: (await import("./pages/PageRefundDetails")).default,
                 }),
               },
               {
                 path: "/success",
+                handle: { title: "Sucesso" },
                 lazy: async () => ({ Component: (await import("./pages/PageSuccess")).default }),
               },
               {
                 path: "/components",
+                handle: { title: "Componentes" },
                 lazy: async () => ({ Component: (await import("./pages/PageComponents")).default }),
               },
             ],
