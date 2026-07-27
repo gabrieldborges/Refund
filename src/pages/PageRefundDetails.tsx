@@ -86,7 +86,7 @@ export default function PageRefundDetails() {
               rel="noreferrer"
               className="flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Icon svg={ReceiptIcon} className="w-5 h-5 fill-accent" />
+              <Icon svg={ReceiptIcon} className="w-5 h-5 text-accent" />
               <Text variant="label-medium" className="text-accent">
                 Abrir comprovante
               </Text>

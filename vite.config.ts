@@ -6,7 +6,21 @@ import svgr from 'vite-plugin-svgr'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), svgr()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Repaint hardcoded black fills as currentColor so a `text-*` color utility
+    // (and the theme) drives icon color; otherwise icons stay black in dark mode.
+    svgr({
+      svgrOptions: {
+        replaceAttrValues: {
+          black: "currentColor",
+          "#000": "currentColor",
+          "#000000": "currentColor",
+        },
+      },
+    }),
+  ],
   resolve: {
     // "@" points at src/, so imports read as "@/lib/api" instead of "../../../lib/api".
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

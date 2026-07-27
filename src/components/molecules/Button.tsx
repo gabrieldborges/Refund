@@ -56,7 +56,7 @@ export const buttonTextVariants = tv({
 export const buttonIconVariants = tv({
 	variants: {
 		variant: {
-			primary: "fill-on-accent",
+			primary: "text-on-accent",
 
 		},
 		size: {

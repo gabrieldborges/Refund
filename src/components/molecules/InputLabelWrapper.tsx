@@ -34,13 +34,13 @@ export const InputLabelWrapperVariants = tv({
 });
 
 export const InputLabelWrapperIconVariants = tv({
-  base: "fill-muted group-focus-within:fill-accent transition-colors duration-200",
+  base: "text-muted group-focus-within:text-accent transition-colors duration-200",
   variants: {
     size: {
       md: "w-6 h-6",
     },
     focused: {
-      true: "fill-accent",
+      true: "text-accent",
     },
   },
   defaultVariants: {

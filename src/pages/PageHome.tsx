@@ -146,7 +146,7 @@ export default function PageHome() {
                     className="flex items-center justify-between gap-4 py-3 hover:bg-app transition rounded px-2 -mx-2"
                   >
                     <div className="flex items-center gap-3">
-                      <Icon svg={category.icon} className="w-6 h-6 fill-accent" />
+                      <Icon svg={category.icon} className="w-6 h-6 text-accent" />
                       <div className="flex flex-col">
                         <Text variant="label-medium" className="text-content">
                           {refund.name}

@@ -14,7 +14,7 @@ export default function PageSuccess() {
           Solicitação enviada!
         </Text>
         <span className="w-20 h-20 rounded-full border-4 border-accent flex items-center justify-center">
-          <Icon svg={CheckIcon} className="w-10 h-10 fill-accent" />
+          <Icon svg={CheckIcon} className="w-10 h-10 text-accent" />
         </span>
         <Text variant="paragraph-medium" className="text-muted">
           Agora é apenas aguardar! Sua solicitação será analisada e, em breve, o

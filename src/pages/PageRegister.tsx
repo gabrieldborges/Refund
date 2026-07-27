@@ -38,7 +38,7 @@ export default function PageRegister() {
         className="w-full max-w-sm bg-surface rounded-lg p-8 flex flex-col gap-4"
       >
         <div className="flex flex-col items-center gap-2 mb-2">
-          <Icon svg={ReceiptIcon} className="w-8 h-8 fill-accent" />
+          <Icon svg={ReceiptIcon} className="w-8 h-8 text-accent" />
           <Text as="h1" variant="heading-medium" className="text-accent">
             refund
           </Text>

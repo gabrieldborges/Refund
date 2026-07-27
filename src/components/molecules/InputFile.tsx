@@ -37,7 +37,7 @@ export default function InputFile({
           {fileName ?? placeholder}
         </Text>
         <span className="w-9 h-9 rounded bg-accent hover:bg-accent-strong transition flex items-center justify-center">
-          <Icon svg={CloudArrowUpIcon} className="w-5 h-5 fill-on-accent" />
+          <Icon svg={CloudArrowUpIcon} className="w-5 h-5 text-on-accent" />
         </span>
       </label>
       <input id={inputId} type="file" className="hidden" onChange={handleChange} {...props} />
