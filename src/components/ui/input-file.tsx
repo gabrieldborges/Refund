@@ -33,7 +33,7 @@ export default function InputFile({
   return (
     <div className="flex w-full flex-col gap-2">
       <Label htmlFor={inputId}>{label}</Label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2  relative">
         <input
           id={inputId}
           type="file"
@@ -50,7 +50,7 @@ export default function InputFile({
           }}
           {...props}
         />
-        <CloudUpload className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <CloudUpload className="size-5 shrink-0 text-muted-foreground absolute right-0 mr-4" aria-hidden />
       </div>
       <p className="text-xs text-muted-foreground">{fileName ?? placeholder}</p>
     </div>

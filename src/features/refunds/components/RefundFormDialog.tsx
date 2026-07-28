@@ -91,11 +91,11 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <FormItem className="flex-1">
+                  <FormItem className="flex-1 ">
                     <FormLabel>Categoria</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full ">
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
@@ -143,8 +143,8 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               control={form.control}
               name="file"
               render={() => (
-                <FormItem>
-                  <FormControl>
+                <FormItem >
+                  <FormControl >
                     <InputFile accept=".jpg,.jpeg,.png,.pdf" {...form.register("file")} />
                   </FormControl>
                   <FormMessage />
@@ -158,7 +158,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               </p>
             )}
 
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} >
               {isPending ? "Enviando…" : "Enviar"}
             </Button>
           </form>
