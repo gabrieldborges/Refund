@@ -19,6 +19,11 @@ export const refundKeys = {
   lists: () => [...refundKeys.all, "list"] as const,
   list: (params: RefundListParams) => [...refundKeys.lists(), params] as const,
   detail: (id: string) => [...refundKeys.all, "detail", id] as const,
+  // O comprovante de um reembolso. Fica sob o prefixo ["refunds"] como os
+  // demais, mas NÃO é invalidado na exclusão: useDeleteRefund mira
+  // refundKeys.lists() justamente para não rebuscar o que acabou de sumir, e
+  // o comprovante segue a mesma regra.
+  receipt: (id: string) => [...refundKeys.all, "receipt", id] as const,
 };
 
 // queryOptions empacota { queryKey, queryFn } num objeto tipado e reutilizável.
@@ -45,6 +50,22 @@ export function refundDetailQuery(id: string) {
     queryFn: async ({ signal }) => {
       const { data } = await api.get<unknown>(`/refunds/${id}`, { signal });
       return refundResponseSchema.parse(data).attributes;
+    },
+  });
+}
+
+// Única query do projeto sem Zod, e por um motivo legítimo: as outras validam
+// JSON, aqui a resposta é binária. A fronteira já é o Content-Type, derivado
+// pelo backend da extensão armazenada — não há estrutura a parsear.
+export function receiptQuery(id: string) {
+  return queryOptions({
+    queryKey: refundKeys.receipt(id),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<Blob>(`/refunds/${id}/receipt`, {
+        responseType: "blob",
+        signal,
+      });
+      return data;
     },
   });
 }

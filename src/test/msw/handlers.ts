@@ -1,5 +1,13 @@
 import { http, HttpResponse } from "msw";
 
+// A real 1x1 transparent PNG. The bytes matter less than the Content-Type —
+// the preview branches on blob.type — but a decodable image keeps the fixture
+// honest if it is ever opened in a real browser.
+const PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+export const receiptPngBytes = Uint8Array.from(atob(PNG_BASE64), (char) => char.charCodeAt(0));
+
 // Shared fixtures. Tests import these to assert against the exact data the
 // mocked network returned, instead of duplicating literals. Shapes mirror the
 // Zod schemas in src/schemas (refund.ts / auth.ts).
@@ -48,6 +56,16 @@ export const handlers = [
       per_page: 10,
       total_pages: 1,
       attributes,
+    });
+  }),
+
+  // Receipt: binary body, with the Content-Type the backend derives from the
+  // stored extension. There is no JSON here to validate. Must be registered
+  // before the `*/refunds/:id` handler below, or the `:id` pattern would
+  // swallow `/1/receipt` and the query would try to parse the blob as JSON.
+  http.get("*/refunds/:id/receipt", () => {
+    return new HttpResponse(receiptPngBytes, {
+      headers: { "Content-Type": "image/png" },
     });
   }),
 
