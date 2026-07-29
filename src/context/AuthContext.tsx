@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { AuthContext, type AuthUser } from "./auth-context";
 import { api, TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "../lib/api";
 import { loginResponseSchema, storedUserSchema } from "../schemas/auth";
+import { queryClient } from "@/lib/query-client";
 
 // safeParse em vez de parse: uma sessão inválida (de antes do `id`, ou
 // corrompida) deve derrubar a sessão, não a aplicação inteira no primeiro
@@ -47,6 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
+    // O cache do React Query agora guarda estado por sessão — incluindo os
+    // bytes do Blob do comprovante que o usuário atual viu. Sem isso, o
+    // staleTime/gcTime deixam esse cache sobreviver ao logout: se outro
+    // usuário logar na mesma aba dentro da janela, os loaders e o useReceipt
+    // serviriam dados (e o Blob) de quem saiu.
+    queryClient.clear();
     setUser(null);
   }
 

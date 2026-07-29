@@ -1,6 +1,7 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "./lib/api";
 import { queryClient } from "./lib/query-client";
+import { storedUserSchema } from "@/schemas/auth";
 import {
   REFUNDS_PER_PAGE,
   refundDetailQuery,
@@ -13,6 +14,26 @@ function requireSession() {
   const user = localStorage.getItem(USER_STORAGE_KEY);
 
   if (!token || !user) {
+    throw redirect("/login");
+  }
+
+  // AuthContext já valida o usuário salvo com storedUserSchema; este loader
+  // rodava antes com uma checagem de presença só, então uma sessão que não
+  // passa mais no schema (ex.: salva antes do `id` existir) chegava a disparar
+  // um ensureQueryData autenticado antes do ProtectedRoute perceber que
+  // isAuthenticated é false. Validar aqui fecha essa janela e, ao falhar,
+  // apaga token e usuário — um "redirect pro login" que deixasse as
+  // credenciais no localStorage não seria de fato um logout.
+  let parsedUser: unknown;
+  try {
+    parsedUser = JSON.parse(user);
+  } catch {
+    parsedUser = undefined;
+  }
+
+  if (!storedUserSchema.safeParse(parsedUser).success) {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
     throw redirect("/login");
   }
 }
