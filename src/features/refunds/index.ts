@@ -18,6 +18,7 @@ export { refundListSearchParamsSchema } from "./schemas/refund";
 
 // Domain constants consumed by pages.
 export { CATEGORIES, CATEGORY_OPTIONS } from "./constants/categories";
+export { REFUNDS_PER_PAGE } from "./constants/pagination";
 
 // Feature component mounted by the app shell (MainLayout).
 export { default as RefundFormDialog } from "./components/RefundFormDialog";

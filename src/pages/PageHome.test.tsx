@@ -8,19 +8,19 @@ import { refundFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
 import PageHome from "./PageHome";
 
-// A second page's worth of matches: 6 rows on this page, but 24 across every
+// A second page's worth of matches: 10 rows on this page, but 24 across every
 // page and a sum that only the API (not a client-side reduce over the visible
 // rows) could know.
 function pagedListResponse() {
   return {
     type: "Refund",
-    count: 6,
+    count: 10,
     total: 24,
     sum_amount_in_cents: 418200,
     page: 1,
-    per_page: 6,
-    total_pages: 4,
-    attributes: Array.from({ length: 6 }, (_, index) => ({
+    per_page: 10,
+    total_pages: 3,
+    attributes: Array.from({ length: 10 }, (_, index) => ({
       ...refundFixture,
       id: index + 1,
       name: `Solicitação ${index + 1}`,
@@ -35,7 +35,7 @@ function renderPageHome() {
     [
       {
         path: "/",
-        loader: () => ({ page: 1, perPage: 6, name: undefined }),
+        loader: () => ({ page: 1, perPage: 10, name: undefined }),
         Component: PageHome,
       },
     ],

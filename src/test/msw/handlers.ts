@@ -45,7 +45,7 @@ export const handlers = [
       total: attributes.length,
       sum_amount_in_cents: attributes.reduce((sum, refund) => sum + refund.amount_in_cents, 0),
       page: 1,
-      per_page: 6,
+      per_page: 10,
       total_pages: 1,
       attributes,
     });
