@@ -45,6 +45,8 @@ if (!Element.prototype.scrollIntoView) {
 if (!URL.createObjectURL) {
   let objectUrlCount = 0;
   URL.createObjectURL = () => `blob:mock/${++objectUrlCount}`;
+}
+if (!URL.revokeObjectURL) {
   URL.revokeObjectURL = () => {};
 }
 

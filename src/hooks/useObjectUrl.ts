@@ -17,10 +17,12 @@ export function useObjectUrl(blob: Blob | undefined): string | null {
 
   useEffect(() => {
     if (!blob) {
-      // Sincronizar com um recurso externo que exige liberação explícita é
-      // exatamente o caso de uso de um efeito com cleanup — a alternativa
-      // (criar a URL durante o render, via useMemo) violaria react-hooks/purity
-      // e ainda poderia vazar URLs quando o React descartasse o memo.
+      // O cleanup do render anterior já revogou a URL antiga (ver o `return`
+      // logo abaixo); sem apagar o estado aqui, o hook continuaria devolvendo
+      // essa URL já revogada indefinidamente depois que o blob sumisse. A
+      // regra abaixo reporta no máximo uma violação por corpo de efeito e
+      // aponta esta linha; a diretiva silencia o efeito inteiro, então um
+      // futuro setState adicionado mais abaixo não seria checado por ela.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUrl(null);
       return;

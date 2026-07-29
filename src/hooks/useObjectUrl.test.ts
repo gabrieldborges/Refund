@@ -7,14 +7,6 @@ afterEach(() => {
 });
 
 describe("useObjectUrl", () => {
-  // Without a blob there is nothing to point at, and null is distinguishable
-  // from a real URL by the caller.
-  it("returns null when there is no blob", () => {
-    const { result } = renderHook(() => useObjectUrl(undefined));
-
-    expect(result.current).toBeNull();
-  });
-
   // The happy path: a blob produces a URL built from that exact blob.
   it("creates an object URL for the blob", () => {
     const createSpy = vi.spyOn(URL, "createObjectURL");
@@ -54,5 +46,23 @@ describe("useObjectUrl", () => {
 
     expect(revokeSpy).toHaveBeenCalledWith(firstUrl);
     expect(result.current).not.toBe(firstUrl);
+  });
+
+  // The transition this hook must not get wrong: once the blob disappears, the
+  // cleanup from the previous render revokes the old URL. If state still held
+  // that URL, the hook would keep handing out an already-revoked URL forever.
+  it("returns null and revokes the URL when the blob is removed", () => {
+    const revokeSpy = vi.spyOn(URL, "revokeObjectURL");
+    const blob = new Blob(["x"], { type: "image/png" });
+
+    const { result, rerender } = renderHook(
+      ({ blob }: { blob: Blob | undefined }) => useObjectUrl(blob),
+      { initialProps: { blob: blob as Blob | undefined } },
+    );
+    const created = result.current;
+    rerender({ blob: undefined });
+
+    expect(revokeSpy).toHaveBeenCalledWith(created);
+    expect(result.current).toBeNull();
   });
 });
