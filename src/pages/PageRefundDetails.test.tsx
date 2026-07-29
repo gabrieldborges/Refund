@@ -37,6 +37,8 @@ describe("PageRefundDetails", () => {
     expect(screen.getByLabelText("Valor")).toHaveValue(
       formatCentsToBRL(refundFixture.amount_in_cents)
     );
+    // The status badge, mirroring the fixture's "pending" status.
+    expect(screen.getByText("Pendente")).toHaveAttribute("data-variant", "secondary");
   });
 
   // The detail fetch can fail (e.g. a bad id) — the page must show an error

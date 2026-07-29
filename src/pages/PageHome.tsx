@@ -177,14 +177,14 @@ export default function PageHome() {
                   to={`/refunds/${refund.id}`}
                   className="flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-accent/50"
                 >
-                  <div className="flex items-center gap-3">
-                    <CategoryIcon className="size-5 text-muted-foreground" aria-hidden />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">{refund.name}</span>
-                      <span className="text-xs text-muted-foreground">{category.label}</span>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <CategoryIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium">{refund.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">{category.label}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-3">
                     <Badge variant={REFUND_STATUS[refund.status].variant}>
                       {REFUND_STATUS[refund.status].label}
                     </Badge>

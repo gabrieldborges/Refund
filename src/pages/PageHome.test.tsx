@@ -102,6 +102,13 @@ describe("PageHome", () => {
 
     renderPageHome();
 
-    expect(await screen.findAllByText("Pendente")).toHaveLength(10);
+    const badges = await screen.findAllByText("Pendente");
+    expect(badges).toHaveLength(10);
+    // The label alone doesn't catch a badge wired to the wrong variant (e.g.
+    // "default" or "destructive"), which would still read "Pendente" but be
+    // the wrong colour. Assert the Badge's data-variant too.
+    badges.forEach((badge) => {
+      expect(badge).toHaveAttribute("data-variant", "secondary");
+    });
   });
 });
