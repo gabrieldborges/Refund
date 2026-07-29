@@ -38,6 +38,16 @@ if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }
 
+// jsdom implements neither createObjectURL nor revokeObjectURL. The receipt
+// preview turns a Blob into an object URL, so without these stubs every test
+// touching it throws. The counter makes each URL unique, which is what lets a
+// test assert that the exact URL it received was the one revoked.
+if (!URL.createObjectURL) {
+  let objectUrlCount = 0;
+  URL.createObjectURL = () => `blob:mock/${++objectUrlCount}`;
+  URL.revokeObjectURL = () => {};
+}
+
 // Start the MSW server before any test. `onUnhandledRequest: "error"` makes a
 // forgotten handler fail loudly instead of hitting the real network.
 beforeAll(() => {
