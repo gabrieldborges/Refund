@@ -22,17 +22,24 @@ export const refundCreateSchema = z.object({
     ),
 });
 
-const refundBaseSchema = z.object({
+const refundUserSchema = z.object({
   id: z.number().int().positive(),
-  user_id: z.number().int().positive(),
+  name: z.string().min(1),
+  // O cliente só precisa saber se mostra foto ou o gradiente padrão; a imagem
+  // vem de GET /users/{id}/avatar, não deste campo.
+  has_avatar: z.boolean(),
+});
+
+export const refundStatusSchema = z.enum(["pending", "approved", "rejected"]);
+
+export const refundSchema = z.object({
+  id: z.number().int().positive(),
   name: z.string().min(1),
   category: z.enum(CATEGORY_VALUES),
   amount_in_cents: z.number().int().positive(),
-  filename: z.string().min(1),
-});
-
-export const refundSchema = refundBaseSchema.extend({
+  status: refundStatusSchema,
   created_at: z.string().nullable(),
+  user: refundUserSchema,
 });
 
 export const refundsListResponseSchema = z.object({
@@ -46,18 +53,14 @@ export const refundsListResponseSchema = z.object({
   attributes: z.array(refundSchema),
 });
 
-export const refundDetailResponseSchema = z.object({
+// Um envelope só para detalhe E criação. Até este ciclo a criação tinha
+// contrato próprio, porque a API não devolvia `created_at`; ela passou a reler
+// a linha gravada e as três respostas ficaram idênticas. Quando o backend
+// remove uma divergência, o frontend remove a compensação.
+export const refundResponseSchema = z.object({
   type: z.literal("Refund"),
   count: z.literal(1),
   attributes: refundSchema,
-});
-
-// A criação não devolve `created_at`, por isso possui um contrato próprio em
-// vez de afirmar que a resposta já contém um Refund completo.
-export const refundCreateResponseSchema = z.object({
-  type: z.literal("Refund"),
-  count: z.literal(1),
-  attributes: refundBaseSchema,
 });
 
 export const refundListSearchParamsSchema = z.object({
@@ -75,5 +78,6 @@ export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 // é esse tipo que o useForm precisa pra tipar os campos antes da validação.
 export type RefundCreateFormInput = z.input<typeof refundCreateSchema>;
 export type Refund = z.output<typeof refundSchema>;
+export type RefundStatus = z.output<typeof refundStatusSchema>;
 export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
 export type RefundListSearchParams = z.output<typeof refundListSearchParamsSchema>;

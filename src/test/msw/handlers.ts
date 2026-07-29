@@ -4,15 +4,16 @@ import { http, HttpResponse } from "msw";
 // mocked network returned, instead of duplicating literals. Shapes mirror the
 // Zod schemas in src/schemas (refund.ts / auth.ts).
 
-// A full Refund as returned by list and detail (includes created_at).
+// A full Refund as returned by list, detail and create — the three share one
+// shape now, so there is a single fixture.
 export const refundFixture = {
   id: 1,
-  user_id: 1,
   name: "Almoço com cliente",
   category: "food",
   amount_in_cents: 4500,
-  filename: "recibo.png",
+  status: "pending",
   created_at: "2026-07-20T12:00:00.000Z",
+  user: { id: 1, name: "Ana Souza", has_avatar: false },
 };
 
 // The login payload, matching loginResponseSchema.
@@ -58,11 +59,9 @@ export const handlers = [
     });
   }),
 
-  // Refund creation: the API does not return created_at here.
+  // Refund creation: same shape as detail, since the API re-reads the row.
   http.post("*/refunds", () => {
-    const { created_at, ...base } = refundFixture;
-    void created_at;
-    return HttpResponse.json({ type: "Refund", count: 1, attributes: base }, { status: 201 });
+    return HttpResponse.json({ type: "Refund", count: 1, attributes: refundFixture }, { status: 201 });
   }),
 
   // Refund deletion: no body.

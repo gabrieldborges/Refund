@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -16,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORIES, useDeleteRefund, useRefund } from "@/features/refunds";
-import { getApiErrorMessage, getReceiptUrl } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
 
 export default function PageRefundDetails() {
@@ -79,16 +78,6 @@ export default function PageRefundDetails() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
-
-              <a
-                href={getReceiptUrl(refund.filename)}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
-              >
-                <Receipt className="size-5" aria-hidden />
-                Abrir comprovante
-              </a>
             </CardContent>
             <CardFooter>
               <Button

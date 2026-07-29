@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { refundDetailResponseSchema, refundsListResponseSchema } from "../schemas/refund";
+import { refundResponseSchema, refundsListResponseSchema } from "../schemas/refund";
 
 interface RefundListParams {
   page: number;
@@ -44,7 +44,7 @@ export function refundDetailQuery(id: string) {
     queryKey: refundKeys.detail(id),
     queryFn: async ({ signal }) => {
       const { data } = await api.get<unknown>(`/refunds/${id}`, { signal });
-      return refundDetailResponseSchema.parse(data).attributes;
+      return refundResponseSchema.parse(data).attributes;
     },
   });
 }

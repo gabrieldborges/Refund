@@ -19,7 +19,8 @@ const validData = {
 } as unknown as RefundCreateFormData;
 
 describe("useCreateRefund", () => {
-  // Happy path: the create response (without created_at) is parsed and returned.
+  // Happy path: the create response (the API re-reads the row, so it is a full
+  // Refund with created_at) is parsed and returned.
   it("creates a refund and parses the response", async () => {
     const { result } = renderHook(() => useCreateRefund(), { wrapper: QueryWrapper });
 

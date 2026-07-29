@@ -28,8 +28,7 @@ function renderPageRefundDetails() {
 }
 
 describe("PageRefundDetails", () => {
-  // Happy path: once the refund loads, its name, category, amount and receipt
-  // link are all shown.
+  // Happy path: once the refund loads, its name, category and amount are shown.
   it("shows the refund details once loaded", async () => {
     renderPageRefundDetails();
 
@@ -37,10 +36,6 @@ describe("PageRefundDetails", () => {
     expect(screen.getByText("Alimentação")).toBeInTheDocument();
     expect(screen.getByLabelText("Valor")).toHaveValue(
       formatCentsToBRL(refundFixture.amount_in_cents)
-    );
-    expect(screen.getByRole("link", { name: "Abrir comprovante" })).toHaveAttribute(
-      "href",
-      expect.stringContaining(refundFixture.filename)
     );
   });
 

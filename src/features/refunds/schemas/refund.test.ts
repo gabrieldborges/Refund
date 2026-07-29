@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { refundCreateSchema } from "./refund";
+import { refundCreateSchema, refundSchema } from "./refund";
 
 // We validate each field through `refundCreateSchema.shape.*` instead of the
 // whole object. This keeps the unit focused and avoids building a real
@@ -57,5 +57,40 @@ describe("refundCreateSchema.shape.amount", () => {
   // A non-numeric string coerces to NaN and is rejected as an invalid number.
   it("rejects a non-numeric string", () => {
     expect(refundCreateSchema.shape.amount.safeParse("abc").success).toBe(false);
+  });
+});
+
+const validRefund = {
+  id: 1,
+  name: "Almoço com cliente",
+  category: "food",
+  amount_in_cents: 4500,
+  status: "pending",
+  created_at: "2026-07-20T12:00:00.000Z",
+  user: { id: 13, name: "Gabriel", has_avatar: false },
+};
+
+describe("refundSchema", () => {
+  // The nested requester replaced the flat user_id: a payload in the new shape
+  // must parse, keeping user.id reachable.
+  it("accepts the nested user shape", () => {
+    const result = refundSchema.safeParse(validRefund);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.user.id).toBe(13);
+    }
+  });
+
+  // The old flat shape must be rejected rather than silently accepted: this is
+  // the assertion that would have caught the breaking change in CI.
+  it("rejects the old flat shape", () => {
+    const { user, ...withoutUser } = validRefund;
+    void user;
+    expect(refundSchema.safeParse({ ...withoutUser, user_id: 13 }).success).toBe(false);
+  });
+
+  // status is part of the contract now, and only the three known values pass.
+  it("rejects an unknown status", () => {
+    expect(refundSchema.safeParse({ ...validRefund, status: "cancelled" }).success).toBe(false);
   });
 });
