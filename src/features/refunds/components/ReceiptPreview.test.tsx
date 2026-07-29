@@ -74,4 +74,31 @@ describe("ReceiptPreview", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("img")).toHaveAttribute("src", inlineSrc);
   });
+
+  // The image/PDF branch is duplicated (inline vs. dialog) by design, so the
+  // dialog copy needs its own coverage — it is the one most likely to drift
+  // from the inline copy unnoticed.
+  it("opens a PDF receipt in a dialog reusing the same object URL", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("*/refunds/:id/receipt", () =>
+        new HttpResponse(new Uint8Array([37, 80, 68, 70]), {
+          headers: { "Content-Type": "application/pdf" },
+        })
+      )
+    );
+
+    renderPreview();
+
+    const inlineLink = await screen.findByRole("link", { name: "Abrir comprovante" });
+    const inlineHref = inlineLink.getAttribute("href");
+
+    await user.click(screen.getByRole("button", { name: "Ver em tela cheia" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("link", { name: "Abrir comprovante" })).toHaveAttribute(
+      "href",
+      inlineHref
+    );
+  });
 });

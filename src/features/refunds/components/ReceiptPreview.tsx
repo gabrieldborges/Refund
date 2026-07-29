@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -24,7 +25,11 @@ export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewP
   const objectUrl = useObjectUrl(blob);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  if (isError) {
+  // `!blob` na guarda: um refetch em segundo plano (ex.: voltar para a aba)
+  // que falhar também vira isError, mas o Query mantém os bytes antigos em
+  // `data`. Sem essa condição, um blip de rede trocaria um comprovante
+  // funcionando por uma mensagem de erro.
+  if (isError && !blob) {
     return (
       <p role="alert" className="py-4 text-center text-sm text-destructive">
         Não foi possível carregar o comprovante.
@@ -46,7 +51,13 @@ export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewP
       {isImage ? (
         <img src={objectUrl} alt={alt} className="max-h-64 w-full rounded-md object-contain" />
       ) : (
-        <object data={objectUrl} type={blob.type} className="h-64 w-full rounded-md" aria-label={alt}>
+        <object
+          data={objectUrl}
+          type={blob.type}
+          className="h-64 w-full rounded-md"
+          aria-label={alt}
+          title={alt}
+        >
           <a href={objectUrl} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
             Abrir comprovante
           </a>
@@ -59,14 +70,21 @@ export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewP
       </Button>
 
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{alt}</DialogTitle>
+            <DialogDescription>Visualização em tela cheia do comprovante.</DialogDescription>
           </DialogHeader>
           {isImage ? (
             <img src={objectUrl} alt={alt} className="max-h-[70vh] w-full object-contain" />
           ) : (
-            <object data={objectUrl} type={blob.type} className="h-[70vh] w-full" aria-label={alt}>
+            <object
+              data={objectUrl}
+              type={blob.type}
+              className="h-[70vh] w-full"
+              aria-label={alt}
+              title={alt}
+            >
               <a href={objectUrl} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
                 Abrir comprovante
               </a>
