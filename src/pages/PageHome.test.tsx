@@ -94,4 +94,14 @@ describe("PageHome", () => {
       { timeout: 2000 }
     );
   });
+
+  // Each row carries its status, so the list is readable without opening a
+  // refund. Read-only here: approving and rejecting is a later cycle.
+  it("shows the status of each row", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome();
+
+    expect(await screen.findAllByText("Pendente")).toHaveLength(10);
+  });
 });

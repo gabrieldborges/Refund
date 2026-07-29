@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useLoaderData, useSearchParams } from "react-router";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, useRefunds } from "@/features/refunds";
+import { CATEGORIES, REFUND_STATUS, useRefunds } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { homeLoader } from "@/router-loaders";
@@ -183,7 +184,12 @@ export default function PageHome() {
                       <span className="text-xs text-muted-foreground">{category.label}</span>
                     </div>
                   </div>
-                  <span className="text-sm">{formatCentsToBRL(refund.amount_in_cents)}</span>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={REFUND_STATUS[refund.status].variant}>
+                      {REFUND_STATUS[refund.status].label}
+                    </Badge>
+                    <span className="text-sm">{formatCentsToBRL(refund.amount_in_cents)}</span>
+                  </div>
                 </Link>
               </li>
             );

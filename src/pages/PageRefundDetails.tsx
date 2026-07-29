@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, ReceiptPreview, useDeleteRefund, useRefund } from "@/features/refunds";
+import { CATEGORIES, REFUND_STATUS, ReceiptPreview, useDeleteRefund, useRefund } from "@/features/refunds";
 import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
 
@@ -68,6 +69,9 @@ export default function PageRefundDetails() {
             <CardHeader>
               <CardTitle>{refund.name}</CardTitle>
               <CardDescription>{CATEGORIES[refund.category].label}</CardDescription>
+              <Badge variant={REFUND_STATUS[refund.status].variant} className="w-fit">
+                {REFUND_STATUS[refund.status].label}
+              </Badge>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
