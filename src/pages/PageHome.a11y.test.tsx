@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { axe } from "vitest-axe";
 import { QueryWrapper } from "@/test/utils";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import PageHome from "./PageHome";
 
 // Accessibility audit of the Home screen (summary band, search field, list and
@@ -15,7 +16,7 @@ describe("PageHome accessibility", () => {
       [
         {
           path: "/",
-          loader: () => ({ page: 1, perPage: 6, name: undefined }),
+          loader: () => ({ page: 1, perPage: REFUNDS_PER_PAGE, name: undefined }),
           Component: PageHome,
         },
       ],

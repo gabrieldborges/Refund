@@ -38,10 +38,13 @@ if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }
 
-// jsdom implements neither createObjectURL nor revokeObjectURL. The receipt
-// preview turns a Blob into an object URL, so without these stubs every test
-// touching it throws. The counter makes each URL unique, which is what lets a
-// test assert that the exact URL it received was the one revoked.
+// Fallback only. Under Vitest's jsdom environment, the global `URL` is
+// actually Node's, which already implements createObjectURL/revokeObjectURL
+// (returning unique `blob:nodedata:<uuid>` values) — verified directly, not
+// assumed — so this guard never fires here. It exists for environments whose
+// `URL` lacks these methods. Today, the uniqueness a test relies on (asserting
+// the exact URL it received was the one revoked) comes from that platform
+// behaviour, not from this stub.
 if (!URL.createObjectURL) {
   let objectUrlCount = 0;
   URL.createObjectURL = () => `blob:mock/${++objectUrlCount}`;

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 
 // A real 1x1 transparent PNG. The bytes matter less than the Content-Type —
 // the preview branches on blob.type — but a decodable image keeps the fixture
@@ -6,7 +7,7 @@ import { http, HttpResponse } from "msw";
 const PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-export const receiptPngBytes = Uint8Array.from(atob(PNG_BASE64), (char) => char.charCodeAt(0));
+const receiptPngBytes = Uint8Array.from(atob(PNG_BASE64), (char) => char.charCodeAt(0));
 
 // Shared fixtures. Tests import these to assert against the exact data the
 // mocked network returned, instead of duplicating literals. Shapes mirror the
@@ -53,16 +54,17 @@ export const handlers = [
       total: attributes.length,
       sum_amount_in_cents: attributes.reduce((sum, refund) => sum + refund.amount_in_cents, 0),
       page: 1,
-      per_page: 10,
+      per_page: REFUNDS_PER_PAGE,
       total_pages: 1,
       attributes,
     });
   }),
 
   // Receipt: binary body, with the Content-Type the backend derives from the
-  // stored extension. There is no JSON here to validate. Must be registered
-  // before the `*/refunds/:id` handler below, or the `:id` pattern would
-  // swallow `/1/receipt` and the query would try to parse the blob as JSON.
+  // stored extension. There is no JSON here to validate. Registered before
+  // `*/refunds/:id` below purely as hygiene (most-specific-first); path-to-
+  // regexp's `:id` never spans a `/`, so `*/refunds/:id` does not actually
+  // match `/refunds/1/receipt` — this was verified, not assumed.
   http.get("*/refunds/:id/receipt", () => {
     return new HttpResponse(receiptPngBytes, {
       headers: { "Content-Type": "image/png" },
