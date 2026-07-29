@@ -1,7 +1,6 @@
 import { Moon, Sun } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useUiStore, resolveTheme } from "@/stores/ui";
 
 interface TopbarProps {
