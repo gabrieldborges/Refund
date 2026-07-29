@@ -30,16 +30,21 @@ function pagedListResponse() {
 
 // Mounts PageHome behind a route whose loader mirrors what homeLoader hands
 // down ({ page, perPage, name }), without pulling in auth/session concerns.
-function renderPageHome() {
+// The page is derived from initialEntry so the stub loader stays honest for
+// whatever entry a test passes, instead of hardcoding a single page number.
+function renderPageHome(initialEntry = "/") {
+  const url = new URL(initialEntry, "http://localhost");
+  const page = Number(url.searchParams.get("page") ?? 1);
+
   const router = createMemoryRouter(
     [
       {
         path: "/",
-        loader: () => ({ page: 1, perPage: 10, name: undefined }),
+        loader: () => ({ page, perPage: 10, name: undefined }),
         Component: PageHome,
       },
     ],
-    { initialEntries: ["/"] }
+    { initialEntries: [initialEntry] }
   );
 
   const view = render(
@@ -75,14 +80,17 @@ describe("PageHome", () => {
     expect(screen.getByRole("button", { name: "Próxima página" })).toBeEnabled();
   });
 
-  // RefundSearch debounces typing before pushing it to the URL. Typing must
-  // eventually update the `name` search param and reset `page` back to 1 (the
-  // page param is dropped entirely, since page 1 has no page param by design).
-  it("updates the search param on the URL after debounce and resets the page", async () => {
+  // RefundSearch debounces typing before pushing it to the URL. Starting on
+  // page 2 is what makes the reset assertion real: the page param must
+  // disappear (page 1 carries no param by design), which is the branch in
+  // updateListLocation that had no coverage while the fixture always started
+  // on page 1.
+  it("updates the search param after debounce and resets away from page 2", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
     const user = userEvent.setup();
 
-    const { router } = renderPageHome();
+    const { router } = renderPageHome("/?page=2");
+    expect(router.state.location.search).toBe("?page=2");
 
     const searchField = await screen.findByRole("textbox", { name: "Pesquisar pelo nome" });
     await user.type(searchField, "Ana");
