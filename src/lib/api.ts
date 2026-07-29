@@ -7,13 +7,6 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// O backend serve os arquivos de recibo estaticamente em /receipts/{filename}
-// (fora do prefixo /refunds da API) — monta a URL completa a partir do nome
-// do arquivo salvo.
-export function getReceiptUrl(filename: string): string {
-  return `${import.meta.env.VITE_API_URL}/receipts/${filename}`;
-}
-
 // Roda antes de toda requisição: anexa o token salvo no login, se existir.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_STORAGE_KEY);

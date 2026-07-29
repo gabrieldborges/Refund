@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, useDeleteRefund, useRefund } from "@/features/refunds";
+import { CATEGORIES, ReceiptPreview, useDeleteRefund, useRefund } from "@/features/refunds";
 import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
 
@@ -78,6 +78,7 @@ export default function PageRefundDetails() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
+              {id && <ReceiptPreview refundId={id} refundName={refund.name} />}
             </CardContent>
             <CardFooter>
               <Button

@@ -103,4 +103,14 @@ describe("PageRefundDetails", () => {
     expect(await screen.findByText("Falha ao excluir")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  // The receipt is no longer a public URL: the page must render the preview,
+  // which fetches the file through the authenticated route.
+  it("renders the receipt preview", async () => {
+    renderPageRefundDetails();
+
+    expect(
+      await screen.findByRole("img", { name: `Comprovante de ${refundFixture.name}` })
+    ).toBeInTheDocument();
+  });
 });
