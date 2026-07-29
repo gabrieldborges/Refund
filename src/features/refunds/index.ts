@@ -22,3 +22,6 @@ export { REFUNDS_PER_PAGE } from "./constants/pagination";
 
 // Feature component mounted by the app shell (MainLayout).
 export { default as RefundFormDialog } from "./components/RefundFormDialog";
+
+// Receipt preview: renders the receipt Blob inline with a fullscreen dialog.
+export { default as ReceiptPreview } from "./components/ReceiptPreview";
