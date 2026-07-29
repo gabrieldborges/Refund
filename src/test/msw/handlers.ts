@@ -19,6 +19,7 @@ export const refundFixture = {
 // The login payload, matching loginResponseSchema.
 export const loginFixture = {
   access: true,
+  id: 1,
   name: "Ana Souza",
   email: "ana@exemplo.com",
   role: "standard",

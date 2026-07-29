@@ -17,7 +17,7 @@ function renderSidebar() {
     <MemoryRouter>
       <AuthContext.Provider
         value={{
-          user: { name: "Gabriel Dantas", email: "gabriel@x.com", role: "standard" },
+          user: { id: 1, name: "Gabriel Dantas", email: "gabriel@x.com", role: "standard" },
           isAuthenticated: true,
           login: vi.fn(),
           register: vi.fn(),

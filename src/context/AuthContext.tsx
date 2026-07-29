@@ -1,11 +1,22 @@
 import { useState, type ReactNode } from "react";
 import { AuthContext, type AuthUser } from "./auth-context";
 import { api, TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "../lib/api";
-import { loginResponseSchema } from "../schemas/auth";
+import { loginResponseSchema, storedUserSchema } from "../schemas/auth";
 
+// safeParse em vez de parse: uma sessão inválida (de antes do `id`, ou
+// corrompida) deve derrubar a sessão, não a aplicação inteira no primeiro
+// render.
 function loadStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_STORAGE_KEY);
-  return raw ? (JSON.parse(raw) as AuthUser) : null;
+  if (!raw) return null;
+
+  try {
+    const result = storedUserSchema.safeParse(JSON.parse(raw));
+    return result.success ? result.data : null;
+  } catch {
+    // JSON.parse joga em texto corrompido; o safeParse nunca chegaria a rodar.
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -17,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await api.post<unknown>("/auth/login", { email, password });
     const loginResponse = loginResponseSchema.parse(data);
     const loggedUser: AuthUser = {
+      id: loginResponse.id,
       name: loginResponse.name,
       email: loginResponse.email,
       role: loginResponse.role,
