@@ -35,6 +35,47 @@ export const loginFixture = {
   token: "fake-jwt-token",
 };
 
+// A refund's review history: approved then paid, plus a rejection with a
+// non-null reason. A fixture with only null reasons could not distinguish
+// "moved forward" from "was discarded" — the rejection reason is the one
+// field this endpoint exists to expose.
+export const refundReviewsFixture = [
+  {
+    from_status: "pending",
+    to_status: "approved",
+    reason: null,
+    reviewer: { id: 1, name: "Gabriel" },
+    created_at: "2026-07-30T10:00:00.000Z",
+  },
+  {
+    from_status: "approved",
+    to_status: "paid",
+    reason: null,
+    reviewer: { id: 1, name: "Gabriel" },
+    created_at: "2026-07-30T14:20:00.000Z",
+  },
+  {
+    from_status: "pending",
+    to_status: "rejected",
+    reason: "Comprovante ilegível",
+    reviewer: { id: 1, name: "Gabriel" },
+    created_at: "2026-07-30T09:00:00.000Z",
+  },
+];
+
+// Per-status counts and cent sums for a user, matching refundStatsResponseSchema.
+// No cross-status total, on purpose: see the schema's comment in refund.ts.
+export const refundStatsFixture = {
+  type: "RefundStats",
+  user_id: 1,
+  by_status: {
+    pending: { count: 2, amount_in_cents: 30000 },
+    approved: { count: 5, amount_in_cents: 65000 },
+    paid: { count: 3, amount_in_cents: 40000 },
+    rejected: { count: 1, amount_in_cents: 10000 },
+  },
+};
+
 // Happy-path handlers. Paths use a leading `*` so they match regardless of the
 // axios baseURL (VITE_API_URL), keeping handlers independent of the host.
 export const handlers = [
@@ -71,6 +112,16 @@ export const handlers = [
     });
   }),
 
+  // Refund review history: registered before `*/refunds/:id` for the same
+  // most-specific-first hygiene as the receipt handler above.
+  http.get("*/refunds/:id/reviews", () => {
+    return HttpResponse.json({
+      type: "RefundReview",
+      count: refundReviewsFixture.length,
+      attributes: refundReviewsFixture,
+    });
+  }),
+
   // Refund detail: echoes the requested id into the fixture.
   http.get("*/refunds/:id", ({ params }) => {
     return HttpResponse.json({
@@ -88,5 +139,10 @@ export const handlers = [
   // Refund deletion: no body.
   http.delete("*/refunds/:id", () => {
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Refund stats: counts and cent sums grouped by status for a user.
+  http.get("*/users/:id/refund-stats", ({ params }) => {
+    return HttpResponse.json({ ...refundStatsFixture, user_id: Number(params.id) });
   }),
 ];

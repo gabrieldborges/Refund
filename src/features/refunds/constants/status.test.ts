@@ -18,4 +18,8 @@ describe("REFUND_STATUS", () => {
   it("labels rejected in Portuguese with the destructive variant", () => {
     expect(REFUND_STATUS.rejected).toEqual({ label: "Rejeitado", variant: "destructive" });
   });
+
+  it("labels paid in Portuguese with the outline variant", () => {
+    expect(REFUND_STATUS.paid).toEqual({ label: "Pago", variant: "outline" });
+  });
 });

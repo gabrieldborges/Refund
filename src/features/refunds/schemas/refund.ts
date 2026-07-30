@@ -30,7 +30,7 @@ const refundUserSchema = z.object({
   has_avatar: z.boolean(),
 });
 
-export const refundStatusSchema = z.enum(["pending", "approved", "rejected"]);
+export const refundStatusSchema = z.enum(["pending", "approved", "rejected", "paid"]);
 
 export const refundSchema = z.object({
   id: z.number().int().positive(),
@@ -72,6 +72,41 @@ export const refundListSearchParamsSchema = z.object({
     .optional(),
 });
 
+// A decisão registrada no histórico. `reason` é nullable porque só a rejeição
+// exige justificativa (BR-018) — aprovação e pagamento gravam null.
+export const refundReviewSchema = z.object({
+  from_status: refundStatusSchema,
+  to_status: refundStatusSchema,
+  reason: z.string().nullable(),
+  reviewer: z.object({ id: z.number().int().positive(), name: z.string().min(1) }),
+  created_at: z.string(),
+});
+
+export const refundReviewsResponseSchema = z.object({
+  type: z.literal("RefundReview"),
+  count: z.number().int().nonnegative(),
+  attributes: z.array(refundReviewSchema),
+});
+
+const statusTotalsSchema = z.object({
+  count: z.number().int().nonnegative(),
+  amount_in_cents: z.number().int().nonnegative(),
+});
+
+// Sem total geral, de propósito: somar os quatro status juntaria previsão,
+// passivo, despesa liquidada e nada. Quem precisar de uma manchete soma as
+// contagens no cliente.
+export const refundStatsResponseSchema = z.object({
+  type: z.literal("RefundStats"),
+  user_id: z.number().int().positive(),
+  by_status: z.object({
+    pending: statusTotalsSchema,
+    approved: statusTotalsSchema,
+    paid: statusTotalsSchema,
+    rejected: statusTotalsSchema,
+  }),
+});
+
 // Saída (depois de validar/coagir — amount já é number): o que o onSubmit recebe.
 export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 // Entrada (o que o campo do formulário realmente digita — amount ainda cru):
@@ -81,3 +116,5 @@ export type Refund = z.output<typeof refundSchema>;
 export type RefundStatus = z.output<typeof refundStatusSchema>;
 export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
 export type RefundListSearchParams = z.output<typeof refundListSearchParamsSchema>;
+export type RefundReview = z.output<typeof refundReviewSchema>;
+export type RefundStats = z.output<typeof refundStatsResponseSchema>;

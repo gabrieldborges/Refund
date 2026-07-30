@@ -89,8 +89,20 @@ describe("refundSchema", () => {
     expect(refundSchema.safeParse({ ...withoutUser, user_id: 13 }).success).toBe(false);
   });
 
-  // status is part of the contract now, and only the three known values pass.
+  // status is part of the contract now, and only the known values pass.
   it("rejects an unknown status", () => {
     expect(refundSchema.safeParse({ ...validRefund, status: "cancelled" }).success).toBe(false);
+  });
+
+  // The break this cycle exists to fix: the API started returning "paid" and the
+  // enum did not have it, so every list containing a paid refund failed to parse
+  // and the Home showed an error to every user.
+  it("accepts a refund whose status is paid", () => {
+    const parsed = refundSchema.parse({ ...validRefund, status: "paid" });
+    expect(parsed.status).toBe("paid");
+  });
+
+  it("rejects a status the API never sends", () => {
+    expect(() => refundSchema.parse({ ...validRefund, status: "archived" })).toThrow();
   });
 });
