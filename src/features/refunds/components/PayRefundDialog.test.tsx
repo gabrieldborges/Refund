@@ -27,10 +27,10 @@ function createFileList(files: File[]): FileList {
   return list;
 }
 
-function renderDialog(onOpenChange = vi.fn()) {
+function renderDialog(refundId = "1", onOpenChange = vi.fn()) {
   render(
     <QueryWrapper>
-      <PayRefundDialog refundId="1" open onOpenChange={onOpenChange} />
+      <PayRefundDialog refundId={refundId} open onOpenChange={onOpenChange} />
     </QueryWrapper>
   );
   return { onOpenChange };
@@ -115,20 +115,32 @@ describe("PayRefundDialog", () => {
     expect(fileField).toHaveAccessibleDescription("Arquivo deve ter no máximo 4MB");
   });
 
-  // Happy path: a valid file lets the form pass validation and the mutation
-  // succeed, which closes the dialog. The request body itself (the `file`
-  // field of the multipart POST) is exercised by usePayRefund's own
-  // reasoning, mirrored from useCreateRefund; parsing it back with
-  // `request.formData()` here would hit an unrelated jsdom-File vs
-  // Node-undici-File cross-realm bug in MSW's multipart parser, the same
-  // landmine useCreateRefund.test.tsx already avoids by not inspecting the
-  // uploaded body server-side.
+  // Happy path: a valid file lets the form pass validation, and the mutation
+  // must actually fire — asserting only `onOpenChange(false)` would also pass
+  // if `onSubmit` skipped `mutateAsync` entirely and just reset-and-closed.
+  // The request body itself (the `file` field of the multipart POST) is
+  // exercised by usePayRefund's own reasoning, mirrored from useCreateRefund;
+  // parsing it back with `request.formData()` here would hit an unrelated
+  // jsdom-File vs Node-undici-File cross-realm bug in MSW's multipart parser,
+  // the same landmine useCreateRefund.test.tsx already avoids by not
+  // inspecting the uploaded body server-side. But "a POST reached this exact
+  // URL" is assertable and is what pins both the mutation call and the id
+  // interpolation: refundId is deliberately NOT "1" (the value every other
+  // test in this file uses), so a bug that hardcoded the URL instead of
+  // interpolating `refundId` would also be caught here.
   it("submits the mutation with the attached file and closes the dialog", async () => {
     const user = userEvent.setup();
+    const refundId = "42";
+    let paymentCalls = 0;
+    let requestUrl = "";
     server.use(
-      http.post("*/refunds/:id/payment", () => new HttpResponse(null, { status: 200 }))
+      http.post("*/refunds/:id/payment", ({ request }) => {
+        paymentCalls += 1;
+        requestUrl = request.url;
+        return new HttpResponse(null, { status: 200 });
+      })
     );
-    const { onOpenChange } = renderDialog();
+    const { onOpenChange } = renderDialog(refundId);
 
     await screen.findByRole("dialog");
     const validFile = new File(["dummy"], "comprovante.png", { type: "image/png" });
@@ -136,5 +148,7 @@ describe("PayRefundDialog", () => {
     await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(paymentCalls).toBe(1);
+    expect(requestUrl).toContain(`/refunds/${refundId}/payment`);
   });
 });
