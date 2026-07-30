@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import type { LoaderFunctionArgs } from "react-router";
 import { server } from "@/test/msw/server";
-import { homeLoader } from "./router-loaders";
+import { homeLoader, reviewLoader } from "./router-loaders";
 import { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "@/lib/api";
 import { queryClient } from "@/lib/query-client";
 
@@ -20,6 +20,19 @@ function isRedirectTo(value: unknown, location: string): boolean {
 // in and this unit test has no reason to fabricate.
 function makeArgs(url = "http://localhost/"): LoaderFunctionArgs {
   return { request: new Request(url) } as LoaderFunctionArgs;
+}
+
+// Only `params.id` matters to reviewLoader; same reasoning as makeArgs above.
+function makeParamsArgs(id: string): LoaderFunctionArgs {
+  return { params: { id } } as unknown as LoaderFunctionArgs;
+}
+
+function setStoredSession(user: { id: number; role: "standard" | "admin" }) {
+  localStorage.setItem(TOKEN_STORAGE_KEY, "fake-token");
+  localStorage.setItem(
+    USER_STORAGE_KEY,
+    JSON.stringify({ id: user.id, name: "Sessão de teste", email: "teste@exemplo.com", role: user.role })
+  );
 }
 
 describe("requireSession (exercised through homeLoader)", () => {
@@ -91,5 +104,52 @@ describe("requireSession (exercised through homeLoader)", () => {
     }
 
     expect(isRedirectTo(caught, "/login")).toBe(true);
+  });
+});
+
+// UI authorization is usability, not security — the backend's 403/404 is what
+// protects the data. The loader simply avoids offering what would be refused.
+describe("reviewLoader", () => {
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  // refundFixture.user.id is 1; the detail handler echoes the requested id
+  // into `attributes.id` but leaves `user` (the owner) untouched.
+  it("redirects a standard user away from the review route", async () => {
+    setStoredSession({ id: 2, role: "standard" });
+
+    let caught: unknown;
+    try {
+      await reviewLoader(makeParamsArgs("1"));
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(isRedirectTo(caught, "/refunds/1")).toBe(true);
+  });
+
+  it("redirects an admin away from reviewing their own refund", async () => {
+    // Session id matches refundFixture.user.id (1): the reviewer is the owner.
+    setStoredSession({ id: 1, role: "admin" });
+
+    let caught: unknown;
+    try {
+      await reviewLoader(makeParamsArgs("1"));
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(isRedirectTo(caught, "/refunds/1")).toBe(true);
+  });
+
+  it("lets an admin review someone else's refund", async () => {
+    // Session id (2) differs from refundFixture.user.id (1): the reviewer is
+    // not the owner.
+    setStoredSession({ id: 2, role: "admin" });
+
+    const result = await reviewLoader(makeParamsArgs("1"));
+
+    expect(result).toEqual({ id: "1" });
   });
 });

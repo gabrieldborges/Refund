@@ -9,11 +9,28 @@ import {
   refundListSearchParamsSchema,
 } from "@/features/refunds";
 
+// Devolve a sessão salva já validada por storedUserSchema, ou null se não
+// houver usuário salvo ou o valor salvo não bater com o schema (JSON
+// inválido, ou um formato antigo que não tem mais os campos exigidos).
+function readStoredUser() {
+  const user = localStorage.getItem(USER_STORAGE_KEY);
+  if (!user) return null;
+
+  let parsedUser: unknown;
+  try {
+    parsedUser = JSON.parse(user);
+  } catch {
+    parsedUser = undefined;
+  }
+
+  const result = storedUserSchema.safeParse(parsedUser);
+  return result.success ? result.data : null;
+}
+
 function requireSession() {
   const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-  const user = localStorage.getItem(USER_STORAGE_KEY);
 
-  if (!token || !user) {
+  if (!token) {
     throw redirect("/login");
   }
 
@@ -24,14 +41,7 @@ function requireSession() {
   // isAuthenticated é false. Validar aqui fecha essa janela e, ao falhar,
   // apaga token e usuário — um "redirect pro login" que deixasse as
   // credenciais no localStorage não seria de fato um logout.
-  let parsedUser: unknown;
-  try {
-    parsedUser = JSON.parse(user);
-  } catch {
-    parsedUser = undefined;
-  }
-
-  if (!storedUserSchema.safeParse(parsedUser).success) {
+  if (!readStoredUser()) {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     throw redirect("/login");
@@ -80,6 +90,29 @@ export async function refundDetailLoader({ params }: LoaderFunctionArgs) {
   }
 
   await queryClient.ensureQueryData(refundDetailQuery(params.id));
+
+  return { id: params.id };
+}
+
+export async function reviewLoader({ params }: LoaderFunctionArgs) {
+  requireSession();
+
+  if (!params.id) {
+    throw new Response("Refund ID is required", { status: 400 });
+  }
+
+  const refund = await queryClient.ensureQueryData(refundDetailQuery(params.id));
+  const session = readStoredUser();
+
+  // Guarda de UI, não de segurança: quem de fato protege os dados é a API,
+  // respondendo 403/404 se alguém tentar revisar sem permissão. Este loader
+  // só evita OFERECER uma ação que seria recusada — ele decide antes de
+  // qualquer render, mas a decisão real não está aqui. Uma rota "protegida"
+  // só no cliente, sem o correspondente no backend, protegeria a interface e
+  // vazaria os dados.
+  if (session?.role !== "admin" || refund.user.id === session.id) {
+    throw redirect(`/refunds/${params.id}`);
+  }
 
   return { id: params.id };
 }

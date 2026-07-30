@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router";
 import MainLayout from "./components/core/MainLayout";
 import ProtectedRoute from "./components/core/ProtectedRoute";
 import PageRouteError from "./pages/PageRouteError";
-import { homeLoader, refundDetailLoader } from "./router-loaders";
+import { homeLoader, refundDetailLoader, reviewLoader } from "./router-loaders";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +27,14 @@ export const router = createBrowserRouter([
                 loader: homeLoader,
                 handle: { title: "Solicitações de reembolso" },
                 lazy: async () => ({ Component: (await import("./pages/PageHome")).default }),
+              },
+              {
+                path: "/refunds/:id/review",
+                loader: reviewLoader,
+                handle: { title: "Revisar solicitação" },
+                lazy: async () => ({
+                  Component: (await import("./pages/PageRefundReview")).default,
+                }),
               },
               {
                 path: "/refunds/:id",
