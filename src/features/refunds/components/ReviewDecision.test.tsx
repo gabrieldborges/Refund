@@ -102,6 +102,27 @@ describe("ReviewDecision", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  // Approving sends only `{ status: "approved" }` — no `reason` key at all,
+  // since `reason` is `undefined` and JSON.stringify drops undefined props.
+  // A wrong body or wrong endpoint here would otherwise go unnoticed: no
+  // other test asserts what clicking Aprovar actually sends.
+  it("fires the mutation with { status: \"approved\" } and no reason when Aprovar is clicked", async () => {
+    let patchBody: unknown;
+    server.use(
+      http.patch("*/refunds/:id/status", async ({ request }) => {
+        patchBody = await request.json();
+        return HttpResponse.json({ id: 1, status: "approved" });
+      })
+    );
+
+    const user = userEvent.setup();
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    await waitFor(() => expect(patchBody).toEqual({ status: "approved" }));
+  });
+
   it("wires the Marcar como pago button to the given callback", async () => {
     let called = false;
     const user = userEvent.setup();
