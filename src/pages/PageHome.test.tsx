@@ -176,4 +176,20 @@ describe("PageHome money card", () => {
     expect(await screen.findByText("R$ 4.182,00")).toBeInTheDocument();
     expect(screen.queryByText("Pendentes")).not.toBeInTheDocument();
   });
+
+  // A failed stats request must not fall through to the "?? 0" default and
+  // render R$ 0,00 / 0 — that reads as "this user has nothing approved, paid
+  // or pending", which is a lie when the real answer is "unknown, the request
+  // failed". Both cards must surface the failure instead.
+  it("shows a failure state instead of a false zero when stats fail to load", async () => {
+    server.use(http.get("*/users/:id/refund-stats", () => HttpResponse.json({}, { status: 500 })));
+
+    renderPageHome("/", "standard");
+
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts).toHaveLength(2);
+    alerts.forEach((alert) => expect(alert).toHaveTextContent("Não foi possível carregar."));
+
+    expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument();
+  });
 });

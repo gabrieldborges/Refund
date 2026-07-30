@@ -78,9 +78,11 @@ export default function PageHome() {
   // aggregate. An admin's money card therefore doesn't need this query at all
   // (it reads the list's own sum_amount_in_cents below); only a standard user,
   // reading their own stats, does.
-  const { data: stats, isLoading: isStatsLoading } = useRefundStats(
-    isAdmin ? undefined : user?.id
-  );
+  const {
+    data: stats,
+    isLoading: isStatsLoading,
+    isError: isStatsError,
+  } = useRefundStats(isAdmin ? undefined : user?.id);
   // Status is a dimension, not an optional filter: pending is a forecast,
   // approved is a liability still owed, paid is a realised expense, and
   // rejected is nothing. A figure spanning all four is meaningless, so the
@@ -152,6 +154,14 @@ export default function PageHome() {
           <CardContent>
             {(isAdmin ? isLoading : isStatsLoading) ? (
               <Skeleton className="h-8 w-28" />
+            ) : !isAdmin && isStatsError ? (
+              // A failed stats request must not silently render as R$ 0,00 —
+              // that would be indistinguishable from a user who genuinely has
+              // nothing approved or paid. Same idiom as the list's own error
+              // banner below (role="alert", destructive text).
+              <p role="alert" className="text-sm text-destructive">
+                Não foi possível carregar.
+              </p>
             ) : (
               <p className="text-2xl font-semibold">
                 {formatCentsToBRL(isAdmin ? (data?.sum_amount_in_cents ?? 0) : approvedAndPaidCents)}
@@ -170,6 +180,10 @@ export default function PageHome() {
             <CardContent>
               {isStatsLoading ? (
                 <Skeleton className="h-8 w-16" />
+              ) : isStatsError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  Não foi possível carregar.
+                </p>
               ) : (
                 <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
               )}
