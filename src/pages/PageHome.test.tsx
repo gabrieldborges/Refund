@@ -31,13 +31,16 @@ function pagedListResponse() {
 }
 
 // Seeds the session AuthProvider reads on mount, so PageHome's useAuth() call
-// sees a logged-in user instead of throwing/redirecting. id: 1 matches
-// refundFixture.user.id and refundStatsFixture.user_id, so the money-card
-// assertions below line up with the same fixtures the other PageHome tests use.
-function seedSession(role: "standard" | "admin") {
+// sees a logged-in user instead of throwing/redirecting. id defaults to 1,
+// matching refundFixture.user.id and refundStatsFixture.user_id, so the
+// money-card assertions below line up with the same fixtures the other
+// PageHome tests use. Row-navigation tests override id to place the session
+// on the other side of refundFixture.user.id (1) when they need an admin
+// looking at someone else's refund.
+function seedSession(role: "standard" | "admin", id = 1) {
   localStorage.setItem(
     USER_STORAGE_KEY,
-    JSON.stringify({ id: 1, name: "Ana Souza", email: "ana@exemplo.com", role })
+    JSON.stringify({ id, name: "Ana Souza", email: "ana@exemplo.com", role })
   );
 }
 
@@ -47,8 +50,8 @@ function seedSession(role: "standard" | "admin") {
 // which stats to request and how to label the money card. The page is derived
 // from initialEntry so the stub loader stays honest for whatever entry a test
 // passes, instead of hardcoding a single page number.
-function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standard") {
-  seedSession(role);
+function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standard", id = 1) {
+  seedSession(role, id);
   const url = new URL(initialEntry, "http://localhost");
   const page = Number(url.searchParams.get("page") ?? 1);
 
@@ -191,5 +194,41 @@ describe("PageHome money card", () => {
     alerts.forEach((alert) => expect(alert).toHaveTextContent("Não foi possível carregar."));
 
     expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument();
+  });
+});
+
+describe("PageHome row navigation", () => {
+  // BR-016: an admin may review any refund except their own. The row's href
+  // must mirror the loader guard from Task 3 (reviewLoader in
+  // router-loaders.ts), or a click would land on a route that immediately
+  // redirects back. refundFixture (id: 1, user.id: 1) is the default
+  // `/refunds` list response, seeded by src/test/msw/handlers.ts.
+
+  // Standard users never get the review route, no matter whose refund it is.
+  it("links a standard user to the plain detail page", async () => {
+    renderPageHome("/", "standard");
+
+    const row = await screen.findByRole("link", { name: /Almoço com cliente/ });
+    expect(row).toHaveAttribute("href", "/refunds/1");
+  });
+
+  it("links an admin to the review page for someone else's refund", async () => {
+    // Session id 2, refundFixture.user.id 1 — different people.
+    renderPageHome("/", "admin", 2);
+
+    const row = await screen.findByRole("link", { name: /Almoço com cliente/ });
+    expect(row).toHaveAttribute("href", "/refunds/1/review");
+  });
+
+  // The case a careless implementation gets wrong: role alone is not enough
+  // to route to /review. When the admin IS the refund's owner, the row must
+  // stay on the plain detail page — the one with the Excluir button — because
+  // BR-016 forbids reviewing your own refund and the API would refuse it.
+  it("links an admin to the plain detail page for their own refund", async () => {
+    // Session id 1 matches refundFixture.user.id 1 — same person.
+    renderPageHome("/", "admin", 1);
+
+    const row = await screen.findByRole("link", { name: /Almoço com cliente/ });
+    expect(row).toHaveAttribute("href", "/refunds/1");
   });
 });

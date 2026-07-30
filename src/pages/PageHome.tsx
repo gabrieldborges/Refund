@@ -220,10 +220,16 @@ export default function PageHome() {
           {data?.attributes.map((refund) => {
             const category = CATEGORIES[refund.category];
             const CategoryIcon = category.icon;
+            // BR-016: an admin may review any refund except their own. This
+            // mirrors reviewLoader's guard (router-loaders.ts) so the row
+            // never links to a route the loader would immediately redirect
+            // away from.
+            const canReview = user?.role === "admin" && refund.user.id !== user.id;
+            const href = canReview ? `/refunds/${refund.id}/review` : `/refunds/${refund.id}`;
             return (
               <li key={refund.id} className="border-b last:border-b-0">
                 <Link
-                  to={`/refunds/${refund.id}`}
+                  to={href}
                   className="flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-accent/50"
                 >
                   <div className="flex min-w-0 items-center gap-3">
