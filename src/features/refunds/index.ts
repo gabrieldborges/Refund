@@ -14,6 +14,7 @@ export { useRefund } from "./hooks/useRefund";
 export { useCreateRefund } from "./hooks/useCreateRefund";
 export { useDeleteRefund } from "./hooks/useDeleteRefund";
 export { useRefundStats } from "./hooks/useRefundStats";
+export { useReviewRefund } from "./hooks/useReviewRefund";
 
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
@@ -28,3 +29,6 @@ export { default as RefundFormDialog } from "./components/RefundFormDialog";
 
 // Receipt preview: renders the receipt Blob inline with a fullscreen dialog.
 export { default as ReceiptPreview } from "./components/ReceiptPreview";
+
+// Review decision controls: approve/reject buttons and the reject-reason dialog.
+export { default as ReviewDecision } from "./components/ReviewDecision";
