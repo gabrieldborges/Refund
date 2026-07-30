@@ -15,6 +15,7 @@ export { useCreateRefund } from "./hooks/useCreateRefund";
 export { useDeleteRefund } from "./hooks/useDeleteRefund";
 export { useRefundStats } from "./hooks/useRefundStats";
 export { useReviewRefund } from "./hooks/useReviewRefund";
+export { usePayRefund } from "./hooks/usePayRefund";
 
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
@@ -32,3 +33,6 @@ export { default as ReceiptPreview } from "./components/ReceiptPreview";
 
 // Review decision controls: approve/reject buttons and the reject-reason dialog.
 export { default as ReviewDecision } from "./components/ReviewDecision";
+
+// Mark-as-paid dialog: uploads the mandatory payment receipt (UC-012).
+export { default as PayRefundDialog } from "./components/PayRefundDialog";

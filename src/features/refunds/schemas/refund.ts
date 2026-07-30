@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { CATEGORY_VALUES } from "../constants/categories";
-
-const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
-const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024;
+import { RECEIPT_ALLOWED_EXTENSIONS, RECEIPT_MAX_FILE_SIZE_BYTES } from "../constants/receiptFile";
 
 export const refundCreateSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -12,12 +10,33 @@ export const refundCreateSchema = z.object({
     .instanceof(FileList)
     .refine((files) => files.length > 0, "Anexe o comprovante")
     .refine(
-      (files) => !files[0] || files[0].size <= MAX_FILE_SIZE_BYTES,
+      (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,
       "Arquivo deve ter no máximo 4MB"
     )
     .refine(
       (files) =>
-        !files[0] || ALLOWED_EXTENSIONS.some((ext) => files[0].name.toLowerCase().endsWith(ext)),
+        !files[0] ||
+        RECEIPT_ALLOWED_EXTENSIONS.some((ext) => files[0].name.toLowerCase().endsWith(ext)),
+      "Arquivo deve ser JPG, PNG ou PDF"
+    ),
+});
+
+// Same rules as refundCreateSchema.shape.file (UC-012 mirrors BR-009), kept as
+// its own schema rather than reused: the expense receipt and the payment
+// receipt are unrelated forms, and merging them would mean a future change to
+// one silently reaching the other.
+export const payRefundSchema = z.object({
+  file: z
+    .instanceof(FileList)
+    .refine((files) => files.length > 0, "Anexe o comprovante de pagamento")
+    .refine(
+      (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,
+      "Arquivo deve ter no máximo 4MB"
+    )
+    .refine(
+      (files) =>
+        !files[0] ||
+        RECEIPT_ALLOWED_EXTENSIONS.some((ext) => files[0].name.toLowerCase().endsWith(ext)),
       "Arquivo deve ser JPG, PNG ou PDF"
     ),
 });
@@ -112,6 +131,9 @@ export type RefundCreateFormData = z.output<typeof refundCreateSchema>;
 // Entrada (o que o campo do formulário realmente digita — amount ainda cru):
 // é esse tipo que o useForm precisa pra tipar os campos antes da validação.
 export type RefundCreateFormInput = z.input<typeof refundCreateSchema>;
+// Same in/out split as RefundCreateFormData/Input, for the pay-refund form.
+export type PayRefundFormData = z.output<typeof payRefundSchema>;
+export type PayRefundFormInput = z.input<typeof payRefundSchema>;
 export type Refund = z.output<typeof refundSchema>;
 export type RefundStatus = z.output<typeof refundStatusSchema>;
 export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
