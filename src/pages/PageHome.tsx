@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, REFUND_STATUS, useRefunds } from "@/features/refunds";
+import { CATEGORIES, REFUND_STATUS, useRefunds, useRefundStats } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useAuth } from "@/context/useAuth";
 import type { homeLoader } from "@/router-loaders";
 
 function RefundRowSkeleton() {
@@ -68,8 +69,25 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
 export default function PageHome() {
   const { page, perPage, name } = useLoaderData<typeof homeLoader>();
   const [, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const { data, isLoading, isError } = useRefunds({ page, perPage, name });
+  // An admin's Home lists everyone's refunds, but GET /users/{id}/refund-stats
+  // is per-user (see UC-014) — there is no endpoint for a global per-status
+  // aggregate. An admin's money card therefore doesn't need this query at all
+  // (it reads the list's own sum_amount_in_cents below); only a standard user,
+  // reading their own stats, does.
+  const { data: stats, isLoading: isStatsLoading } = useRefundStats(
+    isAdmin ? undefined : user?.id
+  );
+  // Status is a dimension, not an optional filter: pending is a forecast,
+  // approved is a liability still owed, paid is a realised expense, and
+  // rejected is nothing. A figure spanning all four is meaningless, so the
+  // money card sums only the two statuses that represent money actually
+  // committed — labelled accordingly so the label carries the meaning.
+  const approvedAndPaidCents =
+    (stats?.by_status.approved.amount_in_cents ?? 0) + (stats?.by_status.paid.amount_in_cents ?? 0);
 
   const updateListLocation = useCallback(
     (nextName: string, nextPage: number, replace = false) => {
@@ -109,7 +127,7 @@ export default function PageHome() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -128,19 +146,36 @@ export default function PageHome() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Total
+              {isAdmin ? "Solicitado" : "Aprovado + pago"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {(isAdmin ? isLoading : isStatsLoading) ? (
               <Skeleton className="h-8 w-28" />
             ) : (
               <p className="text-2xl font-semibold">
-                {formatCentsToBRL(data?.sum_amount_in_cents ?? 0)}
+                {formatCentsToBRL(isAdmin ? (data?.sum_amount_in_cents ?? 0) : approvedAndPaidCents)}
               </p>
             )}
           </CardContent>
         </Card>
+
+        {!isAdmin && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isStatsLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <RefundSearch key={name ?? ""} initialSearch={name ?? ""} updateListLocation={updateListLocation} />

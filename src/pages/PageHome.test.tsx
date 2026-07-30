@@ -4,8 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
-import { refundFixture } from "@/test/msw/handlers";
+import { refundFixture, refundStatsFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
+import { AuthProvider } from "@/context/AuthContext";
+import { USER_STORAGE_KEY } from "@/lib/api";
 import PageHome from "./PageHome";
 
 // A second page's worth of matches: 10 rows on this page, but 24 across every
@@ -28,11 +30,25 @@ function pagedListResponse() {
   };
 }
 
+// Seeds the session AuthProvider reads on mount, so PageHome's useAuth() call
+// sees a logged-in user instead of throwing/redirecting. id: 1 matches
+// refundFixture.user.id and refundStatsFixture.user_id, so the money-card
+// assertions below line up with the same fixtures the other PageHome tests use.
+function seedSession(role: "standard" | "admin") {
+  localStorage.setItem(
+    USER_STORAGE_KEY,
+    JSON.stringify({ id: 1, name: "Ana Souza", email: "ana@exemplo.com", role })
+  );
+}
+
 // Mounts PageHome behind a route whose loader mirrors what homeLoader hands
-// down ({ page, perPage, name }), without pulling in auth/session concerns.
-// The page is derived from initialEntry so the stub loader stays honest for
-// whatever entry a test passes, instead of hardcoding a single page number.
-function renderPageHome(initialEntry = "/") {
+// down ({ page, perPage, name }). AuthProvider is real (not stubbed) because
+// PageHome now reads the logged-in user's id/role via useAuth() to decide
+// which stats to request and how to label the money card. The page is derived
+// from initialEntry so the stub loader stays honest for whatever entry a test
+// passes, instead of hardcoding a single page number.
+function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standard") {
+  seedSession(role);
   const url = new URL(initialEntry, "http://localhost");
   const page = Number(url.searchParams.get("page") ?? 1);
 
@@ -49,7 +65,9 @@ function renderPageHome(initialEntry = "/") {
 
   const view = render(
     <QueryWrapper>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryWrapper>
   );
 
@@ -57,16 +75,16 @@ function renderPageHome(initialEntry = "/") {
 }
 
 describe("PageHome", () => {
-  // The summary band must show the totals the API reported for the whole filtered
-  // set — not a sum of the rows on the current page, which would be wrong as soon
-  // as there is more than one page.
-  it("shows the totals coming from the API", async () => {
+  // The "Solicitações" count must show the total the API reported for the
+  // whole filtered set — not a count of the rows on the current page, which
+  // would be wrong as soon as there is more than one page. (The money card's
+  // own source is covered separately below, per role.)
+  it("shows the request total coming from the API, not the page size", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
 
     renderPageHome();
 
     expect(await screen.findByText("24")).toBeInTheDocument();
-    expect(screen.getByText("R$ 4.182,00")).toBeInTheDocument();
   });
 
   // Pagination controls must be reachable by their accessible name, and the
@@ -118,5 +136,44 @@ describe("PageHome", () => {
     badges.forEach((badge) => {
       expect(badge).toHaveAttribute("data-variant", "secondary");
     });
+  });
+});
+
+describe("PageHome money card", () => {
+  // This is the regression test for the bug this task fixes: the Home used to
+  // show sum_amount_in_cents from the (unfiltered-by-status) list, which mixes
+  // pending forecast, approved liability, paid expense and rejected nothing
+  // into one meaningless figure. A standard user's money card must instead be
+  // labelled "Aprovado + pago" and sum only approved + paid from refund-stats
+  // (fixture: 65000 + 40000 = 105000 cents). Reverting the card to
+  // data?.sum_amount_in_cents turns this red — see task-2-report.md for that run.
+  it("sums only approved + paid for a standard user, and adds a Pendentes card", async () => {
+    renderPageHome("/", "standard");
+
+    expect(await screen.findByText("Aprovado + pago")).toBeInTheDocument();
+    expect(await screen.findByText("R$ 1.050,00")).toBeInTheDocument();
+
+    expect(screen.getByText("Pendentes")).toBeInTheDocument();
+    expect(
+      await screen.findByText(String(refundStatsFixture.by_status.pending.count))
+    ).toBeInTheDocument();
+
+    // The old label and the old (cross-status) figure must both be gone.
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+  });
+
+  // An admin's Home lists everyone's refunds, but GET /refund-stats is
+  // per-user — there is no endpoint for a global per-status aggregate. Until
+  // one exists, the admin card is honestly labelled "Solicitado" and reads the
+  // list's own sum_amount_in_cents, instead of faking a per-status total with
+  // N per-user requests.
+  it("labels the money card 'Solicitado' and uses the list sum for an admin", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin");
+
+    expect(await screen.findByText("Solicitado")).toBeInTheDocument();
+    expect(await screen.findByText("R$ 4.182,00")).toBeInTheDocument();
+    expect(screen.queryByText("Pendentes")).not.toBeInTheDocument();
   });
 });

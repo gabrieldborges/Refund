@@ -24,6 +24,10 @@ export const refundKeys = {
   // refundKeys.lists() justamente para não rebuscar o que acabou de sumir, e
   // o comprovante segue a mesma regra.
   receipt: (id: string) => [...refundKeys.all, "receipt", id] as const,
+  // Per-user stats (counts/sums grouped by status). Keyed by userId because
+  // an admin can read another user's stats, so different users must not
+  // share a cache entry.
+  stats: (userId: number) => [...refundKeys.all, "stats", userId] as const,
 };
 
 // queryOptions empacota { queryKey, queryFn } num objeto tipado e reutilizável.

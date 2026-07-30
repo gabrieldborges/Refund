@@ -3,6 +3,8 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { axe } from "vitest-axe";
 import { QueryWrapper } from "@/test/utils";
+import { AuthProvider } from "@/context/AuthContext";
+import { USER_STORAGE_KEY } from "@/lib/api";
 import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import PageHome from "./PageHome";
 
@@ -12,6 +14,14 @@ import PageHome from "./PageHome";
 // *.a11y.test.tsx files in this branch.
 describe("PageHome accessibility", () => {
   it("has no WCAG A/AA violations", async () => {
+    // PageHome now reads the session via useAuth() to pick the money-card
+    // label/source and fetch per-status stats, so AuthProvider must be real
+    // here too (not just QueryWrapper) — otherwise useAuth() throws.
+    localStorage.setItem(
+      USER_STORAGE_KEY,
+      JSON.stringify({ id: 1, name: "Ana Souza", email: "ana@exemplo.com", role: "standard" })
+    );
+
     const router = createMemoryRouter(
       [
         {
@@ -25,7 +35,9 @@ describe("PageHome accessibility", () => {
 
     const { container } = render(
       <QueryWrapper>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </QueryWrapper>
     );
 
@@ -33,6 +45,7 @@ describe("PageHome accessibility", () => {
     // skeleton placeholders are not what gets checked.
     await screen.findByRole("textbox", { name: "Pesquisar pelo nome" });
     await screen.findByText("Almoço com cliente");
+    await screen.findByText("Aprovado + pago");
 
     const results = await axe(container, {
       runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },

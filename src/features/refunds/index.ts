@@ -6,12 +6,14 @@
 
 // Data-access layer: query options reused by the router loaders.
 export { refundListQuery, refundDetailQuery } from "./api/refundQueries";
+export { refundStatsQuery } from "./api/reviewQueries";
 
 // Hooks: the feature's data API for pages.
 export { useRefunds } from "./hooks/useRefunds";
 export { useRefund } from "./hooks/useRefund";
 export { useCreateRefund } from "./hooks/useCreateRefund";
 export { useDeleteRefund } from "./hooks/useDeleteRefund";
+export { useRefundStats } from "./hooks/useRefundStats";
 
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
