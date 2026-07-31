@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { MainLayoutOutletContext } from "@/components/core/MainLayout";
 
 export default function PageSuccess() {
   const navigate = useNavigate();
+  const { openNewRefund } = useOutletContext<MainLayoutOutletContext>();
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 p-6 text-center">
@@ -15,10 +17,12 @@ export default function PageSuccess() {
         Agora é apenas aguardar! Sua solicitação será analisada e, em breve, o setor
         financeiro irá entrar em contato com você.
       </p>
-      {/* Reabrir o modal direto daqui pede estado compartilhado entre páginas —
-          fica pra quando entrarmos na sub-fase de contexts. Por enquanto, só
-          volta pra Home. */}
-      <Button onClick={() => navigate("/")}>Nova solicitação</Button>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button onClick={openNewRefund}>Nova solicitação</Button>
+        <Button variant="outline" onClick={() => navigate("/")}>
+          Voltar para a Home
+        </Button>
+      </div>
     </div>
   );
 }

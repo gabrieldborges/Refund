@@ -6,6 +6,14 @@ import Topbar from "./Topbar";
 import { useUiStore } from "@/stores/ui";
 import { RefundFormDialog } from "@/features/refunds";
 
+// O diálogo de nova solicitação vive aqui, mas a tela de sucesso precisa
+// reabri-lo. Em vez de subir o estado para uma store global (que é
+// persistida — um refresh restauraria um diálogo aberto), desce-se só o
+// gatilho pelo mecanismo que o próprio router oferece.
+export interface MainLayoutOutletContext {
+  openNewRefund: () => void;
+}
+
 // Reads the deepest route handle that defines a title.
 function useRouteTitle(): string {
   const matches = useMatches();
@@ -35,7 +43,9 @@ export default function MainLayout() {
             (src/components/ui/sidebar.tsx), so a second <main> here would be
             a nested landmark — invalid HTML5 and confusing for AT navigation. */}
         <div className="flex-1 overflow-auto">
-          <Outlet />
+          <Outlet
+            context={{ openNewRefund: () => setIsNewRefundOpen(true) } satisfies MainLayoutOutletContext}
+          />
         </div>
       </SidebarInset>
       <RefundFormDialog open={isNewRefundOpen} onOpenChange={setIsNewRefundOpen} />
