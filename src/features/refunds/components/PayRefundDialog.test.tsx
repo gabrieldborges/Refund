@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -34,6 +35,31 @@ function renderDialog(refundId = "1", onOpenChange = vi.fn()) {
     </QueryWrapper>
   );
   return { onOpenChange };
+}
+
+// Keeps `open` as real controlled state, the same reasoning as
+// RefundFormDialog.test.tsx's own Harness: a `setOpen` prop alone would not
+// exercise whether the dialog's internal state (the chosen file, the error
+// banner) survived a close/reopen cycle of the same mounted instance, which
+// is exactly how PageRefundReview mounts this dialog (unconditionally, for
+// the life of the page). The "Reabrir" button mirrors how that page reopens
+// it: by flipping `open` straight to `true`, not through onOpenChange.
+function Harness({ refundId = "1" }: { refundId?: string }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Reabrir</button>
+      <PayRefundDialog refundId={refundId} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function renderHarness(refundId = "1") {
+  return render(
+    <QueryWrapper>
+      <Harness refundId={refundId} />
+    </QueryWrapper>
+  );
 }
 
 describe("payRefundSchema.shape.file", () => {
@@ -195,5 +221,77 @@ describe("PayRefundDialog", () => {
 
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  // This dialog is mounted unconditionally by PageRefundReview (never
+  // unmounted while the page is), so unlike a dialog created fresh on each
+  // open, its state survives a close/reopen — a failed attempt's error
+  // banner and previously chosen file would otherwise still be there the
+  // next time it opens. Same defect class RefundFormDialog.test.tsx already
+  // covers for the create dialog.
+  it("clears the error banner and the chosen file when reopened after a failed attempt", async () => {
+    server.use(http.post("*/refunds/:id/payment", () => HttpResponse.json({}, { status: 500 })));
+    const user = userEvent.setup();
+    renderHarness();
+
+    await screen.findByRole("dialog");
+    await user.upload(
+      screen.getByLabelText("Comprovante de pagamento"),
+      new File(["dummy"], "comprovante.png", { type: "image/png" })
+    );
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+
+    await screen.findByRole("alert");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+    await screen.findByRole("dialog");
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    // InputFile has no accessible way to read back a selected filename here,
+    // so the file's own absence is asserted indirectly: submitting the
+    // reopened, untouched form must fail the mandatory-file validation
+    // again, which it could not if the previous FileList had survived.
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+    const fileField = await screen.findByLabelText("Comprovante de pagamento");
+    expect(fileField).toHaveAttribute("aria-invalid", "true");
+  });
+
+  // The race the test above doesn't reach: closing while the payment request
+  // is still in flight, then letting it fail. `setSubmitError` in the
+  // `catch` runs after that close already fired, so a close-only clear never
+  // gets a chance to clear it again — reopening would surface an error from
+  // an attempt the user had already abandoned. Clearing on OPEN (via the
+  // `open` effect) is what closes this gap. Mirrors the equivalent
+  // RefundFormDialog test.
+  it("does not surface a stale error from a request that failed after the dialog had already been closed", async () => {
+    server.use(
+      http.post("*/refunds/:id/payment", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return HttpResponse.json({}, { status: 500 });
+      })
+    );
+    const user = userEvent.setup();
+    renderHarness();
+
+    await screen.findByRole("dialog");
+    await user.upload(
+      screen.getByLabelText("Comprovante de pagamento"),
+      new File(["dummy"], "comprovante.png", { type: "image/png" })
+    );
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+
+    // Close immediately, before the delayed 500 response arrives.
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    // Let the in-flight request resolve (and its catch run) while closed.
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+    await screen.findByRole("dialog");
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

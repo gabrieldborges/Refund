@@ -173,9 +173,16 @@ export default function PageHome() {
     [setSearchParams]
   );
 
-  // O `total` da listagem já vem estreitado pelo filtro (UC-004), então o
-  // rótulo genérico prometia mais do que o número entrega.
-  const requestsCardLabel = status ? `Solicitações (${REFUND_STATUS[status].label})` : "Solicitações";
+  // O `total` da listagem vem estreitado por status E por busca de nome
+  // (UC-004) — nomear só o status deixava a busca de fora do rótulo, então um
+  // número filtrado pelos dois aparecia como se só o status explicasse o
+  // recorte. Repetir o termo buscado deixaria o card poluído, então "busca"
+  // apenas sinaliza que esse filtro também está ativo, no mesmo formato que
+  // REFUND_STATUS[status].label já usa para o status.
+  const requestsCardLabel = (() => {
+    const activeFilters = [status && REFUND_STATUS[status].label, name && "busca"].filter(Boolean);
+    return activeFilters.length > 0 ? `Solicitações (${activeFilters.join(", ")})` : "Solicitações";
+  })();
 
   // Com filtro ativo, `sum_amount_in_cents` cobre só aquele status (UC-004).
   // O rótulo segue o número; um número certo com nome errado é pior que

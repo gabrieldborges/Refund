@@ -47,6 +47,28 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
   const { mutateAsync, isPending } = useCreateRefund();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Clears the error the instant `open` flips to true, during render rather
+  // than in an effect: this dialog has no internal trigger (MainLayout flips
+  // `open` straight to true from the Topbar button), so Radix never calls
+  // `onOpenChange(true)` — only its own close gestures do, always with
+  // `false` (see handleOpenChange below, which is where CLOSE is handled).
+  // Tracking the previous `open` in state and comparing during render is
+  // React's documented way to react to a prop change without the extra
+  // render + effect a useEffect would cost here (react.dev: "Adjusting state
+  // when a prop changes").
+  //
+  // This closes a race the close-only clear cannot: closing while the create
+  // request is still in flight clears `submitError` via handleOpenChange,
+  // but if that request then fails, the `catch` in `onSubmit` sets it
+  // *after* the close already ran — leaving a stale error from an abandoned
+  // attempt that would otherwise still be sitting there the next time this
+  // dialog opens.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setSubmitError(null);
+  }
+
   // `isPending` covers only the create request; it falls the instant
   // `mutateAsync` resolves. But `navigate("/success")` below then starts a
   // router transition, and during it this dialog (and this button) is still
@@ -179,9 +201,16 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               </p>
             )}
 
-            <Button type="submit" disabled={isBusy} aria-busy={isBusy}>
-              {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              {isBusy ? "Enviando…" : "Enviar"}
+            {/* The button stays disabled for any in-flight navigation (`isBusy`,
+                including one this dialog didn't start — see `isBusy` above), so a
+                click can't race an unrelated transition. But the "Enviando…" label
+                and spinner must track only `isPending`, the create mutation itself:
+                this dialog is mounted on every protected route, so an unrelated
+                navigation (e.g. typing in the Home search) could otherwise make it
+                claim work is in flight when nothing is. */}
+            <Button type="submit" disabled={isBusy} aria-busy={isPending}>
+              {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {isPending ? "Enviando…" : "Enviar"}
             </Button>
           </form>
         </Form>

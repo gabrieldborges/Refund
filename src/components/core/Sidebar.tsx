@@ -60,7 +60,7 @@ export default function AppSidebar() {
             return (
               <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center group-data-[collapsible=icon]:justify-center">
                 {item.enabled ? (
-                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-2 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-4 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
                     <Link to={item.to} className=" bg-sidebar!">
                       <Icon aria-hidden />
                       <span >{item.label}</span>

@@ -147,7 +147,8 @@ describe("RefundFormDialog", () => {
 
   // navigation.state is global to the router, not scoped to whichever action
   // triggered it — a transition already under way while this dialog is open
-  // must busy its submit button too.
+  // must disable its submit button too, so a click can't race an unrelated
+  // transition.
   //
   // This drives the navigation directly through the router instead of
   // through a real successful submit. A real submit closes this dialog
@@ -159,7 +160,7 @@ describe("RefundFormDialog", () => {
   // (isPending || navigation.state !== "idle") from that unrelated
   // animation-timing gap — the same reasoning PageRefundDetails.test.tsx
   // spells out for its own confirm button.
-  it("keeps the submit button busy while a navigation is in flight, even one it did not trigger", async () => {
+  it("keeps the submit button disabled while a navigation is in flight, even one it did not trigger", async () => {
     const { router } = renderDialogWithSlowSuccess();
 
     await screen.findByRole("dialog");
@@ -168,8 +169,30 @@ describe("RefundFormDialog", () => {
     void router.navigate("/success");
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Enviando/ })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Enviar" })).toBeDisabled();
     });
+  });
+
+  // This dialog is mounted on every protected route, so `isBusy` above goes
+  // true for navigations it did not start — e.g. the debounced setSearchParams
+  // Home's search box fires. Being disabled during that window is fine; the
+  // label and spinner claiming "Enviando…" would not be, since no create
+  // request is actually in flight. Reusing the same unrelated-navigation setup
+  // as the test above, but asserting the label/aria-busy stay idle instead.
+  it("does not claim a submission is in progress during a navigation it did not trigger", async () => {
+    const { router } = renderDialogWithSlowSuccess();
+
+    await screen.findByRole("dialog");
+    void router.navigate("/success");
+
+    const button = await waitFor(() => {
+      const candidate = screen.getByRole("button", { name: "Enviar" });
+      expect(candidate).toBeDisabled();
+      return candidate;
+    });
+
+    expect(button).toHaveAttribute("aria-busy", "false");
+    expect(screen.queryByText("Enviando…")).not.toBeInTheDocument();
   });
 
   // Cancelling must not leave the next visitor holding someone else's draft.
@@ -213,6 +236,46 @@ describe("RefundFormDialog", () => {
     await screen.findByRole("alert");
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+    await screen.findByRole("dialog");
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  // The race the test above doesn't reach: closing while the create request
+  // is still in flight, then letting it fail. `setSubmitError` in the
+  // `catch` runs after that close already fired, so the old code (which only
+  // cleared `submitError` in the close branch) never got a chance to clear
+  // it again — reopening surfaced an error from an attempt the user had
+  // already abandoned. Clearing on OPEN too is what closes this gap.
+  it("does not surface a stale error from a request that failed after the dialog had already been closed", async () => {
+    server.use(
+      http.post("*/refunds", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return HttpResponse.json({}, { status: 500 });
+      })
+    );
+    const user = userEvent.setup();
+    renderHarness();
+
+    await screen.findByRole("dialog");
+    await user.type(screen.getByLabelText("Nome da solicitação"), "Almoço com cliente");
+    await user.click(screen.getByRole("combobox", { name: "Categoria" }));
+    await user.click(await screen.findByRole("option", { name: "Alimentação" }));
+    await user.type(screen.getByLabelText("Valor"), "42.50");
+    await user.upload(
+      screen.getByLabelText("Comprovante"),
+      new File(["conteúdo"], "nota-fiscal.pdf", { type: "application/pdf" })
+    );
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    // Close immediately, before the delayed 500 response arrives.
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    // Let the in-flight request resolve (and its catch run) while closed.
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
     await user.click(screen.getByRole("button", { name: "Reabrir" }));
     await screen.findByRole("dialog");

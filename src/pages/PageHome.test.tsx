@@ -281,6 +281,26 @@ describe("PageHome summary card labels", () => {
 
     expect(await screen.findByText("Todas, sem o filtro")).toBeInTheDocument();
   });
+
+  // `data.total` is narrowed by the name search too (UC-004), not just by
+  // status — the bug this covers is a label that named the status filter but
+  // stayed silent about an active search, so a number filtered by both read
+  // as if only the status explained it.
+  it("also names an active name search on the requests card, alongside the status filter", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2, { status: "paid", name: "almoço" });
+
+    expect(await screen.findByText("Solicitações (Pago, busca)")).toBeInTheDocument();
+  });
+
+  it("names the search filter alone on the requests card when no status filter is active", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2, { name: "almoço" });
+
+    expect(await screen.findByText("Solicitações (busca)")).toBeInTheDocument();
+  });
 });
 
 describe("PageHome pending card", () => {
