@@ -1,5 +1,7 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -8,7 +10,7 @@ import { REFUND_STATUS } from "../constants/status";
 import { useRefundStats } from "../hooks/useRefundStats";
 import { useRefunds } from "../hooks/useRefunds";
 import { getRefundHref, type RefundViewer } from "../lib/getRefundHref";
-import type { RefundStatus } from "../schemas/refund";
+import type { Refund, RefundStatus } from "../schemas/refund";
 
 // Fixed render order for the four counters — the same four keys UC-014
 // always returns, zeros included, so this never needs a data-driven length.
@@ -26,6 +28,34 @@ interface RequesterPanelProps {
   currentRefundId: number;
 }
 
+// Uma seta: link quando há vizinho, botão desabilitado quando não há. Os dois
+// estados precisam ocupar o mesmo espaço — uma seta que some desloca a outra.
+function NavigationArrow({
+  refund,
+  viewer,
+  label,
+  children,
+}: {
+  refund: Refund | null;
+  viewer: RefundViewer | null;
+  label: string;
+  children: React.ReactNode;
+}) {
+  if (!refund) {
+    return (
+      <Button variant="outline" size="icon" aria-label={label} disabled>
+        {children}
+      </Button>
+    );
+  }
+
+  return (
+    <Button variant="outline" size="icon" aria-label={label} asChild>
+      <Link to={getRefundHref(refund, viewer)}>{children}</Link>
+    </Button>
+  );
+}
+
 // The requester's context for a review: who they are, their counts by
 // status (UC-014), and their own refunds (UC-004, first page only — see
 // "No pagination" below). Gives the admin the history to judge one request
@@ -41,6 +71,16 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
     isLoading: isListLoading,
     isError: isListError,
   } = useRefunds({ page: 1, perPage: REFUNDS_PER_PAGE, userId: requester.id });
+
+  // Posição derivada da lista já carregada — sem estado novo. -1 significa que
+  // a solicitação aberta não está nesta página (o painel carrega só a
+  // primeira, por decisão do ciclo anterior); nesse caso não há vizinho em
+  // nenhuma direção.
+  const rows = list?.attributes ?? [];
+  const currentIndex = rows.findIndex((refund) => refund.id === currentRefundId);
+  const previousRefund = currentIndex > 0 ? rows[currentIndex - 1] : null;
+  const nextRefund =
+    currentIndex >= 0 && currentIndex < rows.length - 1 ? rows[currentIndex + 1] : null;
 
   return (
     <Card>
@@ -89,7 +129,25 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
         )}
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-medium">Solicitações</h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">Solicitações</h3>
+            <div className="flex items-center gap-1">
+              <NavigationArrow
+                refund={previousRefund}
+                viewer={viewer}
+                label="Solicitação anterior deste solicitante"
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </NavigationArrow>
+              <NavigationArrow
+                refund={nextRefund}
+                viewer={viewer}
+                label="Próxima solicitação deste solicitante"
+              >
+                <ChevronRight className="size-4" aria-hidden />
+              </NavigationArrow>
+            </div>
+          </div>
 
           {isListLoading && (
             <ul className="flex flex-col gap-2">

@@ -37,6 +37,27 @@ function requesterListResponse(overrides: Partial<typeof refundFixture> = {}) {
   };
 }
 
+// Three refunds so a middle position exists: with two rows every position is
+// an edge, and "both arrows enabled" could never be observed.
+function threeRefundsResponse() {
+  const attributes = [10, 20, 30].map((id, index) => ({
+    ...refundFixture,
+    id,
+    name: `Solicitação ${index + 1}`,
+    user: { id: requester.id, name: requester.name, has_avatar: false },
+  }));
+  return {
+    type: "Refund",
+    count: attributes.length,
+    total: attributes.length,
+    sum_amount_in_cents: attributes.reduce((sum, refund) => sum + refund.amount_in_cents, 0),
+    page: 1,
+    per_page: REFUNDS_PER_PAGE,
+    total_pages: 1,
+    attributes,
+  };
+}
+
 function renderPanel(viewer: RefundViewer | null = adminViewer, currentRefundId = 5) {
   const router = createMemoryRouter(
     [
@@ -214,5 +235,82 @@ describe("RequesterPanel", () => {
 
     const row = await screen.findByRole("link", { name: /Passagem aérea/ });
     expect(row).not.toHaveAttribute("aria-current");
+  });
+
+  // The single-row fixture above can only prove the attribute isn't applied
+  // unconditionally — it has no sibling to withhold it from. With three rows,
+  // this proves aria-current actually distinguishes the current row from its
+  // neighbours, not just from its own absence.
+  it("marks only the current row with aria-current among several", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(threeRefundsResponse())));
+    renderPanel(adminViewer, 20);
+
+    const current = await screen.findByRole("link", { name: /Solicitação 2/ });
+    const first = screen.getByRole("link", { name: /Solicitação 1/ });
+    const third = screen.getByRole("link", { name: /Solicitação 3/ });
+
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(first).not.toHaveAttribute("aria-current");
+    expect(third).not.toHaveAttribute("aria-current");
+  });
+});
+
+describe("RequesterPanel navigation arrows", () => {
+  it("links each arrow to the neighbouring refund from the middle of the list", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(threeRefundsResponse())));
+    renderPanel(adminViewer, 20);
+
+    expect(
+      await screen.findByRole("link", { name: "Solicitação anterior deste solicitante" })
+    ).toHaveAttribute("href", "/refunds/10/review");
+    expect(
+      screen.getByRole("link", { name: "Próxima solicitação deste solicitante" })
+    ).toHaveAttribute("href", "/refunds/30/review");
+  });
+
+  // At an edge the arrow must be a disabled control, not a link to nowhere and
+  // not an absent element — a control that vanishes moves the one next to it.
+  //
+  // Awaits the "next" link first, not the "previous" button: the previous
+  // arrow is disabled both before the list loads (no rows yet) and after
+  // (refund 10 is genuinely first), so awaiting it would resolve against the
+  // pre-load render and race ahead of the list request. The "next" link only
+  // exists once the real data has settled, so waiting on it first proves the
+  // list has loaded before the synchronous assertion below runs.
+  it("disables the previous arrow on the first refund", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(threeRefundsResponse())));
+    renderPanel(adminViewer, 10);
+
+    expect(
+      await screen.findByRole("link", { name: "Próxima solicitação deste solicitante" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Solicitação anterior deste solicitante" })
+    ).toBeDisabled();
+  });
+
+  it("disables the next arrow on the last refund", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(threeRefundsResponse())));
+    renderPanel(adminViewer, 30);
+
+    expect(
+      await screen.findByRole("button", { name: "Próxima solicitação deste solicitante" })
+    ).toBeDisabled();
+  });
+
+  // The panel loads only the requester's first page (10 items, no pagination
+  // by design). A refund beyond it has no position in this list, so there is
+  // no meaningful neighbour in either direction — both arrows go inert rather
+  // than silently jumping to the first page's edges.
+  it("disables both arrows when the current refund is not in the loaded page", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(threeRefundsResponse())));
+    renderPanel(adminViewer, 999);
+
+    expect(
+      await screen.findByRole("button", { name: "Solicitação anterior deste solicitante" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Próxima solicitação deste solicitante" })
+    ).toBeDisabled();
   });
 });
