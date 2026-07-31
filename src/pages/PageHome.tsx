@@ -13,6 +13,7 @@ import {
   type RefundOrder,
   type RefundSort,
   type RefundStatus,
+  REFUND_STATUS,
 } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -160,6 +161,15 @@ export default function PageHome() {
     [setSearchParams]
   );
 
+  // Com filtro ativo, `sum_amount_in_cents` cobre só aquele status (UC-004).
+  // O rótulo segue o número; um número certo com nome errado é pior que
+  // nenhum dos dois.
+  const moneyCardLabel = isAdmin
+    ? status
+      ? REFUND_STATUS[status].label
+      : "Solicitado"
+    : "Aprovado + pago";
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -190,7 +200,7 @@ export default function PageHome() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {isAdmin ? "Solicitado" : "Aprovado + pago"}
+              {moneyCardLabel}
             </CardTitle>
           </CardHeader>
           <CardContent>

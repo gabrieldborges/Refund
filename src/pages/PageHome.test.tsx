@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
@@ -192,6 +192,30 @@ describe("PageHome money card", () => {
     expect(await screen.findByText("Solicitado")).toBeInTheDocument();
     expect(await screen.findByText("R$ 4.182,00")).toBeInTheDocument();
     expect(screen.queryByText("Pendentes")).not.toBeInTheDocument();
+  });
+
+  // With a status filter active the API's sum covers only that status, so the
+  // fixed "Solicitado" label would put a correct number under a wrong name.
+  it("labels the admin money card with the active status filter", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2, { status: "paid" });
+
+    // The label should appear in the card. The toolbar also shows "Pago" as the
+    // selected filter value, so we scope the query to the card to ensure we're
+    // testing the label, not the toolbar.
+    const amountText = await screen.findByText("R$ 4.182,00");
+    const card = amountText.closest('[data-slot="card"]') as HTMLElement;
+    expect(within(card).getByText("Pago")).toBeInTheDocument();
+    expect(screen.queryByText("Solicitado")).not.toBeInTheDocument();
+  });
+
+  it("goes back to 'Solicitado' when no status filter is active", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2);
+
+    expect(await screen.findByText("Solicitado")).toBeInTheDocument();
   });
 
   // A failed stats request must not fall through to the "?? 0" default and
