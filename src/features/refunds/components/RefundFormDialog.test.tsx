@@ -3,6 +3,8 @@ import { describe, it, expect } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/msw/server";
 import { QueryWrapper } from "@/test/utils";
 import RefundFormDialog from "./RefundFormDialog";
 
@@ -186,5 +188,35 @@ describe("RefundFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "Reabrir" }));
 
     expect(await screen.findByLabelText("Nome da solicitação")).toHaveValue("");
+  });
+
+  // A second, separate piece of dialog state besides the form: the error
+  // banner from a previous failed attempt is the same class of "stale
+  // draft" problem — closing and reopening should not greet the user with
+  // someone else's old failure.
+  it("clears the error banner when reopened after cancelling a failed submit", async () => {
+    server.use(http.post("*/refunds", () => HttpResponse.json({}, { status: 500 })));
+    const user = userEvent.setup();
+    renderHarness();
+
+    await screen.findByRole("dialog");
+    await user.type(screen.getByLabelText("Nome da solicitação"), "Almoço com cliente");
+    await user.click(screen.getByRole("combobox", { name: "Categoria" }));
+    await user.click(await screen.findByRole("option", { name: "Alimentação" }));
+    await user.type(screen.getByLabelText("Valor"), "42.50");
+    await user.upload(
+      screen.getByLabelText("Comprovante"),
+      new File(["conteúdo"], "nota-fiscal.pdf", { type: "application/pdf" })
+    );
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await screen.findByRole("alert");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+    await screen.findByRole("dialog");
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

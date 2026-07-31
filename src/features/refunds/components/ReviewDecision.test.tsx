@@ -228,4 +228,41 @@ describe("ReviewDecision", () => {
 
     expect(screen.queryByText("Algo deu errado. Tente novamente.")).not.toBeInTheDocument();
   });
+
+  // `submitError` is shared by both actions, but only ONE of them is the
+  // reject dialog's business. An approve failure has nothing to do with
+  // cancelling an unrelated, unsent reject attempt, so closing the reject
+  // dialog must not silently wipe a still-relevant approve error out from
+  // under the user.
+  it("keeps the approve error banner visible after cancelling an unrelated reject attempt", async () => {
+    const user = userEvent.setup();
+    server.use(http.patch("*/refunds/:id/status", () => HttpResponse.json({}, { status: 500 })));
+
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+    await screen.findByText("Algo deu errado. Tente novamente.");
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+    await user.type(screen.getByLabelText("Motivo"), "Comprovante ilegível");
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.getByText("Algo deu errado. Tente novamente.")).toBeInTheDocument();
+  });
+
+  // The Cancelar button is not the only way out: Escape is the path most
+  // users actually take, and it must reset the same way.
+  it("clears the reason field when reopened after closing via Escape", async () => {
+    const user = userEvent.setup();
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+    await user.type(screen.getByLabelText("Motivo"), "Comprovante ilegível");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+
+    expect(await screen.findByLabelText("Motivo")).toHaveValue("");
+  });
 });

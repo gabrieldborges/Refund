@@ -71,11 +71,15 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
   }
 
   // Reset on CLOSE, not only on submit: someone who fills the form, changes
-  // their mind, and reopens it should not find their old draft. This also
-  // covers the success path above, since it closes by calling this function
-  // instead of the raw `onOpenChange` prop directly.
+  // their mind, and reopens it should not find their old draft — or the
+  // error banner from whatever attempt they abandoned. This also covers the
+  // success path above, since it closes by calling this function instead of
+  // the raw `onOpenChange` prop directly.
   function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) form.reset();
+    if (!nextOpen) {
+      form.reset();
+      setSubmitError(null);
+    }
     onOpenChange(nextOpen);
   }
 

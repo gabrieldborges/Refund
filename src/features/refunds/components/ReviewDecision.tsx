@@ -52,6 +52,13 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
   // e sem isso os dois botões mostrariam spinner ao mesmo tempo.
   const [pendingAction, setPendingAction] = useState<"approve" | "reject" | null>(null);
 
+  // De qual ação veio o `submitError` atual. `pendingAction` não serve para
+  // isso: ele volta a `null` no `finally`, antes que o fechamento do diálogo
+  // de rejeição precise decidir se o erro em tela é "dele" ou de uma
+  // aprovação sem relação nenhuma com o cancelamento. Sem isso, cancelar uma
+  // rejeição apagaria silenciosamente um erro de aprovação ainda válido.
+  const [errorSource, setErrorSource] = useState<"approve" | "reject" | null>(null);
+
   const form = useForm<RejectFormData>({
     resolver: zodResolver(rejectSchema),
     defaultValues: { reason: "" },
@@ -59,11 +66,13 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
 
   async function handleApprove() {
     setSubmitError(null);
+    setErrorSource(null);
     setPendingAction("approve");
     try {
       await mutateAsync({ id: refundId, status: "approved" });
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
+      setErrorSource("approve");
     } finally {
       setPendingAction(null);
     }
@@ -71,26 +80,33 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
 
   async function handleReject(data: RejectFormData) {
     setSubmitError(null);
+    setErrorSource(null);
     setPendingAction("reject");
     try {
       await mutateAsync({ id: refundId, status: "rejected", reason: data.reason });
       handleRejectOpenChange(false);
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
+      setErrorSource("reject");
     } finally {
       setPendingAction(null);
     }
   }
 
   // Resetar ao FECHAR, não só ao enviar: quem preenche, desiste (pelo botão
-  // "Cancelar", pelo X ou pelo Escape) e reabre encontrava o motivo e o erro
-  // da tentativa anterior à espera. `submitError` é um segundo estado do
-  // diálogo além do form — um erro antigo é o mesmo problema que um rascunho
-  // antigo.
+  // "Cancelar", pelo X ou pelo Escape) e reabre encontrava o motivo da
+  // tentativa anterior à espera. `submitError` só é limpo junto se ele
+  // pertence à rejeição: o banner é compartilhado com `handleApprove`, e uma
+  // aprovação que falhou não tem nenhuma relação com cancelar uma rejeição
+  // que nem chegou a ser enviada — apagar o erro errado seria só trocar um
+  // "estado preso" por outro.
   function handleRejectOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       form.reset();
-      setSubmitError(null);
+      if (errorSource === "reject") {
+        setSubmitError(null);
+        setErrorSource(null);
+      }
     }
     setIsRejectOpen(nextOpen);
   }
