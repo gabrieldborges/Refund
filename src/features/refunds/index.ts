@@ -51,3 +51,7 @@ export { default as ReviewTimeline } from "./components/ReviewTimeline";
 // (first page), shown on the review screen so an admin judges one request
 // against that person's history instead of in isolation (UC-014).
 export { default as RequesterPanel } from "./components/RequesterPanel";
+
+// A listagem da Home como tabela (Item 13). Ordenação e filtro são
+// server-side: o componente não ordena nada por conta própria.
+export { default as RefundsTable } from "./components/RefundsTable";

@@ -1,31 +1,15 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, getRefundHref, REFUND_STATUS, useRefunds, useRefundStats } from "@/features/refunds";
+import { RefundsTable, useRefunds, useRefundStats } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAuth } from "@/context/useAuth";
 import type { homeLoader } from "@/router-loaders";
-
-function RefundRowSkeleton() {
-  return (
-    <div className="flex items-center justify-between gap-4 px-2 py-3">
-      <div className="flex items-center gap-3">
-        <Skeleton className="size-6 rounded-full" />
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-3.5 w-24" />
-          <Skeleton className="h-3 w-16" />
-        </div>
-      </div>
-      <Skeleton className="h-4 w-14" />
-    </div>
-  );
-}
 
 interface RefundSearchProps {
   initialSearch: string;
@@ -200,57 +184,8 @@ export default function PageHome() {
         </p>
       )}
 
-      {isLoading && (
-        <ul className="flex flex-col rounded-xl border">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <li key={index} className="border-b last:border-b-0">
-              <RefundRowSkeleton />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!isLoading && !isError && (
-        <ul className="flex flex-col rounded-xl border overflow-hidden">
-          {data?.attributes.length === 0 && (
-            <li className="py-4 text-center text-sm text-muted-foreground">
-              Nenhuma solicitação encontrada.
-            </li>
-          )}
-          {data?.attributes.map((refund) => {
-            const category = CATEGORIES[refund.category];
-            const CategoryIcon = category.icon;
-            // BR-016: an admin may review any refund except their own. This
-            // mirrors reviewLoader's guard (router-loaders.ts) so the row
-            // never links to a route the loader would immediately redirect
-            // away from. getRefundHref is the single implementation of this
-            // rule, shared with RequesterPanel (Task 9) so the two never
-            // carry two copies that could drift apart.
-            const href = getRefundHref(refund, user);
-            return (
-              <li key={refund.id} className="border-b last:border-b-0">
-                <Link
-                  to={href}
-                  className="flex items-center justify-between gap-4 px-4 py-3 transition hover:bg-accent/50"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <CategoryIcon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-medium">{refund.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{category.label}</span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <Badge variant={REFUND_STATUS[refund.status].variant}>
-                      {REFUND_STATUS[refund.status].label}
-                    </Badge>
-                    <span className="text-sm">{formatCentsToBRL(refund.amount_in_cents)}</span>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      {!isError && (
+        <RefundsTable refunds={data?.attributes ?? []} viewer={user} isLoading={isLoading} />
       )}
 
       {data && data.total_pages > 0 && (
