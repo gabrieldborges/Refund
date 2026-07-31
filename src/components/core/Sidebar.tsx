@@ -46,19 +46,26 @@ export default function AppSidebar() {
 
       <SidebarContent>
         <SidebarMenu>
+          {/* pl-2 (not translate-x-2) shifts the icon right: translate repaints
+              content without moving the layout box, so the hover background
+              (tied to the box) stayed put and left an unhighlighted strip on
+              the left. Padding moves the box itself, so hover now fills the
+              row. group-data-[collapsible=icon]:pl-0! + justify-center restore
+              centering in the collapsed/icon rail, where the button shrinks to
+              a fixed square and padding alone would push the icon off-center. */}
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center ">
                 {item.enabled ? (
-                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="translate-x-2 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-2 group-data-[collapsible=icon]:pl-0! group-data-[collapsible=icon]:justify-center hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
                     <Link to={item.to} className=" bg-sidebar!">
                       <Icon aria-hidden />
                       <span >{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 ) : (
-                  <div className=" flex items-center justify-between w-full h-full translate-x-2">
+                  <div className=" flex items-center justify-between w-full h-full pl-2">
                     <SidebarMenuButton type="button" disabled tooltip={item.label} className=" w-fit">
                       <Icon aria-hidden />
                       <span>{item.label}</span>
