@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import PageLogin from "./PageLogin";
 import { AuthProvider } from "../context/AuthContext";
 import { TOKEN_STORAGE_KEY } from "../lib/api";
@@ -16,16 +16,21 @@ import { loginFixture } from "../test/msw/handlers";
 // give (it never exercised axios or the schema).
 
 // Renders PageLogin behind the real AuthProvider, with a marker "/" route so a
-// successful login (navigate("/")) can be observed as a route change.
+// successful login (navigate("/")) can be observed as a route change. A real
+// data router (not the declarative <Routes>) is required now that PageLogin
+// reads useNavigation(), which throws outside one.
 function renderLoginApp() {
+  const router = createMemoryRouter(
+    [
+      { path: "/login", Component: PageLogin },
+      { path: "/", element: <div>home page</div> },
+    ],
+    { initialEntries: ["/login"] }
+  );
+
   render(
     <AuthProvider>
-      <MemoryRouter initialEntries={["/login"]}>
-        <Routes>
-          <Route path="/login" element={<PageLogin />} />
-          <Route path="/" element={<div>home page</div>} />
-        </Routes>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </AuthProvider>
   );
 }

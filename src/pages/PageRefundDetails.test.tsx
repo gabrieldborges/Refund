@@ -6,6 +6,8 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
 import { refundFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
+import { api } from "@/lib/api";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import PageRefundDetails from "./PageRefundDetails";
 
@@ -25,6 +27,42 @@ function renderPageRefundDetails() {
       <RouterProvider router={router} />
     </QueryWrapper>
   );
+}
+
+// Same shape, but the "/" destination carries a loader that awaits GET
+// /refunds, mirroring the real homeLoader. That gives a navigation to "/" a
+// genuine "loading" window to observe, and returns the router itself so a
+// test can drive that navigation directly (see the busy-button test below
+// for why that matters more than it first appears).
+function renderPageRefundDetailsWithSlowHome() {
+  const router = createMemoryRouter(
+    [
+      { path: "/refunds/:id", Component: PageRefundDetails },
+      { path: "/", loader: () => api.get("/refunds"), element: <div>home page</div> },
+    ],
+    { initialEntries: ["/refunds/1"] }
+  );
+
+  const view = render(
+    <QueryWrapper>
+      <RouterProvider router={router} />
+    </QueryWrapper>
+  );
+
+  return { ...view, router };
+}
+
+function emptyListResponse() {
+  return {
+    type: "Refund",
+    count: 0,
+    total: 0,
+    sum_amount_in_cents: 0,
+    page: 1,
+    per_page: REFUNDS_PER_PAGE,
+    total_pages: 0,
+    attributes: [],
+  };
 }
 
 describe("PageRefundDetails", () => {
@@ -85,6 +123,41 @@ describe("PageRefundDetails", () => {
     await user.click(await screen.findByRole("button", { name: "Confirmar" }));
 
     expect(await screen.findByText("home page")).toBeInTheDocument();
+  });
+
+  // The confirm button must stay busy for as long as any navigation is in
+  // flight, not just its own delete request — navigation.state is global to
+  // the router, not scoped to whichever action triggered it, so a transition
+  // started elsewhere while this dialog is open has to busy it too.
+  //
+  // This drives the navigation directly through the router instead of by
+  // clicking "Confirmar" for real. A real delete closes this dialog
+  // (setIsDeleteOpen(false)) in the same tick navigate("/") starts the
+  // transition, and Radix's exit animation — which is what keeps the button
+  // mounted while it plays in a real browser — does not run in jsdom (no
+  // CSS engine), so the dialog unmounts synchronously with nothing left to
+  // assert on. Driving the navigation directly isolates the busy computation
+  // itself (isDeleting || navigation.state !== "idle") from that unrelated
+  // animation-timing gap.
+  it("keeps the confirm button busy while a navigation is in flight, even one it did not trigger", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("*/refunds", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        return HttpResponse.json(emptyListResponse());
+      })
+    );
+
+    const { router } = renderPageRefundDetailsWithSlowHome();
+
+    await user.click(await screen.findByRole("button", { name: "Excluir" }));
+    expect(await screen.findByRole("button", { name: "Confirmar" })).toBeEnabled();
+
+    void router.navigate("/");
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Excluindo/ })).toBeDisabled();
+    });
   });
 
   // If the API rejects the deletion, the dialog stays open and shows the

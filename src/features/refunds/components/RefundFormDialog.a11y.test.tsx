@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { axe } from "vitest-axe";
 import { QueryWrapper } from "@/test/utils";
 import RefundFormDialog from "./RefundFormDialog";
@@ -10,11 +10,16 @@ import RefundFormDialog from "./RefundFormDialog";
 // with color-contrast disabled (jsdom has no CSS).
 describe("RefundFormDialog accessibility", () => {
   it("has no WCAG A/AA violations when open", async () => {
+    // A real data router, not the declarative <MemoryRouter>: the dialog
+    // reads useNavigation(), which throws outside a data router's context.
+    const router = createMemoryRouter(
+      [{ path: "/", element: <RefundFormDialog open onOpenChange={() => {}} /> }],
+      { initialEntries: ["/"] }
+    );
+
     render(
       <QueryWrapper>
-        <MemoryRouter>
-          <RefundFormDialog open onOpenChange={() => {}} />
-        </MemoryRouter>
+        <RouterProvider router={router} />
       </QueryWrapper>
     );
 

@@ -1,18 +1,57 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { QueryWrapper } from "@/test/utils";
 import RefundFormDialog from "./RefundFormDialog";
 
+// Mounts RefundFormDialog at "/" through a real data router, with a "/success"
+// destination it navigates to on a successful submit. A data router (not the
+// declarative <MemoryRouter>) is required now that the dialog reads
+// useNavigation(), which throws outside one.
 function renderDialog() {
-  render(
+  const router = createMemoryRouter(
+    [
+      { path: "/", element: <RefundFormDialog open onOpenChange={() => {}} /> },
+      { path: "/success", element: <div>success page</div> },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  const view = render(
     <QueryWrapper>
-      <MemoryRouter>
-        <RefundFormDialog open onOpenChange={() => {}} />
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </QueryWrapper>
   );
+
+  return { ...view, router };
+}
+
+// Same shape, but "/success" carries a loader that stays pending for a beat
+// before resolving, giving a navigation to it a genuine "loading" window to
+// observe. PageSuccess itself has no loader in the real router (it fetches
+// nothing) — this is a synthetic stand-in purely so a test has a transition
+// to watch, not a claim about what production does.
+function renderDialogWithSlowSuccess() {
+  const router = createMemoryRouter(
+    [
+      { path: "/", element: <RefundFormDialog open onOpenChange={() => {}} /> },
+      {
+        path: "/success",
+        loader: () => new Promise((resolve) => setTimeout(resolve, 80)),
+        element: <div>success page</div>,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  const view = render(
+    <QueryWrapper>
+      <RouterProvider router={router} />
+    </QueryWrapper>
+  );
+
+  return { ...view, router };
 }
 
 describe("RefundFormDialog", () => {
@@ -70,5 +109,32 @@ describe("RefundFormDialog", () => {
     const fileField = await screen.findByLabelText("Comprovante");
     expect(fileField).toHaveAttribute("aria-invalid", "true");
     expect(fileField).toHaveAccessibleDescription("Arquivo deve ter no máximo 4MB");
+  });
+
+  // navigation.state is global to the router, not scoped to whichever action
+  // triggered it — a transition already under way while this dialog is open
+  // must busy its submit button too.
+  //
+  // This drives the navigation directly through the router instead of
+  // through a real successful submit. A real submit closes this dialog
+  // (onOpenChange(false)) in the same tick navigate("/success") starts the
+  // transition, and the Radix exit animation that keeps a closing dialog
+  // mounted while it plays does not run in jsdom (no CSS engine) — the
+  // dialog would unmount synchronously with nothing left to assert on.
+  // Driving the navigation directly isolates the busy computation itself
+  // (isPending || navigation.state !== "idle") from that unrelated
+  // animation-timing gap — the same reasoning PageRefundDetails.test.tsx
+  // spells out for its own confirm button.
+  it("keeps the submit button busy while a navigation is in flight, even one it did not trigger", async () => {
+    const { router } = renderDialogWithSlowSuccess();
+
+    await screen.findByRole("dialog");
+    expect(screen.getByRole("button", { name: "Enviar" })).toBeEnabled();
+
+    void router.navigate("/success");
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Enviando/ })).toBeDisabled();
+    });
   });
 });

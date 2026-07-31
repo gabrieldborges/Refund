@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useNavigation, useParams } from "react-router";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +35,14 @@ export default function PageRefundDetails() {
 
   const { data: refund, isLoading, isError } = useRefund(id);
   const { mutateAsync: deleteRefund, isPending: isDeleting } = useDeleteRefund();
+
+  // `isDeleting` covers only the DELETE request; it falls the instant it
+  // resolves. But a successful delete then calls navigate("/"), whose loader
+  // still has to fetch Home's data — during that window this screen (and this
+  // button) is still what's on the page. The router's navigation state closes
+  // that gap.
+  const navigation = useNavigation();
+  const isBusy = isDeleting || navigation.state !== "idle";
 
   async function handleConfirmDelete() {
     if (!id) return;
@@ -125,8 +134,9 @@ export default function PageRefundDetails() {
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
-            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-              {isDeleting ? "Excluindo…" : "Confirmar"}
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isBusy} aria-busy={isBusy}>
+              {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {isBusy ? "Excluindo…" : "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

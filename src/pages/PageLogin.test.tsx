@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/msw/server";
+import { api } from "@/lib/api";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import PageLogin from "./PageLogin";
 import { AuthContext } from "../context/auth-context";
 import type { AuthContextValue } from "../context/auth-context";
@@ -20,18 +24,61 @@ function authValueWithLogin(login: AuthContextValue["login"]): AuthContextValue 
 }
 
 // Renders PageLogin at "/login" alongside a marker "/" route, so a successful
-// login (which calls navigate("/")) can be observed as a route change.
+// login (which calls navigate("/")) can be observed as a route change. This
+// now has to be a real data router (createMemoryRouter/RouterProvider), not
+// the declarative <Routes>: PageLogin reads useNavigation(), which throws
+// outside a data router's context.
 function renderLogin(login: AuthContextValue["login"]) {
+  const router = createMemoryRouter(
+    [
+      { path: "/login", Component: PageLogin },
+      { path: "/", element: <div>home page</div> },
+    ],
+    { initialEntries: ["/login"] }
+  );
+
   render(
     <AuthContext.Provider value={authValueWithLogin(login)}>
-      <MemoryRouter initialEntries={["/login"]}>
-        <Routes>
-          <Route path="/login" element={<PageLogin />} />
-          <Route path="/" element={<div>home page</div>} />
-        </Routes>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </AuthContext.Provider>
   );
+}
+
+// Same two routes, but the "/" destination now carries a loader that awaits
+// GET /refunds, mirroring the real homeLoader (which awaits
+// queryClient.ensureQueryData before the Home route ever renders). That gives
+// the router a genuine window where navigation.state is "loading" — without
+// it there would be no navigation to observe, and a test could pass or fail
+// for the wrong reason. `login` always resolves immediately here: only the
+// post-login navigation is meant to be slow.
+function renderLoginWithHomeRoute() {
+  const login = vi.fn().mockResolvedValue(undefined);
+  const router = createMemoryRouter(
+    [
+      { path: "/login", Component: PageLogin },
+      { path: "/", loader: () => api.get("/refunds"), element: <div>home page</div> },
+    ],
+    { initialEntries: ["/login"] }
+  );
+
+  render(
+    <AuthContext.Provider value={authValueWithLogin(login)}>
+      <RouterProvider router={router} />
+    </AuthContext.Provider>
+  );
+}
+
+function emptyListResponse() {
+  return {
+    type: "Refund",
+    count: 0,
+    total: 0,
+    sum_amount_in_cents: 0,
+    page: 1,
+    per_page: REFUNDS_PER_PAGE,
+    total_pages: 0,
+    attributes: [],
+  };
 }
 
 describe("PageLogin", () => {
@@ -85,5 +132,29 @@ describe("PageLogin", () => {
     const email = await screen.findByLabelText("E-mail");
     expect(email).toHaveAttribute("aria-invalid", "true");
     expect(email).toHaveAccessibleDescription("E-mail é obrigatório");
+  });
+
+  // The submit button must stay busy until the app has actually moved. Before
+  // this, isSubmitting fell as soon as login() resolved, leaving a ready-looking
+  // button on a page that had not changed yet — the router's loader was still
+  // fetching.
+  it("keeps the submit button busy while the post-login navigation is in flight", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("*/refunds", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        return HttpResponse.json(emptyListResponse());
+      })
+    );
+
+    renderLoginWithHomeRoute();
+
+    await user.type(screen.getByLabelText("E-mail"), "ana@exemplo.com");
+    await user.type(screen.getByLabelText("Senha"), "123456");
+    await user.click(screen.getByRole("button", { name: /Entrar/ }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Entrando/ })).toBeDisabled();
+    });
   });
 });

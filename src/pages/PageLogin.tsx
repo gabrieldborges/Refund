@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useNavigation } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
 import ReceiptIcon from "@/assets/icons/Receipt.svg?react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,14 @@ export default function PageLogin() {
     resolver: zodResolver(loginFormSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  // `isSubmitting` only covers the login request itself — it falls the
+  // instant `login()` resolves. But `navigate("/")` below then starts a
+  // router transition whose loader still has to fetch Home's data, and
+  // during that whole window the person is still looking at this form. The
+  // router's own navigation state is what closes that gap.
+  const navigation = useNavigation();
+  const isBusy = form.formState.isSubmitting || navigation.state !== "idle";
 
   async function onSubmit(data: LoginFormData) {
     setSubmitError(null);
@@ -88,8 +97,9 @@ export default function PageLogin() {
               </p>
             )}
 
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Entrando…" : "Entrar"}
+            <Button type="submit" disabled={isBusy} aria-busy={isBusy}>
+              {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {isBusy ? "Entrando…" : "Entrar"}
             </Button>
           </form>
         </Form>

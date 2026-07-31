@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router";
+import { useNavigate, useNavigation } from "react-router";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,14 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateRefund();
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // `isPending` covers only the create request; it falls the instant
+  // `mutateAsync` resolves. But `navigate("/success")` below then starts a
+  // router transition, and during it this dialog (and this button) is still
+  // what's on screen. The router's own navigation state is what closes that
+  // gap.
+  const navigation = useNavigation();
+  const isBusy = isPending || navigation.state !== "idle";
 
   const form = useForm<RefundCreateFormInput, unknown, RefundCreateFormData>({
     resolver: zodResolver(refundCreateSchema),
@@ -158,8 +167,9 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               </p>
             )}
 
-            <Button type="submit" disabled={isPending} >
-              {isPending ? "Enviando…" : "Enviar"}
+            <Button type="submit" disabled={isBusy} aria-busy={isBusy}>
+              {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {isBusy ? "Enviando…" : "Enviar"}
             </Button>
           </form>
         </Form>
