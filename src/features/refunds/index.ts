@@ -14,6 +14,9 @@ export { useRefund } from "./hooks/useRefund";
 export { useCreateRefund } from "./hooks/useCreateRefund";
 export { useDeleteRefund } from "./hooks/useDeleteRefund";
 export { useRefundStats } from "./hooks/useRefundStats";
+// Contagem global de pendentes para o card do admin. Independente do filtro
+// e da paginação da listagem, de propósito.
+export { usePendingCount } from "./hooks/usePendingCount";
 export { useReviewRefund } from "./hooks/useReviewRefund";
 export { usePayRefund } from "./hooks/usePayRefund";
 export { useRefundReviews } from "./hooks/useRefundReviews";

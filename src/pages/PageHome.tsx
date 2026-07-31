@@ -10,6 +10,7 @@ import {
   RefundsToolbar,
   useRefunds,
   useRefundStats,
+  usePendingCount,
   type RefundOrder,
   type RefundSort,
   type RefundStatus,
@@ -93,6 +94,17 @@ export default function PageHome() {
   // committed — labelled accordingly so the label carries the meaning.
   const approvedAndPaidCents =
     (stats?.by_status.approved.amount_in_cents ?? 0) + (stats?.by_status.paid.amount_in_cents ?? 0);
+
+  // The admin's pending count is global by definition — it answers "what
+  // needs my attention", so it must not follow the list's status filter,
+  // name search or page. It comes from a dedicated one-row query
+  // (usePendingCount), never from `data.total` above. A standard user's own
+  // count already comes from refund-stats, so the request is disabled here.
+  const {
+    count: pendingCount,
+    isLoading: isPendingLoading,
+    isError: isPendingError,
+  } = usePendingCount(isAdmin);
 
   const updateListLocation = useCallback(
     (nextName: string, nextPage: number, replace = false) => {
@@ -238,6 +250,30 @@ export default function PageHome() {
                 </p>
               ) : (
                 <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {isAdmin && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isPendingLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : isPendingError ? (
+                // Same idiom as the standard user's card above: a failed
+                // request must not fall through to "0", which would read as
+                // "nothing is pending" instead of "we don't know".
+                <p role="alert" className="text-sm text-destructive">
+                  Não foi possível carregar.
+                </p>
+              ) : (
+                <p className="text-2xl font-semibold">{pendingCount ?? 0}</p>
               )}
             </CardContent>
           </Card>

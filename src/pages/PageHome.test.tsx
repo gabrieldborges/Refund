@@ -180,10 +180,12 @@ describe("PageHome money card", () => {
   });
 
   // An admin's Home lists everyone's refunds, but GET /refund-stats is
-  // per-user — there is no endpoint for a global per-status aggregate. Until
-  // one exists, the admin card is honestly labelled "Solicitado" and reads the
-  // list's own sum_amount_in_cents, instead of faking a per-status total with
-  // N per-user requests.
+  // per-user — there is no endpoint for a global per-status money aggregate.
+  // Until one exists, the admin money card is honestly labelled "Solicitado"
+  // and reads the list's own sum_amount_in_cents, instead of faking a
+  // per-status total with N per-user requests. (The admin's separate
+  // Pendentes card, covered in the "PageHome pending card" block below, does
+  // have its own dedicated query — that one only needs a count, not a sum.)
   it("labels the money card 'Solicitado' and uses the list sum for an admin", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
 
@@ -191,7 +193,6 @@ describe("PageHome money card", () => {
 
     expect(await screen.findByText("Solicitado")).toBeInTheDocument();
     expect(await screen.findByText("R$ 4.182,00")).toBeInTheDocument();
-    expect(screen.queryByText("Pendentes")).not.toBeInTheDocument();
   });
 
   // With a status filter active the API's sum covers only that status, so the
@@ -232,6 +233,51 @@ describe("PageHome money card", () => {
     alerts.forEach((alert) => expect(alert).toHaveTextContent("Não foi possível carregar."));
 
     expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument();
+  });
+});
+
+describe("PageHome pending card", () => {
+  // The pending card is global by definition: it answers "what needs my
+  // attention", which does not depend on what the user is currently filtering.
+  // This is the assertion that would fail if someone wired it to the list.
+  it("keeps the admin pending count unchanged when a status filter is active", async () => {
+    server.use(
+      http.get("*/refunds", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        // The dedicated pending query asks for per_page=1; the list does not.
+        if (params.get("per_page") === "1") {
+          return HttpResponse.json({ ...pagedListResponse(), total: 7 });
+        }
+        return HttpResponse.json({ ...pagedListResponse(), total: 2 });
+      })
+    );
+
+    renderPageHome("/", "admin", 2, { status: "paid" });
+
+    expect(await screen.findByText("7")).toBeInTheDocument();
+  });
+
+  // A failed pending-count request must not render "0" — indistinguishable
+  // from "nothing pending" when the truth is "we don't know". Same idiom as
+  // the standard user's Pendentes card and the money card above.
+  it("shows a failure state instead of a false zero when the pending count fails to load", async () => {
+    server.use(
+      http.get("*/refunds", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get("per_page") === "1") {
+          return HttpResponse.json({}, { status: 500 });
+        }
+        return HttpResponse.json(pagedListResponse());
+      })
+    );
+
+    renderPageHome("/", "admin");
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Não foi possível carregar.");
+    const card = alert.closest('[data-slot="card"]') as HTMLElement;
+    expect(within(card).getByText("Pendentes")).toBeInTheDocument();
+    expect(within(card).queryByText("0")).not.toBeInTheDocument();
   });
 });
 
@@ -327,11 +373,17 @@ describe("PageHome status filter", () => {
 
   // The request itself is what proves the filter is server-side: asserting the
   // rendered rows could pass with a client-side filter over the current page.
+  // An admin's Home also fires the separate pending-count request (per_page=1,
+  // status=pending) alongside the list — that one is filtered out here by its
+  // per_page, so it cannot be mistaken for the list request this test targets.
   it("sends the status to the API", async () => {
     let capturedStatus: string | null = null;
     server.use(
       http.get("*/refunds", ({ request }) => {
-        capturedStatus = new URL(request.url).searchParams.get("status");
+        const params = new URL(request.url).searchParams;
+        if (params.get("per_page") !== "1") {
+          capturedStatus = params.get("status");
+        }
         return HttpResponse.json(pagedListResponse());
       })
     );
