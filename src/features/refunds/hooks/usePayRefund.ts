@@ -28,8 +28,11 @@ export function usePayRefund() {
     // inactive while here. refundKeys.all (not just .lists()) covers both,
     // and refetchType: "all" forces the refetch even without an active
     // observer on the list.
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.all, refetchType: "all" });
-    },
+    // A promise é DEVOLVIDA de propósito: o React Query mantém a mutation em
+    // `isPending` até um callback assíncrono resolver. Sem isso o botão volta
+    // ao normal quando o HTTP termina, com a tela ainda mostrando o estado
+    // anterior — o histórico, em particular, ainda não foi regerado.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: refundKeys.all, refetchType: "all" }),
   });
 }

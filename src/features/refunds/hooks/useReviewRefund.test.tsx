@@ -7,7 +7,9 @@ import { server } from "@/test/msw/server";
 import { refundFixture } from "@/test/msw/handlers";
 import { refundKeys, refundListQuery, refundDetailQuery } from "../api/refundQueries";
 import type { RefundsListResponse, RefundStatus } from "../schemas/refund";
+import { QueryWrapper } from "@/test/utils";
 import { useReviewRefund } from "./useReviewRefund";
+import { useRefund } from "./useRefund";
 
 // Builds a list response body from a set of items, mirroring
 // useDeleteRefund.test.tsx's helper.
@@ -94,5 +96,54 @@ describe("useReviewRefund", () => {
 
     const listData = qc.getQueryData<RefundsListResponse>(refundKeys.list(params));
     expect(listData?.attributes[0]?.status).toBe("approved");
+  });
+
+  // A mutation's pending state must cover the refetches it triggers, not just
+  // its own HTTP call. Without this, the UI says "done" while the screen still
+  // shows stale data — the exact bug this task fixes. The gate below holds the
+  // refetch open so the two moments are observably different.
+  it("stays pending until the invalidated queries have refetched", async () => {
+    let releaseRefetch!: () => void;
+    const refetchGate = new Promise<void>((resolve) => {
+      releaseRefetch = resolve;
+    });
+    let patchResolved = false;
+    let refetchStarted = false;
+
+    server.use(
+      http.patch("*/refunds/:id/status", () => {
+        patchResolved = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.get("*/refunds/:id", async ({ params }) => {
+        // The first call is the initial load; only gate the refetch.
+        if (refetchStarted) await refetchGate;
+        refetchStarted = true;
+        return HttpResponse.json({
+          type: "Refund",
+          count: 1,
+          attributes: { ...refundFixture, id: Number(params.id) },
+        });
+      })
+    );
+
+    const { result } = renderHook(
+      () => ({ detail: useRefund("1"), review: useReviewRefund() }),
+      { wrapper: QueryWrapper }
+    );
+
+    // An ACTIVE query must exist, or there is nothing for the invalidation to
+    // wait on and the test would pass either way.
+    await waitFor(() => expect(result.current.detail.isSuccess).toBe(true));
+
+    result.current.review.mutate({ id: "1", status: "approved" });
+
+    await waitFor(() => expect(patchResolved).toBe(true));
+    // The HTTP call is done; the screen is not updated yet. This is the
+    // assertion the old code fails.
+    expect(result.current.review.isPending).toBe(true);
+
+    releaseRefetch();
+    await waitFor(() => expect(result.current.review.isPending).toBe(false));
   });
 });

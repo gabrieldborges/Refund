@@ -21,8 +21,11 @@ export function useCreateRefund() {
     // Mesmo alvo do useDeleteRefund: refundKeys.lists() (só as listas) com
     // refetchType: "all", que refaz também as listas inativas e mantém a
     // consistência sem tocar em nenhuma query de detalhe.
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" });
-    },
+    // A promise é DEVOLVIDA de propósito: o React Query mantém a mutation em
+    // `isPending` até um callback assíncrono resolver. Sem isso o botão volta
+    // ao normal quando o HTTP termina, com a tela ainda mostrando o estado
+    // anterior.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" }),
   });
 }

@@ -28,8 +28,11 @@ export function useReviewRefund() {
     // item revisado continua existindo, só muda de estado. A Home fica
     // INATIVA enquanto se revisa, e o refetchType padrão ("active") deixaria
     // sua lista velha por até o staleTime; "all" força o refetch mesmo assim.
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.all, refetchType: "all" });
-    },
+    // A promise é DEVOLVIDA de propósito: o React Query mantém a mutation em
+    // `isPending` até um callback assíncrono resolver. Sem isso o botão volta
+    // ao normal quando o HTTP termina, com a tela ainda mostrando o estado
+    // anterior — o histórico, em particular, ainda não foi regerado.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: refundKeys.all, refetchType: "all" }),
   });
 }

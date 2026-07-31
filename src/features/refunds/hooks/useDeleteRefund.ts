@@ -18,8 +18,11 @@ export function useDeleteRefund() {
     //    INATIVA. O padrão ("active") só refaz queries ativas — a lista inativa
     //    ficaria só marcada como velha e, por causa do staleTime de 30s, não
     //    seria refeita na próxima montagem. "all" força o refetch mesmo inativa.
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" });
-    },
+    // A promise é DEVOLVIDA de propósito: o React Query mantém a mutation em
+    // `isPending` até um callback assíncrono resolver. Sem isso o botão volta
+    // ao normal quando o HTTP termina, com a tela ainda mostrando o estado
+    // anterior.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: refundKeys.lists(), refetchType: "all" }),
   });
 }
