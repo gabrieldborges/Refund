@@ -48,8 +48,8 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { mutateAsync, isPending } = useReviewRefund();
 
-  // Which action is in flight. `isPending` alone can't say which button was
-  // clicked, and without this both buttons would show a spinner at once.
+  // Qual ação está em voo. `isPending` sozinho não diz qual botão foi clicado,
+  // e sem isso os dois botões mostrariam spinner ao mesmo tempo.
   const [pendingAction, setPendingAction] = useState<"approve" | "reject" | null>(null);
 
   const form = useForm<RejectFormData>({

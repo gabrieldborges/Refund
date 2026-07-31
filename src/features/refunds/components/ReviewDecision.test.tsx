@@ -175,4 +175,20 @@ describe("ReviewDecision", () => {
       expect(screen.getByRole("button", { name: "Rejeitar" })).toBeDisabled();
     });
   });
+
+  // A spinner that never stops is worse than the dead-UI bug this task fixes.
+  // `pendingAction` is cleared in a `finally`, so a failed request must also
+  // return the button to its idle, clickable state — not just the happy path.
+  it("returns the approve button to its idle label when the decision fails", async () => {
+    const user = userEvent.setup();
+    server.use(http.patch("*/refunds/:id/status", () => HttpResponse.json({}, { status: 500 })));
+
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    const idle = await screen.findByRole("button", { name: "Aprovar" });
+    expect(idle).toBeEnabled();
+    expect(idle).toHaveAttribute("aria-busy", "false");
+  });
 });

@@ -173,4 +173,27 @@ describe("PayRefundDialog", () => {
     expect(busy).toBeDisabled();
     expect(busy).toHaveAttribute("aria-busy", "true");
   });
+
+  // The dialog must not become permanently unclosable when the request fails
+  // (or hangs — the shared axios instance has no timeout, so this is the same
+  // failure mode as a dropped connection). PayRefundDialog stays mounted the
+  // whole time (the parent renders it unconditionally), so closing it loses
+  // nothing: the mutation and its invalidation keep running regardless.
+  it("returns the confirm button to idle and stays closeable when the payment fails", async () => {
+    const user = userEvent.setup();
+    server.use(http.post("*/refunds/:id/payment", () => HttpResponse.json({}, { status: 500 })));
+    const { onOpenChange } = renderDialog();
+
+    await screen.findByRole("dialog");
+    const validFile = new File(["dummy"], "comprovante.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Comprovante de pagamento"), validFile);
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+
+    const idle = await screen.findByRole("button", { name: "Confirmar pagamento" });
+    expect(idle).toBeEnabled();
+    expect(idle).toHaveAttribute("aria-busy", "false");
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });

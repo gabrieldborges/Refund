@@ -46,17 +46,8 @@ export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRef
     }
   }
 
-  // Ignore close attempts (the header's X, outside click, Escape) while the
-  // upload is in flight — same reasoning as disabling the other decision
-  // buttons in ReviewDecision: the user should not be able to walk away from
-  // a mutation that is still running.
-  function handleOpenChange(next: boolean) {
-    if (isPending) return;
-    onOpenChange(next);
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Marcar como pago</DialogTitle>
