@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, REFUND_STATUS, useRefunds, useRefundStats } from "@/features/refunds";
+import { CATEGORIES, getRefundHref, REFUND_STATUS, useRefunds, useRefundStats } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAuth } from "@/context/useAuth";
@@ -223,9 +223,10 @@ export default function PageHome() {
             // BR-016: an admin may review any refund except their own. This
             // mirrors reviewLoader's guard (router-loaders.ts) so the row
             // never links to a route the loader would immediately redirect
-            // away from.
-            const canReview = user?.role === "admin" && refund.user.id !== user.id;
-            const href = canReview ? `/refunds/${refund.id}/review` : `/refunds/${refund.id}`;
+            // away from. getRefundHref is the single implementation of this
+            // rule, shared with RequesterPanel (Task 9) so the two never
+            // carry two copies that could drift apart.
+            const href = getRefundHref(refund, user);
             return (
               <li key={refund.id} className="border-b last:border-b-0">
                 <Link

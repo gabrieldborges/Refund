@@ -10,21 +10,24 @@ import {
   PayRefundDialog,
   ReceiptPreview,
   REFUND_STATUS,
+  RequesterPanel,
   ReviewDecision,
   ReviewTimeline,
   useRefund,
 } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
+import { useAuth } from "@/context/useAuth";
 
 // reviewLoader (router-loaders.ts) already guarantees only an admin reviewing
 // someone else's refund reaches this component.
 export default function PageRefundReview() {
   const { id } = useParams();
+  const { user } = useAuth();
   const { data: refund, isLoading, isError } = useRefund(id);
   const [isPayOpen, setIsPayOpen] = useState(false);
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-6 p-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
       <Card>
         {isLoading && (
           <>
@@ -81,6 +84,8 @@ export default function PageRefundReview() {
           </>
         )}
       </Card>
+
+      {refund && !isLoading && <RequesterPanel requester={refund.user} viewer={user} />}
 
       {id && <PayRefundDialog refundId={id} open={isPayOpen} onOpenChange={setIsPayOpen} />}
     </div>

@@ -3,21 +3,40 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
-import { refundFixture } from "@/test/msw/handlers";
+import { refundFixture, refundStatsFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
+import { AuthProvider } from "@/context/AuthContext";
+import { USER_STORAGE_KEY } from "@/lib/api";
 import PageRefundReview from "./PageRefundReview";
+
+// Mirrors renderPageHome's seedSession in PageHome.test.tsx. id defaults to
+// 99 — different from refundFixture.user.id (1) — since PageRefundReview now
+// mounts RequesterPanel, which needs a real admin viewer distinct from the
+// refund's owner (an admin reviewing their own refund never reaches this
+// page; reviewLoader redirects it away).
+function seedSession(id = 99) {
+  localStorage.setItem(
+    USER_STORAGE_KEY,
+    JSON.stringify({ id, name: "Gabriel", email: "gabriel@exemplo.com", role: "admin" })
+  );
+}
 
 // Mirrors renderPageRefundDetails in PageRefundDetails.test.tsx. The real
 // reviewLoader guard (admin-only) lives in router.tsx and is out of scope
 // here — this page component itself only needs the refund id from the URL.
+// AuthProvider is real (not stubbed) because PageRefundReview now reads the
+// logged-in admin via useAuth() to pass as RequesterPanel's `viewer`.
 function renderPageRefundReview() {
+  seedSession();
   const router = createMemoryRouter([{ path: "/refunds/:id/review", Component: PageRefundReview }], {
     initialEntries: ["/refunds/1/review"],
   });
 
   return render(
     <QueryWrapper>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryWrapper>
   );
 }
@@ -78,4 +97,18 @@ describe("PageRefundReview", () => {
       ).not.toBeInTheDocument();
     }
   );
+
+  // Task 7's review flagged that no page-level test asserted ReviewTimeline
+  // was actually mounted, only that its own component tests passed —
+  // deleting it from the page would still have left the suite green. Cover
+  // the same gap here: RequesterPanel must be genuinely wired into this page,
+  // not just exist as a standalone component.
+  it("wires RequesterPanel in, showing the requester's name and status counters", async () => {
+    renderPageRefundReview();
+
+    expect(await screen.findByText(refundFixture.user.name)).toBeInTheDocument();
+    expect(
+      await screen.findByText(String(refundStatsFixture.by_status.pending.count))
+    ).toBeInTheDocument();
+  });
 });

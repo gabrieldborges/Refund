@@ -6,6 +6,11 @@ interface RefundListParams {
   page: number;
   perPage: number;
   name?: string;
+  // Scopes the list to one requester (GET /refunds?user_id=). Only an admin's
+  // request is actually restricted by it — UC-004 says the API ignores the
+  // param for a standard user, whose scope is already fixed to their own
+  // token — so passing it is safe by construction; no new error path exists.
+  userId?: number;
 }
 
 // Fonte única das chaves de cache dos reembolsos. Tudo deriva de `all`, então as
@@ -52,7 +57,12 @@ export function refundListQuery(params: RefundListParams) {
     // componente desmontou), o Axios aborta a requisição em vez de terminá-la à toa.
     queryFn: async ({ signal }) => {
       const { data } = await api.get<unknown>("/refunds", {
-        params: { page: params.page, per_page: params.perPage, name: params.name || undefined },
+        params: {
+          page: params.page,
+          per_page: params.perPage,
+          name: params.name || undefined,
+          user_id: params.userId,
+        },
         signal,
       });
       return refundsListResponseSchema.parse(data);

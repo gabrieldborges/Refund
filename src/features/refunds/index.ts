@@ -26,6 +26,11 @@ export { CATEGORIES, CATEGORY_OPTIONS } from "./constants/categories";
 export { REFUNDS_PER_PAGE } from "./constants/pagination";
 export { REFUND_STATUS } from "./constants/status";
 
+// BR-016 route rule: which page a refund row should link to for the current
+// viewer. Shared by the Home's list and RequesterPanel (Task 9) so the two
+// never carry two copies of the same condition.
+export { getRefundHref, type RefundViewer } from "./lib/getRefundHref";
+
 // Feature component mounted by the app shell (MainLayout).
 export { default as RefundFormDialog } from "./components/RefundFormDialog";
 
@@ -41,3 +46,8 @@ export { default as PayRefundDialog } from "./components/PayRefundDialog";
 
 // Review history timeline: the closed loop for a rejection's reason (UC-013).
 export { default as ReviewTimeline } from "./components/ReviewTimeline";
+
+// Requester panel: name, per-status counters and the requester's own refunds
+// (first page), shown on the review screen so an admin judges one request
+// against that person's history instead of in isolation (UC-014).
+export { default as RequesterPanel } from "./components/RequesterPanel";
