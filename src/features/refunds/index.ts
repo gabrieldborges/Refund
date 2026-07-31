@@ -20,6 +20,7 @@ export { useRefundReviews } from "./hooks/useRefundReviews";
 
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
+export type { RefundSort, RefundOrder } from "./schemas/refund";
 
 // Domain constants consumed by pages.
 export { CATEGORIES, CATEGORY_OPTIONS } from "./constants/categories";

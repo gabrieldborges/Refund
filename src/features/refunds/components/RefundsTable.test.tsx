@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
+import type React from "react";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { refundFixture } from "@/test/msw/handlers";
 import type { RefundViewer } from "../lib/getRefundHref";
@@ -29,16 +31,23 @@ const refunds: Refund[] = [
   } as Refund,
 ];
 
-function renderTable(viewer: RefundViewer | null = adminViewer) {
-  const router = createMemoryRouter(
-    [
-      {
-        path: "/",
-        Component: () => <RefundsTable refunds={refunds} viewer={viewer} isLoading={false} />,
-      },
-    ],
-    { initialEntries: ["/"] }
-  );
+function renderTable(
+  viewer: RefundViewer | null = adminViewer,
+  overrides: Partial<React.ComponentProps<typeof RefundsTable>> = {}
+) {
+  const props = {
+    refunds,
+    viewer,
+    isLoading: false,
+    sort: "created_at" as const,
+    order: "desc" as const,
+    onSortChange: () => {},
+    ...overrides,
+  };
+
+  const router = createMemoryRouter([{ path: "/", Component: () => <RefundsTable {...props} /> }], {
+    initialEntries: ["/"],
+  });
 
   return render(<RouterProvider router={router} />);
 }
@@ -132,5 +141,40 @@ describe("RefundsTable column visibility", () => {
 
     expect(screen.getByText("Data").closest("th")).toHaveClass("hidden");
     expect(screen.getByText("Solicitante").closest("th")).toHaveClass("hidden");
+  });
+});
+
+describe("RefundsTable sorting", () => {
+  // Only the four columns the API accepts in `sort` (UC-004) may look
+  // clickable. A button on category or requester would either do nothing or,
+  // worse, invite a client-side sort over the 10 rows of the current page.
+  it("offers a sort button only for the columns the API can sort", () => {
+    renderTable(adminViewer);
+
+    expect(screen.getByRole("button", { name: /Título/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Data/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Status/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Valor/ })).toBeInTheDocument();
+
+    expect(screen.queryByRole("button", { name: /Solicitante/ })).not.toBeInTheDocument();
+  });
+
+  it("reports the clicked column to the caller", async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    renderTable(adminViewer, { onSortChange });
+
+    await user.click(screen.getByRole("button", { name: /Valor/ }));
+
+    expect(onSortChange).toHaveBeenCalledWith("amount_in_cents");
+  });
+
+  // The sorted column must be announced, not just drawn with an arrow: a
+  // screen reader user otherwise has no way to know which column is active.
+  it("marks the active column with aria-sort", () => {
+    renderTable(adminViewer, { sort: "amount_in_cents", order: "asc" });
+
+    expect(screen.getByText("Valor").closest("th")).toHaveAttribute("aria-sort", "ascending");
+    expect(screen.getByText("Data").closest("th")).toHaveAttribute("aria-sort", "none");
   });
 });

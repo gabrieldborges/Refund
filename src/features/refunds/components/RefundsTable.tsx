@@ -7,7 +7,9 @@ import {
   type ColumnDef,
   type RowData,
 } from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -22,7 +24,7 @@ import { formatCentsToBRL, formatDate } from "@/lib/format";
 import { CATEGORIES } from "../constants/categories";
 import { REFUND_STATUS } from "../constants/status";
 import { getRefundHref, type RefundViewer } from "../lib/getRefundHref";
-import type { Refund } from "../schemas/refund";
+import type { Refund, RefundOrder, RefundSort } from "../schemas/refund";
 
 // Column-level styling hook. The TanStack types carry no `className`, so the
 // table's own meta slot is augmented instead of threading a parallel lookup
@@ -38,6 +40,9 @@ interface RefundsTableProps {
   refunds: Refund[];
   viewer: RefundViewer | null;
   isLoading: boolean;
+  sort: RefundSort;
+  order: RefundOrder;
+  onSortChange: (column: RefundSort) => void;
 }
 
 // Os ids das colunas ordenáveis são EXATAMENTE os valores que `sort` aceita em
@@ -66,6 +71,11 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
     {
       id: "name",
       header: "Título",
+      // TanStack only considers a column sortable when it has an accessor
+      // (getCanSort checks `!!column.accessorFn`); the value itself is
+      // unused, sorting happens on the server, but the accessor is what
+      // turns the header into a clickable button below.
+      accessorFn: (refund) => refund.name,
       cell: ({ row }) => (
         <Link
           to={getRefundHref(row.original, viewer)}
@@ -85,12 +95,14 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
     {
       id: "created_at",
       header: "Data",
+      accessorFn: (refund) => refund.created_at,
       meta: { className: "hidden sm:table-cell" },
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       id: "status",
       header: "Status",
+      accessorFn: (refund) => refund.status,
       cell: ({ row }) => (
         <Badge variant={REFUND_STATUS[row.original.status].variant}>
           {REFUND_STATUS[row.original.status].label}
@@ -100,13 +112,21 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
     {
       id: "amount_in_cents",
       header: "Valor",
+      accessorFn: (refund) => refund.amount_in_cents,
       cell: ({ row }) => formatCentsToBRL(row.original.amount_in_cents),
       meta: { className: "text-right" },
     },
   ];
 }
 
-export default function RefundsTable({ refunds, viewer, isLoading }: RefundsTableProps) {
+export default function RefundsTable({
+  refunds,
+  viewer,
+  isLoading,
+  sort,
+  order,
+  onSortChange,
+}: RefundsTableProps) {
   const columns = useMemo(() => createRefundColumns(viewer), [viewer]);
 
   // Two mechanisms with different purposes: screen width is CSS
@@ -152,18 +172,53 @@ export default function RefundsTable({ refunds, viewer, isLoading }: RefundsTabl
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className={cn(header.column.columnDef.meta?.className)}>
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
+              {headerGroup.headers.map((header) => {
+                const isSorted = header.column.id === sort;
+                const label = flexRender(header.column.columnDef.header, header.getContext());
+                const SortIcon = !isSorted ? ChevronsUpDown : order === "asc" ? ArrowUp : ArrowDown;
+
+                return (
+                  <TableHead
+                    key={header.id}
+                    className={cn(header.column.columnDef.meta?.className)}
+                    // Sem isto o estado de ordenação é só uma seta desenhada:
+                    // invisível para quem usa leitor de tela.
+                    aria-sort={
+                      !header.column.getCanSort()
+                        ? undefined
+                        : !isSorted
+                          ? "none"
+                          : order === "asc"
+                            ? "ascending"
+                            : "descending"
+                    }
+                  >
+                    {header.column.getCanSort() ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-2 h-8"
+                        onClick={() => onSortChange(header.column.id as RefundSort)}
+                      >
+                        {label}
+                        <SortIcon className="size-3.5" aria-hidden />
+                      </Button>
+                    ) : (
+                      label
+                    )}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           ))}
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={columns.length} className="py-6 text-center text-muted-foreground">
+              <TableCell
+                colSpan={table.getVisibleFlatColumns().length}
+                className="py-6 text-center text-muted-foreground"
+              >
                 Nenhuma solicitação encontrada.
               </TableCell>
             </TableRow>

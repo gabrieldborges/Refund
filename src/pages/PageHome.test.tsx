@@ -60,7 +60,14 @@ function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standa
     [
       {
         path: "/",
-        loader: () => ({ page, perPage: 10, name: undefined }),
+        loader: () => ({
+          page,
+          perPage: REFUNDS_PER_PAGE,
+          name: undefined,
+          status: undefined,
+          sort: "created_at",
+          order: "desc",
+        }),
         Component: PageHome,
       },
     ],
@@ -231,5 +238,40 @@ describe("PageHome row navigation", () => {
 
     const row = await screen.findByRole("link", { name: /Almoço com cliente/ });
     expect(row).toHaveAttribute("href", "/refunds/1");
+  });
+});
+
+describe("PageHome sorting", () => {
+  // The proof that sorting is server-side: the click must reach the URL (and
+  // from there the request), not reorder the rows already in memory. A
+  // client-side sort would leave the URL untouched and silently sort 10 of 24
+  // rows — the exact bug the backend query cycle exists to prevent.
+  it("writes the clicked column to the URL and resets the page", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+    const user = userEvent.setup();
+
+    const { router } = renderPageHome("/?page=2", "admin", 2);
+
+    await user.click(await screen.findByRole("button", { name: /Valor/ }));
+
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?sort=amount_in_cents");
+    });
+  });
+
+  // The default direction carries no information, so it stays out of the URL —
+  // the same rule page=1 and the empty name already follow.
+  it("omits the default sort from the URL and toggles direction on a second click", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+    const user = userEvent.setup();
+
+    const { router } = renderPageHome("/", "admin", 2);
+
+    const dateHeader = await screen.findByRole("button", { name: /Data/ });
+    await user.click(dateHeader);
+
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?order=asc");
+    });
   });
 });

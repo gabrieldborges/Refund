@@ -5,11 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefundsTable, useRefunds, useRefundStats } from "@/features/refunds";
+import {
+  RefundsTable,
+  useRefunds,
+  useRefundStats,
+  type RefundOrder,
+  type RefundSort,
+} from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAuth } from "@/context/useAuth";
 import type { homeLoader } from "@/router-loaders";
+
+// Coluna nova começa na direção que faz sentido para o tipo do dado; a mesma
+// coluna clicada de novo inverte. Tabela de lookup em vez de ternários
+// encadeados, como REFUND_STATUS e RECEIPT_COPY.
+const DEFAULT_ORDER_BY_COLUMN: Record<RefundSort, RefundOrder> = {
+  name: "asc",
+  status: "asc",
+  created_at: "desc",
+  amount_in_cents: "desc",
+};
 
 interface RefundSearchProps {
   initialSearch: string;
@@ -51,12 +67,12 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
 }
 
 export default function PageHome() {
-  const { page, perPage, name } = useLoaderData<typeof homeLoader>();
+  const { page, perPage, name, status, sort, order } = useLoaderData<typeof homeLoader>();
   const [, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
-  const { data, isLoading, isError } = useRefunds({ page, perPage, name });
+  const { data, isLoading, isError } = useRefunds({ page, perPage, name, status, sort, order });
   // An admin's Home lists everyone's refunds, but GET /users/{id}/refund-stats
   // is per-user (see UC-014) — there is no endpoint for a global per-status
   // aggregate. An admin's money card therefore doesn't need this query at all
@@ -100,6 +116,29 @@ export default function PageHome() {
       );
     },
     [setSearchParams]
+  );
+
+  const handleSortChange = useCallback(
+    (column: RefundSort) => {
+      const nextOrder: RefundOrder =
+        column === sort ? (order === "asc" ? "desc" : "asc") : DEFAULT_ORDER_BY_COLUMN[column];
+
+      setSearchParams((currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+        // Ordenar reinicia a paginação: a página 3 de uma ordem é um conjunto
+        // sem relação com a página 3 da outra.
+        nextParams.delete("page");
+
+        if (column === "created_at") nextParams.delete("sort");
+        else nextParams.set("sort", column);
+
+        if (nextOrder === "desc") nextParams.delete("order");
+        else nextParams.set("order", nextOrder);
+
+        return nextParams;
+      });
+    },
+    [order, setSearchParams, sort]
   );
 
   return (
@@ -185,7 +224,14 @@ export default function PageHome() {
       )}
 
       {!isError && (
-        <RefundsTable refunds={data?.attributes ?? []} viewer={user} isLoading={isLoading} />
+        <RefundsTable
+          refunds={data?.attributes ?? []}
+          viewer={user}
+          isLoading={isLoading}
+          sort={sort}
+          order={order}
+          onSortChange={handleSortChange}
+        />
       )}
 
       {data && data.total_pages > 0 && (
