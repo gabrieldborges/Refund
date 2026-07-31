@@ -130,6 +130,65 @@ describe("PageRefundReview", () => {
   });
 });
 
+describe("PageRefundReview pending queue", () => {
+  // Alias for renderPageRefundReview(): this describe block never needs the
+  // status override, only the plain render.
+  function renderReviewPage() {
+    return renderPageRefundReview();
+  }
+
+  it("links the queue button to the next eligible pending refund", async () => {
+    // A pending list whose first entry is a different refund from a different
+    // person — the one the button must land on.
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 1,
+          total: 1,
+          sum_amount_in_cents: 4500,
+          page: 1,
+          per_page: 10,
+          total_pages: 1,
+          attributes: [
+            { ...refundFixture, id: 42, status: "pending", user: { id: 3, name: "Carla", has_avatar: false } },
+          ],
+        })
+      )
+    );
+
+    renderReviewPage();
+
+    expect(await screen.findByRole("link", { name: "Próxima pendente" })).toHaveAttribute(
+      "href",
+      "/refunds/42/review"
+    );
+  });
+
+  // Disabled, not absent: a button that disappears leaves the admin unable to
+  // tell "the queue is empty" from "the screen is broken".
+  it("disables the queue button when the queue has nothing eligible", async () => {
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 0,
+          total: 0,
+          sum_amount_in_cents: 0,
+          page: 1,
+          per_page: 10,
+          total_pages: 0,
+          attributes: [],
+        })
+      )
+    );
+
+    renderReviewPage();
+
+    expect(await screen.findByRole("button", { name: "Próxima pendente" })).toBeDisabled();
+  });
+});
+
 describe("PageRefundReview receipts", () => {
   // The admin approves or rejects based on the expense receipt. Showing only
   // the payment receipt means deciding without the document that justifies

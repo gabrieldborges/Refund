@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useParams } from "react-router";
+import { ArrowRight } from "lucide-react";
+import { Link, useParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,7 @@ import {
   RequesterPanel,
   ReviewDecision,
   ReviewTimeline,
+  useNextPendingRefund,
   useRefund,
 } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
@@ -25,9 +28,28 @@ export default function PageRefundReview() {
   const { user } = useAuth();
   const { data: refund, isLoading, isError } = useRefund(id);
   const [isPayOpen, setIsPayOpen] = useState(false);
+  const { nextRefund } = useNextPendingRefund(refund?.id ?? 0, user);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+      {refund && (
+      <div className="flex justify-end">
+        {nextRefund ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/refunds/${nextRefund.id}/review`}>
+              Próxima pendente
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" disabled>
+            Próxima pendente
+            <ArrowRight className="size-4" aria-hidden />
+          </Button>
+        )}
+      </div>
+      )}
+
       <Card>
         {isLoading && (
           <>

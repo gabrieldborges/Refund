@@ -18,6 +18,10 @@ export { useReviewRefund } from "./hooks/useReviewRefund";
 export { usePayRefund } from "./hooks/usePayRefund";
 export { useRefundReviews } from "./hooks/useRefundReviews";
 
+// A próxima solicitação pendente revisável, para a navegação em fila da tela
+// de revisão. Pula a solicitação aberta e as do próprio admin (BR-016).
+export { useNextPendingRefund } from "./hooks/useNextPendingRefund";
+
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
 export type { RefundSort, RefundOrder, RefundStatus } from "./schemas/refund";
