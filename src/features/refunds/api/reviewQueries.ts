@@ -17,9 +17,10 @@ export function refundStatsQuery(userId: number) {
 
 // A refund's full decision history (GET /refunds/{id}/reviews — UC-013).
 // The API returns entries ordered chronologically (oldest first, id as
-// tie-breaker); this layer parses and returns them as-is, so the caller must
-// render them in the order received rather than re-sorting. An undecided
-// refund returns a 200 with an empty list, not an error.
+// tie-breaker); this layer parses and returns them as-is — it never
+// reorders by any field. Presentation order (e.g. most-recent-first) is a
+// decision left to the caller, made without mutating this cached array. An
+// undecided refund returns a 200 with an empty list, not an error.
 export function refundReviewsQuery(id: string) {
   return queryOptions({
     queryKey: refundKeys.reviews(id),

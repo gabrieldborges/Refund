@@ -43,10 +43,12 @@ export default function ReviewTimeline({ refundId }: ReviewTimelineProps) {
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-medium">Histórico</h3>
-      {/* Rendered in the order the API returns (oldest first, id as
-          tie-breaker) — never re-sorted here. */}
+      {/* Shown most recent to oldest. This is PRESENTATION order: the data
+          layer (api/reviewQueries.ts) still hands back exactly what the API
+          sent, with no reordering by field, and `toReversed` does not
+          mutate the array cached by React Query. */}
       <ol className="flex flex-col gap-3">
-        {data.attributes.map((review) => (
+        {data.attributes.toReversed().map((review) => (
           <li
             key={`${review.created_at}-${review.from_status}-${review.to_status}`}
             className="flex flex-col gap-1 border-l-2 border-muted pl-3"

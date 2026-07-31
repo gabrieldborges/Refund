@@ -88,4 +88,42 @@ describe("ReviewTimeline", () => {
     );
     expect(container).not.toBeEmptyDOMElement();
   });
+
+  // Most recent first. The response below is chronological — oldest to newest,
+  // which is what UC-013 says the API returns — so "renders the last entry
+  // first" and "renders the most recent first" are the same statement here.
+  // The shared refundReviewsFixture is NOT chronological, which is why this
+  // test does not use it.
+  it("shows the most recent decision first", async () => {
+    server.use(
+      http.get("*/refunds/:id/reviews", () =>
+        HttpResponse.json({
+          type: "RefundReview",
+          count: 2,
+          attributes: [
+            {
+              from_status: "pending",
+              to_status: "approved",
+              reason: null,
+              reviewer: { id: 1, name: "Gabriel" },
+              created_at: "2026-07-30T10:00:00.000Z",
+            },
+            {
+              from_status: "approved",
+              to_status: "paid",
+              reason: null,
+              reviewer: { id: 1, name: "Gabriel" },
+              created_at: "2026-07-30T14:20:00.000Z",
+            },
+          ],
+        })
+      )
+    );
+
+    renderTimeline();
+
+    const entries = await screen.findAllByRole("listitem");
+    expect(entries[0]).toHaveTextContent("Pago");
+    expect(entries[1]).toHaveTextContent("Aprovado");
+  });
 });

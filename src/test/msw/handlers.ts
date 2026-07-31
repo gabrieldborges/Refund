@@ -44,11 +44,19 @@ export const loginFixture = {
   token: "fake-jwt-token",
 };
 
-// A refund's review history: approved then paid, plus a rejection with a
-// non-null reason. A fixture with only null reasons could not distinguish
-// "moved forward" from "was discarded" — the rejection reason is the one
-// field this endpoint exists to expose.
+// A refund's review history: rejected, then approved, then paid. A fixture
+// with only null reasons could not distinguish "moved forward" from "was
+// discarded" — the rejection reason is the one field this endpoint exists
+// to expose. Ordered oldest to newest, mirroring the chronological order
+// UC-013 says the API returns.
 export const refundReviewsFixture = [
+  {
+    from_status: "pending",
+    to_status: "rejected",
+    reason: "Comprovante ilegível",
+    reviewer: { id: 1, name: "Gabriel" },
+    created_at: "2026-07-30T09:00:00.000Z",
+  },
   {
     from_status: "pending",
     to_status: "approved",
@@ -62,13 +70,6 @@ export const refundReviewsFixture = [
     reason: null,
     reviewer: { id: 1, name: "Gabriel" },
     created_at: "2026-07-30T14:20:00.000Z",
-  },
-  {
-    from_status: "pending",
-    to_status: "rejected",
-    reason: "Comprovante ilegível",
-    reviewer: { id: 1, name: "Gabriel" },
-    created_at: "2026-07-30T09:00:00.000Z",
   },
 ];
 
