@@ -50,15 +50,17 @@ export default function AppSidebar() {
               content without moving the layout box, so the hover background
               (tied to the box) stayed put and left an unhighlighted strip on
               the left. Padding moves the box itself, so hover now fills the
-              row. group-data-[collapsible=icon]:pl-0! + justify-center restore
-              centering in the collapsed/icon rail, where the button shrinks to
-              a fixed square and padding alone would push the icon off-center. */}
+              row. In the collapsed/icon rail, the shrunk 32px button has no
+              internal slack to redistribute (its own p-2! padding already
+              centers a 16px icon exactly) — what needs centering is the whole
+              button *within* the wider 48px rail, so that centering belongs
+              on the row (SidebarMenuItem), not inside the button. */}
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
-              <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center ">
+              <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center group-data-[collapsible=icon]:justify-center">
                 {item.enabled ? (
-                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-2 group-data-[collapsible=icon]:pl-0! group-data-[collapsible=icon]:justify-center hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-2 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
                     <Link to={item.to} className=" bg-sidebar!">
                       <Icon aria-hidden />
                       <span >{item.label}</span>
