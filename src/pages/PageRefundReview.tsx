@@ -5,7 +5,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, PayRefundDialog, REFUND_STATUS, ReviewDecision, useRefund } from "@/features/refunds";
+import {
+  CATEGORIES,
+  PayRefundDialog,
+  REFUND_STATUS,
+  ReviewDecision,
+  ReviewTimeline,
+  useRefund,
+} from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 
 // reviewLoader (router-loaders.ts) already guarantees only an admin reviewing
@@ -56,6 +63,7 @@ export default function PageRefundReview() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
+              {id && <ReviewTimeline refundId={id} />}
             </CardContent>
             {id && (
               <CardFooter>

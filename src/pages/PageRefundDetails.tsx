@@ -15,7 +15,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CATEGORIES, REFUND_STATUS, ReceiptPreview, useDeleteRefund, useRefund } from "@/features/refunds";
+import {
+  CATEGORIES,
+  REFUND_STATUS,
+  ReceiptPreview,
+  ReviewTimeline,
+  useDeleteRefund,
+  useRefund,
+} from "@/features/refunds";
 import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
 
@@ -83,6 +90,7 @@ export default function PageRefundDetails() {
                 />
               </div>
               {id && <ReceiptPreview refundId={id} refundName={refund.name} />}
+              {id && <ReviewTimeline refundId={id} />}
             </CardContent>
             <CardFooter>
               <Button

@@ -28,6 +28,10 @@ export const refundKeys = {
   // an admin can read another user's stats, so different users must not
   // share a cache entry.
   stats: (userId: number) => [...refundKeys.all, "stats", userId] as const,
+  // A refund's full decision history (UC-013). Own subtree under
+  // ["refunds"] rather than nested under detail(id): it is a distinct
+  // resource (GET /refunds/{id}/reviews), not a field of the refund itself.
+  reviews: (id: string) => [...refundKeys.all, "reviews", id] as const,
 };
 
 // queryOptions empacota { queryKey, queryFn } num objeto tipado e reutilizável.
