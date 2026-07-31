@@ -33,7 +33,7 @@ describe("formatCentsToBRL", () => {
 
 describe("formatDate", () => {
   it("formats an ISO timestamp as a pt-BR date", () => {
-    expect(formatDate("2026-07-20T12:00:00.000Z")).toBe("20/07/2026");
+    expect(formatDate("2026-07-20T02:00:00.000Z")).toBe("20/07/2026");
   });
 
   // created_at is nullable in the API contract (refund.ts), so the formatter
