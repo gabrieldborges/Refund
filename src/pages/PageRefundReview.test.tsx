@@ -131,12 +131,6 @@ describe("PageRefundReview", () => {
 });
 
 describe("PageRefundReview pending queue", () => {
-  // Alias for renderPageRefundReview(): this describe block never needs the
-  // status override, only the plain render.
-  function renderReviewPage() {
-    return renderPageRefundReview();
-  }
-
   it("links the queue button to the next eligible pending refund", async () => {
     // A pending list whose first entry is a different refund from a different
     // person — the one the button must land on.
@@ -157,7 +151,7 @@ describe("PageRefundReview pending queue", () => {
       )
     );
 
-    renderReviewPage();
+    renderPageRefundReview();
 
     expect(await screen.findByRole("link", { name: "Próxima pendente" })).toHaveAttribute(
       "href",
@@ -183,7 +177,7 @@ describe("PageRefundReview pending queue", () => {
       )
     );
 
-    renderReviewPage();
+    renderPageRefundReview();
 
     expect(await screen.findByRole("button", { name: "Próxima pendente" })).toBeDisabled();
   });

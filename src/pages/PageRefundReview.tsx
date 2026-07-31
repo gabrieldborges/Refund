@@ -33,21 +33,21 @@ export default function PageRefundReview() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
       {refund && (
-      <div className="flex justify-end">
-        {nextRefund ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/refunds/${nextRefund.id}/review`}>
+        <div className="flex justify-end">
+          {nextRefund ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/refunds/${nextRefund.id}/review`}>
+                Próxima pendente
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" disabled>
               Próxima pendente
               <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" disabled>
-            Próxima pendente
-            <ArrowRight className="size-4" aria-hidden />
-          </Button>
-        )}
-      </div>
+            </Button>
+          )}
+        </div>
       )}
 
       <Card>

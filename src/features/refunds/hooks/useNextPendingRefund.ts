@@ -33,5 +33,5 @@ export function useNextPendingRefund(currentRefundId: number, viewer: RefundView
       (refund) => refund.id !== currentRefundId && refund.user.id !== viewer?.id
     ) ?? null;
 
-  return { nextRefund, isLoading: isAdmin && isLoading };
+  return { nextRefund, isLoading };
 }
