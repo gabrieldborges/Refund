@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import {
   Dialog,
@@ -47,6 +48,10 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { mutateAsync, isPending } = useReviewRefund();
 
+  // Which action is in flight. `isPending` alone can't say which button was
+  // clicked, and without this both buttons would show a spinner at once.
+  const [pendingAction, setPendingAction] = useState<"approve" | "reject" | null>(null);
+
   const form = useForm<RejectFormData>({
     resolver: zodResolver(rejectSchema),
     defaultValues: { reason: "" },
@@ -54,21 +59,27 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
 
   async function handleApprove() {
     setSubmitError(null);
+    setPendingAction("approve");
     try {
       await mutateAsync({ id: refundId, status: "approved" });
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function handleReject(data: RejectFormData) {
     setSubmitError(null);
+    setPendingAction("reject");
     try {
       await mutateAsync({ id: refundId, status: "rejected", reason: data.reason });
       setIsRejectOpen(false);
       form.reset();
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -80,14 +91,26 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
     <div className="flex flex-col gap-2">
       <div className="flex gap-2">
         {status === "pending" && (
-          <Button onClick={handleApprove} disabled={isPending} className="flex-1">
-            Aprovar
+          <Button
+            onClick={handleApprove}
+            disabled={isPending}
+            aria-busy={pendingAction === "approve"}
+            className="flex-1"
+          >
+            {pendingAction === "approve" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {pendingAction === "approve" ? "Aprovando…" : "Aprovar"}
           </Button>
         )}
 
         {status === "rejected" && (
-          <Button onClick={handleApprove} disabled={isPending} className="w-full">
-            Aprovar
+          <Button
+            onClick={handleApprove}
+            disabled={isPending}
+            aria-busy={pendingAction === "approve"}
+            className="w-full"
+          >
+            {pendingAction === "approve" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {pendingAction === "approve" ? "Aprovando…" : "Aprovar"}
           </Button>
         )}
 
@@ -144,8 +167,14 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
                 <Button type="button" variant="outline" onClick={() => setIsRejectOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" variant="destructive" disabled={isPending}>
-                  {isPending ? "Rejeitando…" : "Confirmar"}
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={isPending}
+                  aria-busy={pendingAction === "reject"}
+                >
+                  {pendingAction === "reject" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                  {pendingAction === "reject" ? "Rejeitando…" : "Confirmar"}
                 </Button>
               </DialogFooter>
             </form>

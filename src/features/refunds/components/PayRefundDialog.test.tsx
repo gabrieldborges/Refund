@@ -151,4 +151,26 @@ describe("PayRefundDialog", () => {
     expect(paymentCalls).toBe(1);
     expect(requestUrl).toContain(`/refunds/${refundId}/payment`);
   });
+
+  // Same reasoning as ReviewDecision: a disabled button with its original
+  // label is indistinguishable from a dead UI while the upload is in flight.
+  it("shows a busy label on the confirm button while the payment is in flight", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("*/refunds/:id/payment", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return new HttpResponse(null, { status: 200 });
+      })
+    );
+    renderDialog();
+
+    await screen.findByRole("dialog");
+    const validFile = new File(["dummy"], "comprovante.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Comprovante de pagamento"), validFile);
+    await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+
+    const busy = await screen.findByRole("button", { name: /Marcando como pago/ });
+    expect(busy).toBeDisabled();
+    expect(busy).toHaveAttribute("aria-busy", "true");
+  });
 });

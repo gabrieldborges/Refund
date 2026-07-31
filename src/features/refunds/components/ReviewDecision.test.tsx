@@ -134,4 +134,45 @@ describe("ReviewDecision", () => {
 
     expect(called).toBe(true);
   });
+
+  // The clicked button must say what it is doing, not just go grey. A disabled
+  // button with its original label is indistinguishable from a dead UI.
+  it("shows a busy label on the approve button while the decision is in flight", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch("*/refunds/:id/status", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    const busy = await screen.findByRole("button", { name: /Aprovando/ });
+    expect(busy).toBeDisabled();
+    expect(busy).toHaveAttribute("aria-busy", "true");
+  });
+
+  // The other actions must not stay clickable while one is running — two
+  // concurrent decisions on the same refund is exactly the race the backend
+  // guards against with a conditional UPDATE.
+  it("disables the other decision buttons while one is in flight", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.patch("*/refunds/:id/status", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Rejeitar" })).toBeDisabled();
+    });
+  });
 });
