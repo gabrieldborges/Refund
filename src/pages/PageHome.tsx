@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { useLoaderData, useSearchParams } from "react-router";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useLoaderData, useNavigation, useSearchParams } from "react-router";
+import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +105,35 @@ export default function PageHome() {
     isLoading: isPendingLoading,
     isError: isPendingError,
   } = usePendingCount(isAdmin);
+
+  // Trocar de página é uma navegação do router, não uma mutation: o clique
+  // reescreve os search params e o loader da rota rebusca. Então quem sabe se
+  // ainda está carregando é o router, não o React Query.
+  //
+  // `navigation.location` é o destino da transição em curso. Ler a página
+  // pedida dali, em vez de olhar só `navigation.state`, resolve duas coisas de
+  // uma vez: diz QUAL seta gira (comparando com a página atual), e faz com que
+  // uma navegação que não muda de página — a busca com debounce, por exemplo —
+  // não acenda nenhuma das duas. Essa segunda parte é a armadilha que a
+  // revisão da branch anterior encontrou no diálogo de nova solicitação, onde
+  // um `navigation.state !== "idle"` global fazia o botão anunciar um envio
+  // que não existia.
+  //
+  // O loader remove `page=1` da URL por ser o padrão, então parâmetro ausente
+  // significa página 1.
+  //
+  // A comparação é contra `page` (do loader), NÃO contra `data.page` (da
+  // resposta da API). Os dois coincidem quando tudo funciona, mas só o
+  // primeiro é derivado da URL dos dois lados — `data` pode estar servindo a
+  // página anterior durante a transição, ou vir de um cache. Um teste pegou
+  // isso: com um fixture que devolve `page: 1` fixo, comparar contra a
+  // resposta acendia a seta numa navegação que nem mudava de página.
+  const navigation = useNavigation();
+  const pendingPage = navigation.location
+    ? Number(new URLSearchParams(navigation.location.search).get("page") ?? 1)
+    : null;
+  const isLoadingPreviousPage = pendingPage !== null && pendingPage < page;
+  const isLoadingNextPage = pendingPage !== null && pendingPage > page;
 
   const updateListLocation = useCallback(
     (nextName: string, nextPage: number, replace = false) => {
@@ -331,10 +360,15 @@ export default function PageHome() {
             variant="outline"
             size="icon"
             aria-label="Página anterior"
-            disabled={data.page === 1}
+            aria-busy={isLoadingPreviousPage}
+            disabled={data.page === 1 || navigation.state !== "idle"}
             onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
           >
-            <ChevronLeft className="size-4" aria-hidden />
+            {isLoadingPreviousPage ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <ChevronLeft className="size-4" aria-hidden />
+            )}
           </Button>
           <span className="text-sm text-muted-foreground">
             Página {data.page} de {data.total_pages}
@@ -343,10 +377,15 @@ export default function PageHome() {
             variant="outline"
             size="icon"
             aria-label="Próxima página"
-            disabled={data.page === data.total_pages}
+            aria-busy={isLoadingNextPage}
+            disabled={data.page === data.total_pages || navigation.state !== "idle"}
             onClick={() => updateListLocation(name ?? "", Math.min(data.total_pages, data.page + 1))}
           >
-            <ChevronRight className="size-4" aria-hidden />
+            {isLoadingNextPage ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <ChevronRight className="size-4" aria-hidden />
+            )}
           </Button>
         </div>
       )}

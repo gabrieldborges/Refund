@@ -462,3 +462,135 @@ describe("PageHome status filter", () => {
     });
   });
 });
+
+// Pagination is a router navigation, not a query mutation: clicking a page
+// button rewrites the search params and the route's loader refetches. The
+// button must therefore stay busy until the transition settles — the same
+// distinction between "waiting for data" and "waiting for the route" that
+// PageLogin and the delete flow already make.
+//
+// This helper differs from renderPageHome above in two ways it needs to: its
+// loader derives `page` from the request URL (so a navigation actually changes
+// what comes back) and it resolves slowly (so the in-flight state is
+// observable at all).
+// A list response that echoes the page it was asked for. `pagedListResponse()`
+// hardcodes `page: 1`, which is fine where nobody reads it back — but these
+// tests navigate between pages, and PageHome computes the next page from
+// `data.page`. A mock that always answers "page 1" to a request for page 2
+// contradicts the contract it stands in for, and would make these tests pass
+// or fail for reasons that have nothing to do with the code under test.
+function echoingListHandler() {
+  return http.get("*/refunds", ({ request }) => {
+    const requested = Number(new URL(request.url).searchParams.get("page") ?? 1);
+    return HttpResponse.json({ ...pagedListResponse(), page: requested });
+  });
+}
+
+function renderPageHomeWithSlowLoader(initialEntry = "/") {
+  seedSession("standard", 1);
+
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/",
+        loader: async ({ request }) => {
+          const requested = new URL(request.url).searchParams;
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          return {
+            page: Number(requested.get("page") ?? 1),
+            perPage: REFUNDS_PER_PAGE,
+            name: undefined,
+            status: undefined,
+            sort: "created_at",
+            order: "desc",
+          };
+        },
+        Component: PageHome,
+      },
+    ],
+    { initialEntries: [initialEntry] }
+  );
+
+  const view = render(
+    <QueryWrapper>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryWrapper>
+  );
+
+  return { ...view, router };
+}
+
+describe("PageHome pagination busy state", () => {
+  it("shows a spinner on the next-page button while that page loads", async () => {
+    server.use(echoingListHandler());
+    const user = userEvent.setup();
+
+    renderPageHomeWithSlowLoader();
+
+    const next = await screen.findByRole("button", { name: "Próxima página" });
+    await user.click(next);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Próxima página" })).toHaveAttribute(
+        "aria-busy",
+        "true"
+      );
+    });
+  });
+
+  // The direction matters: a spinner on both buttons would say the list is
+  // going backwards and forwards at once. This is what the pending location's
+  // page param buys over a plain `navigation.state !== "idle"`.
+  it("leaves the previous-page button idle while the next page loads", async () => {
+    server.use(echoingListHandler());
+    const user = userEvent.setup();
+
+    renderPageHomeWithSlowLoader("/?page=2");
+
+    await user.click(await screen.findByRole("button", { name: "Próxima página" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Próxima página" })).toHaveAttribute(
+        "aria-busy",
+        "true"
+      );
+    });
+    expect(screen.getByRole("button", { name: "Página anterior" })).toHaveAttribute(
+      "aria-busy",
+      "false"
+    );
+  });
+
+  // A navigation this button did not cause must not make it claim to be
+  // loading a page — the trap the whole-branch review found in
+  // RefundFormDialog, avoided here because the pending page is compared
+  // against the current one rather than reading a global "is navigating".
+  it("does not claim a page is loading when the navigation changes something else", async () => {
+    server.use(echoingListHandler());
+
+    const { router } = renderPageHomeWithSlowLoader("/?page=2");
+
+    await screen.findByRole("button", { name: "Próxima página" });
+    void router.navigate("/?page=2&name=Ana");
+
+    // Anchor on something the DOM actually shows: both buttons disable during
+    // ANY navigation, so this proves the component re-rendered mid-transition.
+    // Waiting on `router.state` instead would settle before React flushed,
+    // and the aria-busy assertion below would then pass against a stale
+    // render — i.e. for the wrong reason. Verified: with the direction logic
+    // replaced by a global `navigation.state`, this test fails here.
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Próxima página" })).toBeDisabled();
+    });
+    expect(screen.getByRole("button", { name: "Próxima página" })).toHaveAttribute(
+      "aria-busy",
+      "false"
+    );
+    expect(screen.getByRole("button", { name: "Página anterior" })).toHaveAttribute(
+      "aria-busy",
+      "false"
+    );
+  });
+});
