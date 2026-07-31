@@ -6,10 +6,11 @@ import Topbar from "./Topbar";
 import { useUiStore } from "@/stores/ui";
 import { RefundFormDialog } from "@/features/refunds";
 
-// O diálogo de nova solicitação vive aqui, mas a tela de sucesso precisa
-// reabri-lo. Em vez de subir o estado para uma store global (que é
-// persistida — um refresh restauraria um diálogo aberto), desce-se só o
-// gatilho pelo mecanismo que o próprio router oferece.
+// The new-refund dialog's state lives here, but the success screen needs to
+// reopen it. Rather than lifting that state into a global store (persisted
+// to localStorage — a refresh would restore an open dialog) or a search
+// param (which would reopen the form on refresh too), only the trigger
+// travels down, through the mechanism the router already offers.
 export interface MainLayoutOutletContext {
   openNewRefund: () => void;
 }
