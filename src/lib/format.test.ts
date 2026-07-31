@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCentsToBRL } from "./format";
+import { formatCentsToBRL, formatDate } from "./format";
 
 // Compare against the same Intl formatter the function uses, so the assertion
 // does not hardcode a specific separator/space (pt-BR uses a non-breaking
@@ -28,5 +28,22 @@ describe("formatCentsToBRL", () => {
   // A single leftover cent must round-trip through the division correctly.
   it("keeps a single cent visible", () => {
     expect(formatCentsToBRL(1)).toBe(expectedBRL(0.01));
+  });
+});
+
+describe("formatDate", () => {
+  it("formats an ISO timestamp as a pt-BR date", () => {
+    expect(formatDate("2026-07-20T12:00:00.000Z")).toBe("20/07/2026");
+  });
+
+  // created_at is nullable in the API contract (refund.ts), so the formatter
+  // must answer with a placeholder instead of throwing or printing
+  // "Invalid Date" into a table cell.
+  it("returns a dash for a null date", () => {
+    expect(formatDate(null)).toBe("—");
+  });
+
+  it("returns a dash for a string that is not a date", () => {
+    expect(formatDate("não é data")).toBe("—");
   });
 });
