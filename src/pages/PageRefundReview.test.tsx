@@ -26,8 +26,25 @@ function seedSession(id = 99) {
 // here — this page component itself only needs the refund id from the URL.
 // AuthProvider is real (not stubbed) because PageRefundReview now reads the
 // logged-in admin via useAuth() to pass as RequesterPanel's `viewer`.
-function renderPageRefundReview() {
+//
+// `overrides` lets a test render a refund whose status differs from the
+// fixture's default "pending" — e.g. "paid", so both receipts are on screen
+// at once — without duplicating the server.use(...) plumbing per test.
+function renderPageRefundReview(overrides?: { status?: (typeof refundFixture)["status"] }) {
   seedSession();
+
+  if (overrides?.status) {
+    server.use(
+      http.get("*/refunds/:id", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 1,
+          attributes: { ...refundFixture, status: overrides.status },
+        })
+      )
+    );
+  }
+
   const router = createMemoryRouter([{ path: "/refunds/:id/review", Component: PageRefundReview }], {
     initialEntries: ["/refunds/1/review"],
   });
@@ -109,6 +126,33 @@ describe("PageRefundReview", () => {
     expect(await screen.findByText(refundFixture.user.name)).toBeInTheDocument();
     expect(
       await screen.findByText(String(refundStatsFixture.by_status.pending.count))
+    ).toBeInTheDocument();
+  });
+});
+
+describe("PageRefundReview receipts", () => {
+  // The admin approves or rejects based on the expense receipt. Showing only
+  // the payment receipt means deciding without the document that justifies
+  // the request — the detail page has shown both all along.
+  it("shows the expense receipt so the admin can judge the request", async () => {
+    renderPageRefundReview();
+
+    expect(
+      await screen.findByRole("button", { name: "Ver comprovante em tela cheia" })
+    ).toBeInTheDocument();
+  });
+
+  // On a paid refund BOTH receipts are on screen. The accessible names must
+  // stay distinct, or a screen reader user hears the same button twice and
+  // cannot tell which file each one opens.
+  it("shows both receipts, with distinct accessible names, on a paid refund", async () => {
+    renderPageRefundReview({ status: "paid" });
+
+    expect(
+      await screen.findByRole("button", { name: "Ver comprovante em tela cheia" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
     ).toBeInTheDocument();
   });
 });

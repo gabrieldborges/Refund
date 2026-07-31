@@ -67,6 +67,9 @@ export default function PageRefundReview() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
+              {/* O comprovante da despesa é o documento que a decisão julga,
+                  então aparece sempre — a mesma ordem da página de detalhe. */}
+              {id && <ReceiptPreview refundId={id} refundName={refund.name} kind="expense" />}
               {id && refund.status === "paid" && (
                 <ReceiptPreview refundId={id} refundName={refund.name} kind="payment" />
               )}
