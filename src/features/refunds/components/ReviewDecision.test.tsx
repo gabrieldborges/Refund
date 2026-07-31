@@ -191,4 +191,41 @@ describe("ReviewDecision", () => {
     expect(idle).toBeEnabled();
     expect(idle).toHaveAttribute("aria-busy", "false");
   });
+
+  // Cancelling must not leave the next visitor holding someone else's draft.
+  // The success path already resets; this is the path that did not.
+  it("clears the reason field when reopened after cancelling", async () => {
+    const user = userEvent.setup();
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+    await user.type(screen.getByLabelText("Motivo"), "Comprovante ilegível");
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+
+    expect(await screen.findByLabelText("Motivo")).toHaveValue("");
+  });
+
+  // The reject dialog carries a second, separate piece of state: the error
+  // banner from a previous failed attempt. Cancelling and reopening should
+  // not greet the user with someone else's stale failure. The banner sits
+  // outside the dialog itself, in the region Radix marks aria-hidden while
+  // the dialog is open, so it is queried by text rather than role="alert".
+  it("clears the error banner when reopened after cancelling a failed rejection", async () => {
+    const user = userEvent.setup();
+    server.use(http.patch("*/refunds/:id/status", () => HttpResponse.json({}, { status: 500 })));
+
+    renderDecision("pending");
+
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+    await user.type(screen.getByLabelText("Motivo"), "Comprovante ilegível");
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
+    await screen.findByText("Algo deu errado. Tente novamente.");
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await user.click(screen.getByRole("button", { name: "Rejeitar" }));
+
+    expect(screen.queryByText("Algo deu errado. Tente novamente.")).not.toBeInTheDocument();
+  });
 });

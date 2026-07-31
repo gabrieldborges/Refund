@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -52,6 +53,37 @@ function renderDialogWithSlowSuccess() {
   );
 
   return { ...view, router };
+}
+
+// Keeps `open` as real controlled state (a `setOpen` prop alone would not do:
+// the dialog must survive a close/reopen cycle as the same mounted instance,
+// which is what actually exercises whether its internal form state was reset
+// rather than merely never having existed). The "Reabrir" button is the only
+// way back in, since RefundFormDialog itself has no open trigger of its own.
+function Harness() {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Reabrir</button>
+      <RefundFormDialog open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function renderHarness() {
+  const router = createMemoryRouter(
+    [
+      { path: "/", element: <Harness /> },
+      { path: "/success", element: <div>success page</div> },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  return render(
+    <QueryWrapper>
+      <RouterProvider router={router} />
+    </QueryWrapper>
+  );
 }
 
 describe("RefundFormDialog", () => {
@@ -136,5 +168,23 @@ describe("RefundFormDialog", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Enviando/ })).toBeDisabled();
     });
+  });
+
+  // Cancelling must not leave the next visitor holding someone else's draft.
+  // The success path already resets; this is the path that did not — closing
+  // via Escape exercises the same Radix onOpenChange callback that the X
+  // button and an outside click also go through.
+  it("clears the form when reopened after cancelling", async () => {
+    const user = userEvent.setup();
+    renderHarness();
+
+    await screen.findByRole("dialog");
+    await user.type(screen.getByLabelText("Nome da solicitação"), "Almoço");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+
+    expect(await screen.findByLabelText("Nome da solicitação")).toHaveValue("");
   });
 });

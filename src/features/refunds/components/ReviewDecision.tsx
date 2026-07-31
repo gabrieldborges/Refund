@@ -74,13 +74,25 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
     setPendingAction("reject");
     try {
       await mutateAsync({ id: refundId, status: "rejected", reason: data.reason });
-      setIsRejectOpen(false);
-      form.reset();
+      handleRejectOpenChange(false);
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
     } finally {
       setPendingAction(null);
     }
+  }
+
+  // Resetar ao FECHAR, não só ao enviar: quem preenche, desiste (pelo botão
+  // "Cancelar", pelo X ou pelo Escape) e reabre encontrava o motivo e o erro
+  // da tentativa anterior à espera. `submitError` é um segundo estado do
+  // diálogo além do form — um erro antigo é o mesmo problema que um rascunho
+  // antigo.
+  function handleRejectOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      form.reset();
+      setSubmitError(null);
+    }
+    setIsRejectOpen(nextOpen);
   }
 
   if (status === "paid") {
@@ -138,7 +150,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
         </p>
       )}
 
-      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+      <Dialog open={isRejectOpen} onOpenChange={handleRejectOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rejeitar solicitação</DialogTitle>
@@ -164,7 +176,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
               />
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsRejectOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => handleRejectOpenChange(false)}>
                   Cancelar
                 </Button>
                 <Button

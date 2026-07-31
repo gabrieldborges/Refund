@@ -63,16 +63,24 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
     setSubmitError(null);
     try {
       await mutateAsync(data);
-      form.reset();
-      onOpenChange(false);
+      handleOpenChange(false);
       navigate("/success");
     } catch (err) {
       setSubmitError(getApiErrorMessage(err));
     }
   }
 
+  // Reset on CLOSE, not only on submit: someone who fills the form, changes
+  // their mind, and reopens it should not find their old draft. This also
+  // covers the success path above, since it closes by calling this function
+  // instead of the raw `onOpenChange` prop directly.
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) form.reset();
+    onOpenChange(nextOpen);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Nova solicitação de reembolso</DialogTitle>
