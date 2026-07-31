@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { refundListQuery } from "../api/refundQueries";
 import { REFUNDS_PER_PAGE } from "../constants/pagination";
-import type { RefundViewer } from "../lib/getRefundHref";
+import { canReviewRefund, type RefundViewer } from "../lib/getRefundHref";
 import type { Refund } from "../schemas/refund";
 
 // A fila de trabalho do admin: a pendente MAIS ANTIGA primeiro. O padrão da
@@ -11,6 +11,13 @@ import type { Refund } from "../schemas/refund";
 // Limitação consciente: só a primeira página é consultada. Se as 10 pendentes
 // mais antigas forem todas do próprio admin, o botão desabilita mesmo havendo
 // outras adiante. Varrer páginas até achar custa mais do que o caso raro vale.
+//
+// Coincidência a preservar: com `status: "pending"` e `order: "asc"`, esta
+// query tem a MESMA chave de cache e a MESMA requisição HTTP que a Home em
+// `?status=pending&order=asc` — por isso é correto compartilhar uma entrada
+// de cache com ela. Se um dos dois lados ganhar `select`, `staleTime` ou
+// `placeholderData` diferente do outro, essa coincidência quebra e os dois
+// passam a disputar a mesma entrada silenciosamente.
 export function useNextPendingRefund(currentRefundId: number, viewer: RefundViewer | null) {
   const isAdmin = viewer?.role === "admin";
 
@@ -26,11 +33,13 @@ export function useNextPendingRefund(currentRefundId: number, viewer: RefundView
   });
 
   // Duas exclusões, por motivos diferentes: a atual porque "próxima" precisa
-  // ser outra tela, e as do próprio admin por BR-016 — o reviewLoader
-  // redirecionaria, e o botão teria prometido algo que não entrega.
+  // ser outra tela, e as do próprio admin por BR-016 — delegada a
+  // `canReviewRefund` (getRefundHref.ts), a única implementação da regra.
+  // Reescrever a condição aqui seria a segunda cópia que o comentário de lá
+  // avisa para não criar.
   const nextRefund: Refund | null =
     data?.attributes.find(
-      (refund) => refund.id !== currentRefundId && refund.user.id !== viewer?.id
+      (refund) => refund.id !== currentRefundId && canReviewRefund(refund, viewer)
     ) ?? null;
 
   return { nextRefund, isLoading };

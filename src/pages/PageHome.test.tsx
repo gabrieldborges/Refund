@@ -291,7 +291,7 @@ describe("PageHome sorting", () => {
 
   // The default direction carries no information, so it stays out of the URL —
   // the same rule page=1 and the empty name already follow.
-  it("omits the default sort from the URL and toggles direction on a second click", async () => {
+  it("omits the default sort from the URL", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
     const user = userEvent.setup();
 

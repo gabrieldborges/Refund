@@ -8,14 +8,26 @@ export interface RefundViewer {
   role: "standard" | "admin";
 }
 
-// BR-016: an admin may review any refund except their own. Extracted so the
-// Home's list rows and the review screen's RequesterPanel (Task 9) share ONE
-// implementation of this condition instead of two copies that could drift —
-// a second copy is exactly how they would.
+// BR-016: an admin may review any refund except their own. This is the SINGLE
+// implementation of that condition — every caller that needs the rule (not
+// just a route) must call `canReviewRefund` instead of re-expressing it, or
+// a future clause added here (e.g. "not a refund the admin already rejected")
+// would silently miss whichever caller still carries its own copy.
+export function canReviewRefund(
+  refund: { user: { id: number } },
+  viewer: RefundViewer | null
+): boolean {
+  return viewer?.role === "admin" && refund.user.id !== viewer.id;
+}
+
+// One caller of `canReviewRefund`: picks the route for a refund row. The
+// Home's list rows and the review screen's RequesterPanel (Task 9) share this
+// so the two never carry two copies of the routing decision.
 export function getRefundHref(
   refund: { id: number; user: { id: number } },
   viewer: RefundViewer | null
 ): string {
-  const canReview = viewer?.role === "admin" && refund.user.id !== viewer.id;
-  return canReview ? `/refunds/${refund.id}/review` : `/refunds/${refund.id}`;
+  return canReviewRefund(refund, viewer)
+    ? `/refunds/${refund.id}/review`
+    : `/refunds/${refund.id}`;
 }

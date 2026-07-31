@@ -195,6 +195,7 @@ export default function RefundsTable({
                   >
                     {header.column.getCanSort() ? (
                       <Button
+                        type="button"
                         variant="ghost"
                         size="sm"
                         className="-ml-2 h-8"
