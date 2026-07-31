@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
@@ -118,6 +118,14 @@ describe("PageRefundDetails", () => {
 
   // The API has no has_payment_receipt field: a "paid" status is itself the
   // proof the file exists, so the page must show it exactly then.
+  //
+  // The default MSW fixtures (msw/handlers.ts) serve a PNG from /receipt and
+  // a PDF from /payment-receipt on purpose. A link only appears here if the
+  // payment-receipt endpoint was genuinely hit — if useReceipt silently
+  // ignored `kind` and always called receiptQuery, this would render a
+  // second <img> (byte-identical to the expense one) instead, and the
+  // assertions below would fail even though a "Comprovante de pagamento"
+  // label was still shown somewhere.
   it("renders the payment receipt when the refund is paid", async () => {
     server.use(
       http.get("*/refunds/:id", () =>
@@ -131,27 +139,46 @@ describe("PageRefundDetails", () => {
 
     renderPageRefundDetails();
 
+    expect(await screen.findByRole("link", { name: "Abrir comprovante" })).toBeInTheDocument();
     expect(
-      await screen.findByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
+      screen.getByTitle(`Comprovante de pagamento de ${refundFixture.name}`)
     ).toBeInTheDocument();
   });
 
-  // A pending/approved/rejected refund never had a payment made, so the
-  // payment-receipt endpoint would 404 for it — the page must not even ask.
-  it("does not render the payment receipt when the refund is not paid", async () => {
-    renderPageRefundDetails();
+  // A refund that never had a payment made must not show the preview — for
+  // every non-paid status, not just the fixture's default "pending". A gate
+  // like `status !== "pending"` would wrongly show it for "approved" and
+  // "rejected" too, and a test that only tried "pending" would miss that.
+  it.each(["pending", "approved", "rejected"] as const)(
+    "does not render the payment receipt when the refund is %s",
+    async (status) => {
+      server.use(
+        http.get("*/refunds/:id", () =>
+          HttpResponse.json({
+            type: "Refund",
+            count: 1,
+            attributes: { ...refundFixture, status },
+          })
+        )
+      );
 
-    await screen.findByRole("img", { name: `Comprovante de ${refundFixture.name}` });
-    expect(
-      screen.queryByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
-    ).not.toBeInTheDocument();
-  });
+      renderPageRefundDetails();
+
+      await screen.findByRole("img", { name: `Comprovante de ${refundFixture.name}` });
+      expect(screen.queryByRole("link", { name: "Abrir comprovante" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByTitle(`Comprovante de pagamento de ${refundFixture.name}`)
+      ).not.toBeInTheDocument();
+    }
+  );
 
   // With a paid refund, the expense and payment previews render side by
   // side. Two fullscreen buttons with the same accessible name would be
   // indistinguishable to a screen reader user — each must say which receipt
-  // it opens.
-  it("gives the two fullscreen buttons distinct accessible names on a paid refund", async () => {
+  // it opens, AND belong to that receipt's own preview (swapping the two
+  // copy strings between kinds would still pass a test that only checked
+  // both strings exist somewhere in the document).
+  it("gives the two fullscreen buttons distinct accessible names, each owned by its own preview", async () => {
     server.use(
       http.get("*/refunds/:id", () =>
         HttpResponse.json({
@@ -164,11 +191,26 @@ describe("PageRefundDetails", () => {
 
     renderPageRefundDetails();
 
+    const expenseImage = await screen.findByRole("img", {
+      name: `Comprovante de ${refundFixture.name}`,
+    });
+    const expensePreview = expenseImage.closest("div");
+    expect(expensePreview).not.toBeNull();
     expect(
-      await screen.findByRole("button", { name: "Ver comprovante em tela cheia" })
+      within(expensePreview!).getByRole("button", { name: "Ver comprovante em tela cheia" })
     ).toBeInTheDocument();
+
+    const paymentLink = screen.getByRole("link", { name: "Abrir comprovante" });
+    const paymentPreview = paymentLink.closest("div");
+    expect(paymentPreview).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
+      within(paymentPreview!).getByRole("button", {
+        name: "Ver comprovante de pagamento em tela cheia",
+      })
     ).toBeInTheDocument();
+
+    // Sanity: the two assertions above must be scoped to two different
+    // previews, not the same one matched twice.
+    expect(expensePreview).not.toBe(paymentPreview);
   });
 });

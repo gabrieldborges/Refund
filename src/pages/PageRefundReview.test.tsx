@@ -26,6 +26,13 @@ describe("PageRefundReview", () => {
   // The API has no has_payment_receipt field: a "paid" status is itself the
   // proof the file exists, so the review screen must show it exactly then —
   // same rule as PageRefundDetails.
+  //
+  // The default MSW fixtures (msw/handlers.ts) serve a PNG from /receipt and
+  // a PDF from /payment-receipt on purpose. A link only appears here if the
+  // payment-receipt endpoint was genuinely hit — if useReceipt silently
+  // ignored `kind` and always called receiptQuery, no such link would ever
+  // render, even though a "Comprovante de pagamento" label was still shown
+  // somewhere via a plain <img>.
   it("renders the payment receipt when the refund is paid", async () => {
     server.use(
       http.get("*/refunds/:id", () =>
@@ -39,19 +46,36 @@ describe("PageRefundReview", () => {
 
     renderPageRefundReview();
 
+    expect(await screen.findByRole("link", { name: "Abrir comprovante" })).toBeInTheDocument();
     expect(
-      await screen.findByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
+      screen.getByTitle(`Comprovante de pagamento de ${refundFixture.name}`)
     ).toBeInTheDocument();
   });
 
-  // A pending refund was never paid, so the payment-receipt endpoint would
-  // 404 for it — the review screen must not even ask.
-  it("does not render the payment receipt when the refund is not paid", async () => {
-    renderPageRefundReview();
+  // A refund that never had a payment made must not show the preview — for
+  // every non-paid status, not just the fixture's default "pending". A gate
+  // like `status !== "pending"` would wrongly show it for "approved" and
+  // "rejected" too, and a test that only tried "pending" would miss that.
+  it.each(["pending", "approved", "rejected"] as const)(
+    "does not render the payment receipt when the refund is %s",
+    async (status) => {
+      server.use(
+        http.get("*/refunds/:id", () =>
+          HttpResponse.json({
+            type: "Refund",
+            count: 1,
+            attributes: { ...refundFixture, status },
+          })
+        )
+      );
 
-    await screen.findByText(refundFixture.name);
-    expect(
-      screen.queryByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
-    ).not.toBeInTheDocument();
-  });
+      renderPageRefundReview();
+
+      await screen.findByText(refundFixture.name);
+      expect(screen.queryByRole("link", { name: "Abrir comprovante" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByTitle(`Comprovante de pagamento de ${refundFixture.name}`)
+      ).not.toBeInTheDocument();
+    }
+  );
 });

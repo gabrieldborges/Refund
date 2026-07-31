@@ -105,24 +105,22 @@ describe("ReceiptPreview", () => {
   // kind="payment" hits UC-012's payment-receipt endpoint and uses distinct
   // copy from kind="expense" — the fix for the fullscreen button's
   // accessible name being context-free when two previews share a screen.
+  //
+  // No handler override here: the default fixtures (msw/handlers.ts) serve a
+  // PNG from /receipt and a PDF from /payment-receipt on purpose, so this
+  // test only goes green if kind="payment" really reached the payment
+  // endpoint. If useReceipt silently ignored `kind` and always called
+  // receiptQuery, this would render an <img> instead of the PDF fallback
+  // link below, and the query below would fail to find it.
   it("labels the payment receipt distinctly from the expense receipt", async () => {
-    server.use(
-      http.get("*/refunds/:id/payment-receipt", () =>
-        new HttpResponse(new Uint8Array([1, 2, 3, 4]), {
-          headers: { "Content-Type": "image/png" },
-        })
-      )
-    );
-
     render(
       <QueryWrapper>
         <ReceiptPreview refundId="1" refundName="Almoço com cliente" kind="payment" />
       </QueryWrapper>
     );
 
-    expect(
-      await screen.findByRole("img", { name: "Comprovante de pagamento de Almoço com cliente" })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Abrir comprovante" })).toBeInTheDocument();
+    expect(screen.getByTitle("Comprovante de pagamento de Almoço com cliente")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
     ).toBeInTheDocument();

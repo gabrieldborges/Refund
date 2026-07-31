@@ -9,6 +9,15 @@ const PNG_BASE64 =
 
 const receiptPngBytes = Uint8Array.from(atob(PNG_BASE64), (char) => char.charCodeAt(0));
 
+// The %PDF magic bytes. Deliberately a DIFFERENT format from the expense
+// fixture above, not just different bytes of the same type: ReceiptPreview
+// branches its markup on blob.type (<img> vs. <object> + fallback <a>), so a
+// test can tell "the payment-receipt endpoint was actually hit" from "the
+// expense endpoint was hit and the result was merely labelled as payment" —
+// the latter would still produce byte-identical PNG output if useReceipt
+// silently ignored `kind`, but it cannot produce a PDF-shaped DOM.
+const paymentReceiptPdfBytes = new Uint8Array([37, 80, 68, 70]);
+
 // Shared fixtures. Tests import these to assert against the exact data the
 // mocked network returned, instead of duplicating literals. Shapes mirror the
 // Zod schemas in src/schemas (refund.ts / auth.ts).
@@ -114,10 +123,12 @@ export const handlers = [
 
   // Payment receipt (UC-012's sibling of the handler above): same shape, same
   // most-specific-first registration reasoning, distinct path so a test can
-  // tell the two apart or override just one.
+  // tell the two apart or override just one. Serves a PDF on purpose — see
+  // paymentReceiptPdfBytes above — so a test can distinguish "fetched this
+  // endpoint" from "fetched the expense one and just labelled it payment".
   http.get("*/refunds/:id/payment-receipt", () => {
-    return new HttpResponse(receiptPngBytes, {
-      headers: { "Content-Type": "image/png" },
+    return new HttpResponse(paymentReceiptPdfBytes, {
+      headers: { "Content-Type": "application/pdf" },
     });
   }),
 
