@@ -45,7 +45,8 @@ export default function RequesterPanel({ requester, viewer }: RequesterPanelProp
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {isStatsLoading && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <Skeleton className="h-16 w-full" />
             {STATUS_ORDER.map((status) => (
               <Skeleton key={status} className="h-16 w-full" />
             ))}
@@ -63,7 +64,17 @@ export default function RequesterPanel({ requester, viewer }: RequesterPanelProp
         )}
 
         {stats && !isStatsLoading && !isStatsError && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {/* Contagem, não valor: somar dinheiro dos quatro status juntaria
+                previsão, passivo, despesa liquidada e nada — é o que o
+                comentário de refundStatsResponseSchema registra, e ele já
+                prevê esta soma de CONTAGENS no cliente. */}
+            <div className="flex flex-col gap-1 rounded-lg border p-3">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xl font-semibold">
+                {STATUS_ORDER.reduce((sum, status) => sum + stats.by_status[status].count, 0)}
+              </span>
+            </div>
             {STATUS_ORDER.map((status) => (
               <div key={status} className="flex flex-col gap-1 rounded-lg border p-3">
                 <span className="text-xs text-muted-foreground">{REFUND_STATUS[status].label}</span>

@@ -164,4 +164,29 @@ describe("RequesterPanel", () => {
     const homeLink = await screen.findByRole("link", { name: /na Home/i });
     expect(homeLink).toHaveAttribute("href", `/?name=${encodeURIComponent(requester.name)}`);
   });
+
+  // The four per-status counters answer "how is this person's history split";
+  // the total answers "how often has this person asked at all". The fixture
+  // sums to 11 (2 + 5 + 3 + 1), a number none of the four carries, so the
+  // assertion cannot pass by accidentally matching one of them.
+  it("shows a total counter summing every status", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel();
+
+    expect(await screen.findByText("Total")).toBeInTheDocument();
+    expect(screen.getByText("11")).toBeInTheDocument();
+  });
+
+  // A failed stats request must not render a total of 0 — same reasoning as
+  // the four counters it is derived from.
+  it("hides the total when stats fail to load", async () => {
+    server.use(
+      http.get("*/refunds", () => HttpResponse.json(requesterListResponse())),
+      http.get("*/users/:id/refund-stats", () => HttpResponse.json({}, { status: 500 }))
+    );
+    renderPanel();
+
+    await screen.findByRole("alert");
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+  });
 });
