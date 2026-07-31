@@ -51,7 +51,12 @@ function seedSession(role: "standard" | "admin", id = 1) {
 // which stats to request and how to label the money card. The page is derived
 // from initialEntry so the stub loader stays honest for whatever entry a test
 // passes, instead of hardcoding a single page number.
-function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standard", id = 1) {
+function renderPageHome(
+  initialEntry = "/",
+  role: "standard" | "admin" = "standard",
+  id = 1,
+  loaderOverrides: Record<string, unknown> = {}
+) {
   seedSession(role, id);
   const url = new URL(initialEntry, "http://localhost");
   const page = Number(url.searchParams.get("page") ?? 1);
@@ -67,6 +72,7 @@ function renderPageHome(initialEntry = "/", role: "standard" | "admin" = "standa
           status: undefined,
           sort: "created_at",
           order: "desc",
+          ...loaderOverrides,
         }),
         Component: PageHome,
       },
@@ -272,6 +278,44 @@ describe("PageHome sorting", () => {
 
     await waitFor(() => {
       expect(router.state.location.search).toBe("?order=asc");
+    });
+  });
+});
+
+describe("PageHome status filter", () => {
+  // Same proof as the sorting test: the filter must reach the URL (and the
+  // request), not hide rows already fetched. Starting on page 2 makes the
+  // reset assertion real — a page number from the unfiltered set is
+  // meaningless once the set changes.
+  it("writes the chosen status to the URL and resets the page", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+    const user = userEvent.setup();
+
+    const { router } = renderPageHome("/?page=2", "admin", 2);
+
+    await user.click(await screen.findByRole("combobox", { name: "Filtrar por status" }));
+    await user.click(screen.getByRole("option", { name: "Pago" }));
+
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?status=paid");
+    });
+  });
+
+  // The request itself is what proves the filter is server-side: asserting the
+  // rendered rows could pass with a client-side filter over the current page.
+  it("sends the status to the API", async () => {
+    let capturedStatus: string | null = null;
+    server.use(
+      http.get("*/refunds", ({ request }) => {
+        capturedStatus = new URL(request.url).searchParams.get("status");
+        return HttpResponse.json(pagedListResponse());
+      })
+    );
+
+    renderPageHome("/", "admin", 2, { status: "paid" });
+
+    await waitFor(() => {
+      expect(capturedStatus).toBe("paid");
     });
   });
 });

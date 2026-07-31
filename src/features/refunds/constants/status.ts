@@ -11,3 +11,12 @@ export const REFUND_STATUS: Record<
   rejected: { label: "Rejeitado", variant: "destructive" },
   paid: { label: "Pago", variant: "outline" },
 };
+
+// Ordem de exibição no filtro: o ciclo de vida de uma solicitação, não a
+// ordem alfabética nem a ordem das chaves do Record acima.
+export const STATUS_FILTER_ORDER: readonly RefundStatus[] = [
+  "pending",
+  "approved",
+  "paid",
+  "rejected",
+];

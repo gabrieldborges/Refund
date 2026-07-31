@@ -20,7 +20,7 @@ export { useRefundReviews } from "./hooks/useRefundReviews";
 
 // URL search-params schema used by the home loader.
 export { refundListSearchParamsSchema } from "./schemas/refund";
-export type { RefundSort, RefundOrder } from "./schemas/refund";
+export type { RefundSort, RefundOrder, RefundStatus } from "./schemas/refund";
 
 // Domain constants consumed by pages.
 export { CATEGORIES, CATEGORY_OPTIONS } from "./constants/categories";
@@ -56,3 +56,7 @@ export { default as RequesterPanel } from "./components/RequesterPanel";
 // A listagem da Home como tabela (Item 13). Ordenação e filtro são
 // server-side: o componente não ordena nada por conta própria.
 export { default as RefundsTable } from "./components/RefundsTable";
+
+// Toolbar da listagem: filtro por status, escrito na URL e resolvido no
+// servidor (UC-004).
+export { default as RefundsToolbar } from "./components/RefundsToolbar";

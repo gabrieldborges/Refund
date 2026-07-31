@@ -7,10 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   RefundsTable,
+  RefundsToolbar,
   useRefunds,
   useRefundStats,
   type RefundOrder,
   type RefundSort,
+  type RefundStatus,
 } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -141,6 +143,23 @@ export default function PageHome() {
     [order, setSearchParams, sort]
   );
 
+  const handleStatusChange = useCallback(
+    (nextStatus: RefundStatus | undefined) => {
+      setSearchParams((currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+        // Trocar o filtro reinicia a paginação: a página 3 do conjunto antigo
+        // pode nem existir no novo. É a mesma regra da busca por nome.
+        nextParams.delete("page");
+
+        if (nextStatus) nextParams.set("status", nextStatus);
+        else nextParams.delete("status");
+
+        return nextParams;
+      });
+    },
+    [setSearchParams]
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -215,7 +234,16 @@ export default function PageHome() {
         )}
       </div>
 
-      <RefundSearch key={name ?? ""} initialSearch={name ?? ""} updateListLocation={updateListLocation} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <RefundSearch
+            key={name ?? ""}
+            initialSearch={name ?? ""}
+            updateListLocation={updateListLocation}
+          />
+        </div>
+        <RefundsToolbar status={status} onStatusChange={handleStatusChange} />
+      </div>
 
       {isError && (
         <p role="alert" className="py-4 text-center text-sm text-destructive">
