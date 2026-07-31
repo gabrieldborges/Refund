@@ -33,7 +33,7 @@ Fundação das Tasks 5, 6 e 12. Sem UI nova.
 - Modify: `src/features/refunds/schemas/refund.ts:85-92` (`refundListSearchParamsSchema`)
 - Modify: `src/features/refunds/api/refundQueries.ts:4-16` (`RefundListParams`) e `:53-70` (`refundListQuery`)
 - Modify: `src/router-loaders.ts:51-83` (`homeLoader`)
-- Modify: `src/test/msw/handlers.ts:33` (dívida do `per_page` literal)
+- Modify: `src/features/refunds/components/RequesterPanel.test.tsx:33` e `src/pages/PageHome.test.tsx:23` (dívida do `per_page` literal — `src/test/msw/handlers.ts` **já** usa a constante)
 - Test: `src/features/refunds/schemas/refund.test.ts` (existente), `src/router-loaders.test.ts` (criar)
 
 **Interfaces:**
