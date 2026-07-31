@@ -37,9 +37,16 @@ function requesterListResponse(overrides: Partial<typeof refundFixture> = {}) {
   };
 }
 
-function renderPanel(viewer: RefundViewer | null = adminViewer) {
+function renderPanel(viewer: RefundViewer | null = adminViewer, currentRefundId = 5) {
   const router = createMemoryRouter(
-    [{ path: "/", Component: () => <RequesterPanel requester={requester} viewer={viewer} /> }],
+    [
+      {
+        path: "/",
+        Component: () => (
+          <RequesterPanel requester={requester} viewer={viewer} currentRefundId={currentRefundId} />
+        ),
+      },
+    ],
     { initialEntries: ["/"] }
   );
 
@@ -188,5 +195,24 @@ describe("RequesterPanel", () => {
 
     await screen.findByRole("alert");
     expect(screen.queryByText("Total")).not.toBeInTheDocument();
+  });
+
+  // aria-current is the half that a screen reader can perceive: the background
+  // colour alone tells a sighted user where they are and tells everyone else
+  // nothing. Both halves ship together or the highlight is decorative.
+  it("marks the current refund's row with aria-current", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel(adminViewer, 5);
+
+    const row = await screen.findByRole("link", { name: /Passagem aérea/ });
+    expect(row).toHaveAttribute("aria-current", "page");
+  });
+
+  it("leaves other rows without aria-current", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel(adminViewer, 999);
+
+    const row = await screen.findByRole("link", { name: /Passagem aérea/ });
+    expect(row).not.toHaveAttribute("aria-current");
   });
 });

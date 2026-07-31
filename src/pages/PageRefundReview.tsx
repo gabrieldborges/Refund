@@ -88,7 +88,9 @@ export default function PageRefundReview() {
         )}
       </Card>
 
-      {refund && !isLoading && <RequesterPanel requester={refund.user} viewer={user} />}
+      {refund && !isLoading && (
+        <RequesterPanel requester={refund.user} viewer={user} currentRefundId={refund.id} />
+      )}
 
       {id && <PayRefundDialog refundId={id} open={isPayOpen} onOpenChange={setIsPayOpen} />}
     </div>

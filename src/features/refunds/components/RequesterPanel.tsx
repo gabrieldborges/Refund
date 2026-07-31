@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { REFUNDS_PER_PAGE } from "../constants/pagination";
 import { REFUND_STATUS } from "../constants/status";
 import { useRefundStats } from "../hooks/useRefundStats";
@@ -20,6 +21,9 @@ interface RequesterPanelProps {
   // context here — a feature component may not import `@/context` (see
   // getRefundHref.ts) — so the page passes it down.
   viewer: RefundViewer | null;
+  // Qual linha desta lista é a solicitação aberta agora. Também é a âncora
+  // das setas de navegação (Task 11).
+  currentRefundId: number;
 }
 
 // The requester's context for a review: who they are, their counts by
@@ -30,7 +34,7 @@ interface RequesterPanelProps {
 // No avatar: `has_avatar` is always false today (upload doesn't exist yet),
 // so a photo would render as initials for everyone — deferred to the
 // profile-picture cycle.
-export default function RequesterPanel({ requester, viewer }: RequesterPanelProps) {
+export default function RequesterPanel({ requester, viewer, currentRefundId }: RequesterPanelProps) {
   const { data: stats, isLoading: isStatsLoading, isError: isStatsError } = useRefundStats(requester.id);
   const {
     data: list,
@@ -111,19 +115,28 @@ export default function RequesterPanel({ requester, viewer }: RequesterPanelProp
                     Nenhuma solicitação encontrada.
                   </li>
                 )}
-                {list.attributes.map((refund) => (
-                  <li key={refund.id} className="border-b last:border-b-0">
-                    <Link
-                      to={getRefundHref(refund, viewer)}
-                      className="flex items-center justify-between gap-3 px-3 py-2 text-sm transition hover:bg-accent/50"
-                    >
-                      <span className="truncate">{refund.name}</span>
-                      <Badge variant={REFUND_STATUS[refund.status].variant}>
-                        {REFUND_STATUS[refund.status].label}
-                      </Badge>
-                    </Link>
-                  </li>
-                ))}
+                {list.attributes.map((refund) => {
+                  const isCurrent = refund.id === currentRefundId;
+                  return (
+                    <li key={refund.id} className="border-b last:border-b-0">
+                      <Link
+                        to={getRefundHref(refund, viewer)}
+                        // Cor sozinha não é sinal acessível; aria-current é o
+                        // que um leitor de tela anuncia.
+                        aria-current={isCurrent ? "page" : undefined}
+                        className={cn(
+                          "flex items-center justify-between gap-3 px-3 py-2 text-sm transition hover:bg-accent/50",
+                          isCurrent && "bg-accent font-medium"
+                        )}
+                      >
+                        <span className="truncate">{refund.name}</span>
+                        <Badge variant={REFUND_STATUS[refund.status].variant}>
+                          {REFUND_STATUS[refund.status].label}
+                        </Badge>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* No pagination here on purpose (see file header) — the Home
