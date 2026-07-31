@@ -5,6 +5,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
 import { refundFixture, refundStatsFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import type { RefundViewer } from "../lib/getRefundHref";
 import RequesterPanel from "./RequesterPanel";
 
@@ -30,7 +31,7 @@ function requesterListResponse(overrides: Partial<typeof refundFixture> = {}) {
     total: attributes.length,
     sum_amount_in_cents: attributes.reduce((sum, refund) => sum + refund.amount_in_cents, 0),
     page: 1,
-    per_page: 10,
+    per_page: REFUNDS_PER_PAGE,
     total_pages: 1,
     attributes,
   };

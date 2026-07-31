@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { http, HttpResponse } from "msw";
 import type { LoaderFunctionArgs } from "react-router";
 import { server } from "@/test/msw/server";
@@ -151,5 +151,88 @@ describe("reviewLoader", () => {
     const result = await reviewLoader(makeParamsArgs("1"));
 
     expect(result).toEqual({ id: "1" });
+  });
+});
+
+// homeLoader calls requireSession() first, so every test needs a session that
+// passes storedUserSchema (id included — a session without it is treated as
+// logged out and redirected to /login).
+function seedSession() {
+  localStorage.setItem(TOKEN_STORAGE_KEY, "fake-jwt-token");
+  localStorage.setItem(
+    USER_STORAGE_KEY,
+    JSON.stringify({ id: 1, name: "Ana Souza", email: "ana@exemplo.com", role: "admin" })
+  );
+}
+
+// The loader throws a redirect Response for a URL it wants normalized. Running
+// it inside try/catch is what lets a test read the Location header instead of
+// the returned params.
+async function runLoader(url: string) {
+  try {
+    const data = await homeLoader({
+      request: new Request(url),
+      params: {},
+      context: {} as never,
+    } as unknown as LoaderFunctionArgs);
+    return { data, redirectedTo: null as string | null };
+  } catch (thrown) {
+    if (thrown instanceof Response) {
+      return { data: null, redirectedTo: thrown.headers.get("Location") };
+    }
+    throw thrown;
+  }
+}
+
+describe("homeLoader query params", () => {
+  beforeEach(() => {
+    seedSession();
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 0,
+          total: 0,
+          sum_amount_in_cents: 0,
+          page: 1,
+          per_page: 10,
+          total_pages: 0,
+          attributes: [],
+        })
+      )
+    );
+  });
+
+  // A default written in the URL is noise: it makes two URLs that mean the
+  // same thing look different, and breaks the "shared link = same view"
+  // property the Item 3 normalization established for page and name.
+  it("redirects away a sort and order that are already the defaults", async () => {
+    const { redirectedTo } = await runLoader("http://localhost/?sort=created_at&order=desc");
+
+    expect(redirectedTo).toBe("/");
+  });
+
+  it("keeps a non-default sort and order in the URL", async () => {
+    const { data, redirectedTo } = await runLoader("http://localhost/?sort=name&order=asc");
+
+    expect(redirectedTo).toBeNull();
+    expect(data).toMatchObject({ sort: "name", order: "asc" });
+  });
+
+  // An unknown value must be rewritten to the normalized URL, not passed
+  // through to the API, which would answer 422.
+  it("redirects an unknown sort to the normalized URL", async () => {
+    const { redirectedTo } = await runLoader("http://localhost/?sort=cor");
+
+    expect(redirectedTo).toBe("/");
+  });
+
+  it("keeps a valid status and drops an unknown one", async () => {
+    const kept = await runLoader("http://localhost/?status=paid");
+    expect(kept.redirectedTo).toBeNull();
+    expect(kept.data).toMatchObject({ status: "paid" });
+
+    const dropped = await runLoader("http://localhost/?status=quase");
+    expect(dropped.redirectedTo).toBe("/");
   });
 });

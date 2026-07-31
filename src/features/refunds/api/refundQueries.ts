@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { refundResponseSchema, refundsListResponseSchema } from "../schemas/refund";
+import type { RefundOrder, RefundSort, RefundStatus } from "../schemas/refund";
 
 interface RefundListParams {
   page: number;
@@ -11,6 +12,11 @@ interface RefundListParams {
   // param for a standard user, whose scope is already fixed to their own
   // token — so passing it is safe by construction; no new error path exists.
   userId?: number;
+  // Filtro e ordenação server-side (UC-004). Nunca ordenamos no cliente: ele
+  // só tem a página atual, e ordenar 10 de N linhas parece funcionar.
+  status?: RefundStatus;
+  sort?: RefundSort;
+  order?: RefundOrder;
 }
 
 // Fonte única das chaves de cache dos reembolsos. Tudo deriva de `all`, então as
@@ -62,6 +68,9 @@ export function refundListQuery(params: RefundListParams) {
           per_page: params.perPage,
           name: params.name || undefined,
           user_id: params.userId,
+          status: params.status,
+          sort: params.sort,
+          order: params.order,
         },
         signal,
       });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { refundCreateSchema, refundSchema } from "./refund";
+import { refundCreateSchema, refundListSearchParamsSchema, refundSchema } from "./refund";
 
 // We validate each field through `refundCreateSchema.shape.*` instead of the
 // whole object. This keeps the unit focused and avoids building a real
@@ -104,5 +104,35 @@ describe("refundSchema", () => {
 
   it("rejects a status the API never sends", () => {
     expect(() => refundSchema.parse({ ...validRefund, status: "archived" })).toThrow();
+  });
+});
+
+describe("refundListSearchParamsSchema", () => {
+  // An unknown sort must fall back to the default instead of reaching the API:
+  // the server answers 422 for a sort outside its whitelist (UC-004), which
+  // would turn a mistyped URL into the whole Home in isError.
+  it("falls back to the default sort and order when the values are unknown", () => {
+    const result = refundListSearchParamsSchema.parse({ sort: "cor", order: "cima" });
+
+    expect(result.sort).toBe("created_at");
+    expect(result.order).toBe("desc");
+  });
+
+  it("keeps a sort and order that belong to the server's whitelist", () => {
+    const result = refundListSearchParamsSchema.parse({ sort: "amount_in_cents", order: "asc" });
+
+    expect(result.sort).toBe("amount_in_cents");
+    expect(result.order).toBe("asc");
+  });
+
+  // Absent status means "every status", not a status — so it must stay
+  // undefined and be omitted from the request, not coerced to a value.
+  it("leaves status undefined when absent and when unknown", () => {
+    expect(refundListSearchParamsSchema.parse({}).status).toBeUndefined();
+    expect(refundListSearchParamsSchema.parse({ status: "quase" }).status).toBeUndefined();
+  });
+
+  it("keeps a status that belongs to the server's whitelist", () => {
+    expect(refundListSearchParamsSchema.parse({ status: "paid" }).status).toBe("paid");
   });
 });

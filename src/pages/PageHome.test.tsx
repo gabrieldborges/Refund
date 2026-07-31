@@ -8,6 +8,7 @@ import { refundFixture, refundStatsFixture } from "@/test/msw/handlers";
 import { QueryWrapper } from "@/test/utils";
 import { AuthProvider } from "@/context/AuthContext";
 import { USER_STORAGE_KEY } from "@/lib/api";
+import { REFUNDS_PER_PAGE } from "@/features/refunds";
 import PageHome from "./PageHome";
 
 // A second page's worth of matches: 10 rows on this page, but 24 across every
@@ -20,7 +21,7 @@ function pagedListResponse() {
     total: 24,
     sum_amount_in_cents: 418200,
     page: 1,
-    per_page: 10,
+    per_page: REFUNDS_PER_PAGE,
     total_pages: 3,
     attributes: Array.from({ length: 10 }, (_, index) => ({
       ...refundFixture,

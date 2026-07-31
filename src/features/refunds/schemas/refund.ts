@@ -51,6 +51,11 @@ const refundUserSchema = z.object({
 
 export const refundStatusSchema = z.enum(["pending", "approved", "rejected", "paid"]);
 
+// Espelham as listas brancas de UC-004. Um valor fora delas responde 422 no
+// servidor, então o cliente cai no padrão em vez de propagar o erro.
+export const refundSortSchema = z.enum(["created_at", "amount_in_cents", "name", "status"]);
+export const refundOrderSchema = z.enum(["asc", "desc"]);
+
 export const refundSchema = z.object({
   id: z.number().int().positive(),
   name: z.string().min(1),
@@ -89,6 +94,11 @@ export const refundListSearchParamsSchema = z.object({
     .trim()
     .transform((value) => value || undefined)
     .optional(),
+  // Ausente = todos os status. `.optional()` antes de `.catch()` para que
+  // ausência passe pela validação e só um valor INVÁLIDO caia no catch.
+  status: refundStatusSchema.optional().catch(undefined),
+  sort: refundSortSchema.catch("created_at"),
+  order: refundOrderSchema.catch("desc"),
 });
 
 // A decisão registrada no histórico. `reason` é nullable porque só a rejeição
@@ -136,6 +146,8 @@ export type PayRefundFormData = z.output<typeof payRefundSchema>;
 export type PayRefundFormInput = z.input<typeof payRefundSchema>;
 export type Refund = z.output<typeof refundSchema>;
 export type RefundStatus = z.output<typeof refundStatusSchema>;
+export type RefundSort = z.output<typeof refundSortSchema>;
+export type RefundOrder = z.output<typeof refundOrderSchema>;
 export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
 export type RefundListSearchParams = z.output<typeof refundListSearchParamsSchema>;
 export type RefundReview = z.output<typeof refundReviewSchema>;

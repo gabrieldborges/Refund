@@ -48,34 +48,47 @@ function requireSession() {
   }
 }
 
+// Escreve o parâmetro só quando ele carrega informação: ausente, vazio ou
+// igual ao padrão sai da URL. É a regra que o Item 3 estabeleceu para `page`
+// e `name`, agora com um lugar só em vez de um `if` por parâmetro.
+function setOrDelete(
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined,
+  defaultValue?: string
+) {
+  if (value && value !== defaultValue) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
+}
+
 export async function homeLoader({ request }: LoaderFunctionArgs) {
   requireSession();
 
   const url = new URL(request.url);
-  const { page, name } = refundListSearchParamsSchema.parse({
+  const { page, name, status, sort, order } = refundListSearchParamsSchema.parse({
     page: url.searchParams.get("page") ?? undefined,
     name: url.searchParams.get("name") ?? undefined,
+    status: url.searchParams.get("status") ?? undefined,
+    sort: url.searchParams.get("sort") ?? undefined,
+    order: url.searchParams.get("order") ?? undefined,
   });
+
   const normalizedSearchParams = new URLSearchParams(url.searchParams);
-
-  if (page > 1) {
-    normalizedSearchParams.set("page", String(page));
-  } else {
-    normalizedSearchParams.delete("page");
-  }
-
-  if (name) {
-    normalizedSearchParams.set("name", name);
-  } else {
-    normalizedSearchParams.delete("name");
-  }
+  setOrDelete(normalizedSearchParams, "page", page > 1 ? String(page) : undefined);
+  setOrDelete(normalizedSearchParams, "name", name);
+  setOrDelete(normalizedSearchParams, "status", status);
+  setOrDelete(normalizedSearchParams, "sort", sort, "created_at");
+  setOrDelete(normalizedSearchParams, "order", order, "desc");
 
   if (normalizedSearchParams.toString() !== url.searchParams.toString()) {
     const normalizedSearch = normalizedSearchParams.toString();
     throw redirect(`${url.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`);
   }
 
-  const queryParams = { page, perPage: REFUNDS_PER_PAGE, name };
+  const queryParams = { page, perPage: REFUNDS_PER_PAGE, name, status, sort, order };
 
   await queryClient.ensureQueryData(refundListQuery(queryParams));
 
