@@ -105,3 +105,32 @@ describe("RefundsTable", () => {
     expect(screen.getAllByText("Alimentação")).toHaveLength(2);
   });
 });
+
+describe("RefundsTable column visibility", () => {
+  // For a standard user every row is their own, so a requester column would
+  // repeat the same name down the page. The column is dropped, not blanked —
+  // an empty column still costs a header and horizontal space.
+  it("hides the requester column for a standard viewer", () => {
+    renderTable({ id: 1, role: "standard" });
+
+    expect(screen.queryByText("Solicitante")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bruno Lima")).not.toBeInTheDocument();
+  });
+
+  it("shows the requester column for an admin viewer", () => {
+    renderTable(adminViewer);
+
+    expect(screen.getByText("Solicitante")).toBeInTheDocument();
+  });
+
+  // Narrow screens drop category, requester and date via CSS so the table
+  // degrades to the title/status/amount row the Home had before. Asserting the
+  // class is the only option here: jsdom has no layout engine, so a real
+  // media query cannot be evaluated in a unit test.
+  it("marks the columns that collapse on narrow screens", () => {
+    renderTable(adminViewer);
+
+    expect(screen.getByText("Data").closest("th")).toHaveClass("hidden");
+    expect(screen.getByText("Solicitante").closest("th")).toHaveClass("hidden");
+  });
+});

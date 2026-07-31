@@ -49,6 +49,7 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
       id: "category",
       header: () => <span className="sr-only">Categoria</span>,
       enableSorting: false,
+      meta: { className: "hidden w-10 sm:table-cell" },
       cell: ({ row }) => {
         const category = CATEGORIES[row.original.category];
         const CategoryIcon = category.icon;
@@ -78,11 +79,13 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
       id: "user",
       header: "Solicitante",
       enableSorting: false,
+      meta: { className: "hidden sm:table-cell" },
       cell: ({ row }) => row.original.user.name,
     },
     {
       id: "created_at",
       header: "Data",
+      meta: { className: "hidden sm:table-cell" },
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
@@ -106,17 +109,25 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
 export default function RefundsTable({ refunds, viewer, isLoading }: RefundsTableProps) {
   const columns = useMemo(() => createRefundColumns(viewer), [viewer]);
 
-  // TanStack Table's `useReactTable()` is a headless library: it returns
-  // closures (getHeaderGroups, getRowModel, …) whose identity the React
-  // Compiler cannot prove is stable, so it skips compiling this component.
+  // Two mechanisms with different purposes: screen width is CSS
+  // (meta.className), role is table state. Mixing them would make a media
+  // query depend on JS measuring the viewport.
+  const columnVisibility = useMemo(() => ({ user: viewer?.role === "admin" }), [viewer?.role]);
+
+  // `eslint-plugin-react-hooks`'s recommended config flags TanStack Table's
+  // headless closures (getHeaderGroups, getRowModel, …) as an "incompatible
+  // library" because it cannot prove their reference identity is stable.
   // Nothing downstream memoizes on `table`'s reference, so the diagnostic is
-  // a false positive here — same scoped, explained-per-line pattern already
-  // used for the two vendored warnings in eslint.config.js.
+  // a false positive here — narrowly suppressed and explained, the same
+  // convention as the vendored warnings in eslint.config.js:120-138, though
+  // those are file-scoped exemptions for runtime-shaped bugs in copied
+  // shadcn code, not quite this line-scoped case.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: refunds,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: { columnVisibility },
     // O cliente tem 10 de N linhas. Ordenar, filtrar ou paginar aqui
     // trabalharia sobre a página, não sobre o conjunto — o erro que originou
     // o ciclo de backend da consulta da listagem.
