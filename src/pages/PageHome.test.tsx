@@ -236,6 +236,53 @@ describe("PageHome money card", () => {
   });
 });
 
+describe("PageHome summary card labels", () => {
+  // Three numbers side by side under generic labels, two following the filter
+  // and one ignoring it, is the confusion this fixes. Each label states its
+  // own scope.
+  it("names the active filter on the requests card", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2, { status: "paid" });
+
+    expect(await screen.findByText("Solicitações (Pago)")).toBeInTheDocument();
+  });
+
+  // "Solicitações" is also the page's own h1, and an admin's Home fires a
+  // second request for the pending-count card that (unscoped) would return
+  // the same total, so a bare text match on the number could land on either.
+  // Distinguishing the two responses by per_page, the same way the pending
+  // card tests below do, keeps "24" unique and lets us walk up from it to
+  // scope the assertion to the requests card, following the money card
+  // tests' `within(card)` pattern.
+  it("uses the plain label when no filter is active", async () => {
+    server.use(
+      http.get("*/refunds", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get("per_page") === "1") {
+          return HttpResponse.json({ ...pagedListResponse(), total: 5 });
+        }
+        return HttpResponse.json(pagedListResponse());
+      })
+    );
+
+    renderPageHome("/", "admin", 2);
+
+    const total = await screen.findByText("24");
+    const card = total.closest('[data-slot="card"]') as HTMLElement;
+    expect(within(card).getByText("Solicitações")).toBeInTheDocument();
+    expect(within(card).queryByText(/Solicitações \(/)).not.toBeInTheDocument();
+  });
+
+  it("says the pending card ignores the filter when one is active", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(pagedListResponse())));
+
+    renderPageHome("/", "admin", 2, { status: "paid" });
+
+    expect(await screen.findByText("Todas, sem o filtro")).toBeInTheDocument();
+  });
+});
+
 describe("PageHome pending card", () => {
   // The pending card is global by definition: it answers "what needs my
   // attention", which does not depend on what the user is currently filtering.

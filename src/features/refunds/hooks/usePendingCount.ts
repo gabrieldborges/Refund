@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { refundListQuery } from "../api/refundQueries";
 
-// Quantas solicitações estão pendentes NO TOTAL — nunca a página atual, nunca
-// o filtro ativo. Pede uma página de UMA linha e lê só o `total`, que a API
-// calcula sobre o conjunto inteiro (UC-004); o corpo vem praticamente vazio.
+// How many refunds are pending IN TOTAL — never the current page, never the
+// active filter. Requests a one-row page and reads only `total`, which the
+// API computes over the whole set (UC-004); the body comes back almost
+// empty.
 //
-// Só o admin precisa disto. Um usuário comum já recebe a própria contagem em
-// GET /users/{id}/refund-stats, que por ser por usuário já ignora filtro e
-// paginação — daí o `enabled`.
+// Only the admin needs this. A standard user already gets their own count
+// from GET /users/{id}/refund-stats, which, being per-user, already ignores
+// filter and pagination — hence the `enabled`.
 export function usePendingCount(enabled: boolean) {
   const { data, isLoading, isError } = useQuery({
     ...refundListQuery({ page: 1, perPage: 1, status: "pending" }),

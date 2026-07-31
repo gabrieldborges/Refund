@@ -173,6 +173,10 @@ export default function PageHome() {
     [setSearchParams]
   );
 
+  // O `total` da listagem já vem estreitado pelo filtro (UC-004), então o
+  // rótulo genérico prometia mais do que o número entrega.
+  const requestsCardLabel = status ? `Solicitações (${REFUND_STATUS[status].label})` : "Solicitações";
+
   // Com filtro ativo, `sum_amount_in_cents` cobre só aquele status (UC-004).
   // O rótulo segue o número; um número certo com nome errado é pior que
   // nenhum dos dois.
@@ -197,7 +201,7 @@ export default function PageHome() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Solicitações
+              {requestsCardLabel}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -249,7 +253,10 @@ export default function PageHome() {
                   Não foi possível carregar.
                 </p>
               ) : (
-                <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
+                <>
+                  <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
+                  {status && <p className="text-xs text-muted-foreground">Todas, sem o filtro</p>}
+                </>
               )}
             </CardContent>
           </Card>
@@ -273,7 +280,10 @@ export default function PageHome() {
                   Não foi possível carregar.
                 </p>
               ) : (
-                <p className="text-2xl font-semibold">{pendingCount ?? 0}</p>
+                <>
+                  <p className="text-2xl font-semibold">{pendingCount ?? 0}</p>
+                  {status && <p className="text-xs text-muted-foreground">Todas, sem o filtro</p>}
+                </>
               )}
             </CardContent>
           </Card>
