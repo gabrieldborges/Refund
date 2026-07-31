@@ -9,7 +9,7 @@ import ReceiptPreview from "./ReceiptPreview";
 function renderPreview() {
   return render(
     <QueryWrapper>
-      <ReceiptPreview refundId="1" refundName="Almoço com cliente" />
+      <ReceiptPreview refundId="1" refundName="Almoço com cliente" kind="expense" />
     </QueryWrapper>
   );
 }
@@ -69,7 +69,7 @@ describe("ReceiptPreview", () => {
     const inlineImage = await screen.findByRole("img", { name: /Almoço com cliente/ });
     const inlineSrc = inlineImage.getAttribute("src");
 
-    await user.click(screen.getByRole("button", { name: "Ver em tela cheia" }));
+    await user.click(screen.getByRole("button", { name: "Ver comprovante em tela cheia" }));
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("img")).toHaveAttribute("src", inlineSrc);
@@ -93,12 +93,38 @@ describe("ReceiptPreview", () => {
     const inlineLink = await screen.findByRole("link", { name: "Abrir comprovante" });
     const inlineHref = inlineLink.getAttribute("href");
 
-    await user.click(screen.getByRole("button", { name: "Ver em tela cheia" }));
+    await user.click(screen.getByRole("button", { name: "Ver comprovante em tela cheia" }));
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("link", { name: "Abrir comprovante" })).toHaveAttribute(
       "href",
       inlineHref
     );
+  });
+
+  // kind="payment" hits UC-012's payment-receipt endpoint and uses distinct
+  // copy from kind="expense" — the fix for the fullscreen button's
+  // accessible name being context-free when two previews share a screen.
+  it("labels the payment receipt distinctly from the expense receipt", async () => {
+    server.use(
+      http.get("*/refunds/:id/payment-receipt", () =>
+        new HttpResponse(new Uint8Array([1, 2, 3, 4]), {
+          headers: { "Content-Type": "image/png" },
+        })
+      )
+    );
+
+    render(
+      <QueryWrapper>
+        <ReceiptPreview refundId="1" refundName="Almoço com cliente" kind="payment" />
+      </QueryWrapper>
+    );
+
+    expect(
+      await screen.findByRole("img", { name: "Comprovante de pagamento de Almoço com cliente" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
+    ).toBeInTheDocument();
   });
 });

@@ -29,7 +29,8 @@ export { REFUND_STATUS } from "./constants/status";
 // Feature component mounted by the app shell (MainLayout).
 export { default as RefundFormDialog } from "./components/RefundFormDialog";
 
-// Receipt preview: renders the receipt Blob inline with a fullscreen dialog.
+// Receipt preview: renders a receipt Blob inline with a fullscreen dialog.
+// The `kind` prop picks expense (UC-010) vs payment (UC-012) receipt.
 export { default as ReceiptPreview } from "./components/ReceiptPreview";
 
 // Review decision controls: approve/reject buttons and the reject-reason dialog.

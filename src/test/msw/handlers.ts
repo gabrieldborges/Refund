@@ -112,6 +112,15 @@ export const handlers = [
     });
   }),
 
+  // Payment receipt (UC-012's sibling of the handler above): same shape, same
+  // most-specific-first registration reasoning, distinct path so a test can
+  // tell the two apart or override just one.
+  http.get("*/refunds/:id/payment-receipt", () => {
+    return new HttpResponse(receiptPngBytes, {
+      headers: { "Content-Type": "image/png" },
+    });
+  }),
+
   // Refund review history: registered before `*/refunds/:id` for the same
   // most-specific-first hygiene as the receipt handler above.
   http.get("*/refunds/:id/reviews", () => {

@@ -115,4 +115,60 @@ describe("PageRefundDetails", () => {
       await screen.findByRole("img", { name: `Comprovante de ${refundFixture.name}` })
     ).toBeInTheDocument();
   });
+
+  // The API has no has_payment_receipt field: a "paid" status is itself the
+  // proof the file exists, so the page must show it exactly then.
+  it("renders the payment receipt when the refund is paid", async () => {
+    server.use(
+      http.get("*/refunds/:id", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 1,
+          attributes: { ...refundFixture, status: "paid" },
+        })
+      )
+    );
+
+    renderPageRefundDetails();
+
+    expect(
+      await screen.findByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
+    ).toBeInTheDocument();
+  });
+
+  // A pending/approved/rejected refund never had a payment made, so the
+  // payment-receipt endpoint would 404 for it — the page must not even ask.
+  it("does not render the payment receipt when the refund is not paid", async () => {
+    renderPageRefundDetails();
+
+    await screen.findByRole("img", { name: `Comprovante de ${refundFixture.name}` });
+    expect(
+      screen.queryByRole("img", { name: `Comprovante de pagamento de ${refundFixture.name}` })
+    ).not.toBeInTheDocument();
+  });
+
+  // With a paid refund, the expense and payment previews render side by
+  // side. Two fullscreen buttons with the same accessible name would be
+  // indistinguishable to a screen reader user — each must say which receipt
+  // it opens.
+  it("gives the two fullscreen buttons distinct accessible names on a paid refund", async () => {
+    server.use(
+      http.get("*/refunds/:id", () =>
+        HttpResponse.json({
+          type: "Refund",
+          count: 1,
+          attributes: { ...refundFixture, status: "paid" },
+        })
+      )
+    );
+
+    renderPageRefundDetails();
+
+    expect(
+      await screen.findByRole("button", { name: "Ver comprovante em tela cheia" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
+    ).toBeInTheDocument();
+  });
 });

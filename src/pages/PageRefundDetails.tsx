@@ -89,7 +89,10 @@ export default function PageRefundDetails() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
-              {id && <ReceiptPreview refundId={id} refundName={refund.name} />}
+              {id && <ReceiptPreview refundId={id} refundName={refund.name} kind="expense" />}
+              {id && refund.status === "paid" && (
+                <ReceiptPreview refundId={id} refundName={refund.name} kind="payment" />
+              )}
               {id && <ReviewTimeline refundId={id} />}
             </CardContent>
             <CardFooter>

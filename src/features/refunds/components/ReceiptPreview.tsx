@@ -10,15 +10,37 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
-import { useReceipt } from "../hooks/useReceipt";
+import { useReceipt, type ReceiptKind } from "../hooks/useReceipt";
 
 interface ReceiptPreviewProps {
   refundId: string;
   refundName: string;
+  // Which file this preview shows. Required rather than defaulted: a paid
+  // refund renders TWO of these on the same screen (expense + payment), and
+  // an implicit default would make it easy to wire both up pointing at the
+  // same one by accident.
+  kind: ReceiptKind;
 }
 
-export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewProps) {
-  const { data: blob, isPending, isError } = useReceipt(refundId);
+// Copy that differs between the two files this component can show. Keeping it
+// as a lookup table (instead of inline ternaries sprinkled through the JSX)
+// is what keeps the fullscreen button's accessible name distinct between the
+// expense and payment previews — see the "Ver ... em tela cheia" trap this
+// fixes: with two previews on one screen, an unqualified "Ver em tela cheia"
+// button would be indistinguishable to a screen reader.
+const RECEIPT_COPY: Record<ReceiptKind, { name: (refundName: string) => string; button: string }> = {
+  expense: {
+    name: (refundName) => `Comprovante de ${refundName}`,
+    button: "Ver comprovante em tela cheia",
+  },
+  payment: {
+    name: (refundName) => `Comprovante de pagamento de ${refundName}`,
+    button: "Ver comprovante de pagamento em tela cheia",
+  },
+};
+
+export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPreviewProps) {
+  const { data: blob, isPending, isError } = useReceipt(refundId, kind);
   // Uma URL, um dono: ela é criada aqui e a MESMA string vai para o diálogo de
   // tela cheia. Se o diálogo criasse a sua, seriam dois donos de um recurso que
   // precisa ser revogado exatamente uma vez.
@@ -44,7 +66,8 @@ export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewP
   // O tipo vem de graça: o backend define o Content-Type pela extensão
   // armazenada e o Blob carrega isso. Nenhum campo novo no contrato.
   const isImage = blob.type.startsWith("image/");
-  const alt = `Comprovante de ${refundName}`;
+  const { name: nameFor, button: fullscreenButtonLabel } = RECEIPT_COPY[kind];
+  const alt = nameFor(refundName);
 
   return (
     <div className="flex flex-col gap-2">
@@ -66,7 +89,7 @@ export default function ReceiptPreview({ refundId, refundName }: ReceiptPreviewP
 
       <Button variant="outline" size="sm" className="self-end" onClick={() => setIsFullscreen(true)}>
         <Expand className="size-4" aria-hidden />
-        Ver em tela cheia
+        {fullscreenButtonLabel}
       </Button>
 
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>

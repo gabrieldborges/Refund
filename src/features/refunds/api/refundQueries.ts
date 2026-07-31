@@ -24,6 +24,14 @@ export const refundKeys = {
   // refundKeys.lists() justamente para não rebuscar o que acabou de sumir, e
   // o comprovante segue a mesma regra.
   receipt: (id: string) => [...refundKeys.all, "receipt", id] as const,
+  // O comprovante de PAGAMENTO (UC-012), um arquivo distinto do de despesa
+  // acima — endpoint próprio (`/payment-receipt`), só passa a existir depois
+  // que o admin marca a solicitação como paga. Mesma regra do `receipt`: nem
+  // useDeleteRefund nem useCreateRefund tocam este ramo, os dois miram só
+  // refundKeys.lists(). usePayRefund é a exceção — invalida refundKeys.all
+  // inteiro, o que alcança esta chave também, e faz sentido: é exatamente o
+  // pagamento que faz esse arquivo passar a existir.
+  paymentReceipt: (id: string) => [...refundKeys.all, "payment-receipt", id] as const,
   // Per-user stats (counts/sums grouped by status). Keyed by userId because
   // an admin can read another user's stats, so different users must not
   // share a cache entry.
@@ -70,6 +78,24 @@ export function receiptQuery(id: string) {
     queryKey: refundKeys.receipt(id),
     queryFn: async ({ signal }) => {
       const { data } = await api.get<Blob>(`/refunds/${id}/receipt`, {
+        responseType: "blob",
+        signal,
+      });
+      return data;
+    },
+  });
+}
+
+// Sibling of receiptQuery for UC-012's payment-receipt endpoint: same shape,
+// same "binary body, no Zod" reasoning above, just a different path and cache
+// key. All four failure modes (unknown id, someone else's refund, a refund
+// never paid, a file missing from disk) answer the same 404 — the query
+// surfaces that as a single isError, exactly like receiptQuery.
+export function paymentReceiptQuery(id: string) {
+  return queryOptions({
+    queryKey: refundKeys.paymentReceipt(id),
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<Blob>(`/refunds/${id}/payment-receipt`, {
         responseType: "blob",
         signal,
       });

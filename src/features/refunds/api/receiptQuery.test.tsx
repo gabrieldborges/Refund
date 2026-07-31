@@ -36,4 +36,25 @@ describe("useReceipt", () => {
 
     expect(result.current.fetchStatus).toBe("idle");
   });
+
+  // kind="payment" must hit the payment-receipt endpoint (UC-012's sibling of
+  // UC-010), not the expense one — proven by pointing the two endpoints at
+  // different bytes and asserting the payment kind returns the payment bytes.
+  it("hits the payment-receipt endpoint when kind is payment", async () => {
+    server.use(
+      http.get("*/refunds/:id/receipt", () =>
+        HttpResponse.json({ detail: "should not be called" }, { status: 500 })
+      ),
+      http.get("*/refunds/:id/payment-receipt", () =>
+        new HttpResponse(new Uint8Array([1, 2, 3, 4]), {
+          headers: { "Content-Type": "image/jpeg" },
+        })
+      )
+    );
+
+    const { result } = renderHook(() => useReceipt("1", "payment"), { wrapper: QueryWrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.type).toContain("image/jpeg");
+  });
 });

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   CATEGORIES,
   PayRefundDialog,
+  ReceiptPreview,
   REFUND_STATUS,
   ReviewDecision,
   ReviewTimeline,
@@ -63,6 +64,9 @@ export default function PageRefundReview() {
                   value={formatCentsToBRL(refund.amount_in_cents)}
                 />
               </div>
+              {id && refund.status === "paid" && (
+                <ReceiptPreview refundId={id} refundName={refund.name} kind="payment" />
+              )}
               {id && <ReviewTimeline refundId={id} />}
             </CardContent>
             {id && (
