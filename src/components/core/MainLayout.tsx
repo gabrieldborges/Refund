@@ -49,12 +49,7 @@ export default function MainLayout() {
         {/* A plain div, not <main>: SidebarInset already renders as <main>
             (src/components/ui/sidebar.tsx), so a second <main> here would be
             a nested landmark — invalid HTML5 and confusing for AT navigation. */}
-        {/* scrollbar-gutter reserva a calha da barra de rolagem mesmo quando
-            ela não aparece. Sem isso, um conteúdo que cresce e encolhe (as
-            linhas da tabela entrando escalonadas) faz a barra surgir e sumir,
-            e cada troca muda a largura útil — um deslocamento horizontal
-            visível, que é o "flick" percebido ao abrir a Home. */}
-        <div className="flex-1 overflow-auto [scrollbar-gutter:stable]">
+        <div className="flex-1 overflow-auto">
           <Outlet
             context={{ openNewRefund: () => setIsNewRefundOpen(true) } satisfies MainLayoutOutletContext}
           />
