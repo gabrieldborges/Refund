@@ -10,8 +10,6 @@ function activeLocale(): string {
 }
 
 export function formatCentsToBRL(cents: number): string {
-  const deliberateError: number = "isto não é um número";
-  void deliberateError;
   return (cents / 100).toLocaleString(activeLocale(), {
     style: "currency",
     currency: "BRL",
