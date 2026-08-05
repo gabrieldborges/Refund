@@ -10,11 +10,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/useAuth";
 import { initialsFromName, usernameFromEmail } from "@/lib/profile";
 import { NAV_ITEMS } from "./nav-items";
 
 export default function AppSidebar() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,19 +62,19 @@ export default function AppSidebar() {
             return (
               <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center group-data-[collapsible=icon]:justify-center">
                 {item.enabled ? (
-                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={item.label} className="pl-4 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
+                  <SidebarMenuButton asChild isActive={location.pathname === item.to} tooltip={t(item.labelKey)} className="pl-4 hover:bg-accent! h-full hover:text-accent-foreground! dark:hover:bg-accent/50!" >
                     <Link to={item.to} className=" bg-sidebar!">
                       <Icon aria-hidden />
-                      <span >{item.label}</span>
+                      <span >{t(item.labelKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 ) : (
                   <div className=" flex items-center justify-between w-full h-full pl-2">
-                    <SidebarMenuButton type="button" disabled tooltip={item.label} className=" w-fit">
+                    <SidebarMenuButton type="button" disabled tooltip={t(item.labelKey)} className=" w-fit">
                       <Icon aria-hidden />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </SidebarMenuButton>
-                    <SidebarMenuBadge className="pr-5 text-sidebar-ring ">em breve</SidebarMenuBadge>
+                    <SidebarMenuBadge className="pr-5 text-sidebar-ring ">{t("nav.comingSoon")}</SidebarMenuBadge>
                   </div>
                 )}
               </SidebarMenuItem>
@@ -84,9 +86,9 @@ export default function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton type="button" onClick={handleLogout} tooltip="Sair">
+            <SidebarMenuButton type="button" onClick={handleLogout} tooltip={t("shell.logout")}>
               <LogOut aria-hidden />
-              <span>Sair</span>
+              <span>{t("shell.logout")}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

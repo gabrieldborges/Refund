@@ -1,16 +1,20 @@
 import { CalendarDays, LayoutDashboard, ReceiptText, Users, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
-  label: string;
+  // A catalogue key, not display text. This module is data, evaluated once at
+  // import time, so it cannot call t() — the component that renders the item
+  // translates it.
+  labelKey: string;
   to: string;
   icon: LucideIcon;
   enabled: boolean;
 }
 
-// Only "Solicitações" is live now; the rest are placeholders for future cycles.
+// Only the refunds entry is live now; the rest are placeholders for future
+// cycles.
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Solicitações", to: "/", icon: ReceiptText, enabled: true },
-  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: false },
-  { label: "Time", to: "/team", icon: Users, enabled: false },
-  { label: "Calendário", to: "/calendar", icon: CalendarDays, enabled: false },
+  { labelKey: "nav.refunds", to: "/", icon: ReceiptText, enabled: true },
+  { labelKey: "nav.dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: false },
+  { labelKey: "nav.team", to: "/team", icon: Users, enabled: false },
+  { labelKey: "nav.calendar", to: "/calendar", icon: CalendarDays, enabled: false },
 ];

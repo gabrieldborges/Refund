@@ -35,13 +35,13 @@ export const router = createBrowserRouter([
                   {
                     index: true,
                     loader: homeLoader,
-                    handle: { title: "Solicitações de reembolso" },
+                    handle: { titleKey: "routes.home" },
                     lazy: async () => ({ Component: (await import("./pages/PageHome")).default }),
                   },
                   {
                     path: "/refunds/:id/review",
                     loader: reviewLoader,
-                    handle: { title: "Revisar solicitação" },
+                    handle: { titleKey: "routes.review" },
                     lazy: async () => ({
                       Component: (await import("./pages/PageRefundReview")).default,
                     }),
@@ -49,19 +49,19 @@ export const router = createBrowserRouter([
                   {
                     path: "/refunds/:id",
                     loader: refundDetailLoader,
-                    handle: { title: "Detalhe da solicitação" },
+                    handle: { titleKey: "routes.detail" },
                     lazy: async () => ({
                       Component: (await import("./pages/PageRefundDetails")).default,
                     }),
                   },
                   {
                     path: "/success",
-                    handle: { title: "Sucesso" },
+                    handle: { titleKey: "routes.success" },
                     lazy: async () => ({ Component: (await import("./pages/PageSuccess")).default }),
                   },
                   {
                     path: "/components",
-                    handle: { title: "Componentes" },
+                    handle: { titleKey: "routes.components" },
                     lazy: async () => ({
                       Component: (await import("./pages/PageComponents")).default,
                     }),

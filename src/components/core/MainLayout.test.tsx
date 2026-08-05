@@ -28,7 +28,7 @@ function renderShell(childElement: React.ReactNode = <p>home page</p>) {
             children: [
               {
                 index: true,
-                handle: { title: "Solicitações de reembolso" },
+                handle: { titleKey: "routes.home" },
                 element: childElement,
               },
             ],

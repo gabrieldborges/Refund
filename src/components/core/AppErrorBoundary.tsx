@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import i18next from "i18next";
 import { Button } from "@/components/ui/button";
 
 interface AppErrorBoundaryProps {
@@ -47,15 +48,31 @@ export default class AppErrorBoundary extends Component<
       return this.props.children;
     }
 
+    // i18next.t is called directly rather than through useTranslation: this is
+    // a class, and hooks are not available. That also means the fallback does
+    // not re-render on a language switch — acceptable, because the only action
+    // it offers is reloading the document, which reinitialises everything.
+    //
+    // Every key carries a defaultValue. One of the failures this boundary
+    // exists to survive is the catalogue itself failing to load (see the
+    // .catch in main.tsx), and a safety net that renders "error.title" when
+    // the app is already broken helps nobody.
+    const t = i18next.t.bind(i18next);
+
     return (
       <main className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-10">
         <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border bg-card p-8 text-center text-card-foreground">
-          <h1 className="text-2xl font-semibold tracking-tight">Algo deu errado</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("error.title", { defaultValue: "Algo deu errado" })}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            A aplicação não conseguiu iniciar. Recarregue a página para tentar de novo.
+            {t("error.bootFailed", {
+              defaultValue:
+                "A aplicação não conseguiu iniciar. Recarregue a página para tentar de novo.",
+            })}
           </p>
           <Button variant="outline" onClick={() => window.location.reload()}>
-            Recarregar a página
+            {t("error.reload", { defaultValue: "Recarregar a página" })}
           </Button>
         </div>
       </main>

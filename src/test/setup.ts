@@ -5,6 +5,15 @@ import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "./msw/server";
+import { initI18nForTests } from "./i18n";
+
+// i18n is initialised SYNCHRONOUSLY here, unlike in main.tsx where the
+// catalogue is awaited. Tests render components directly, without going
+// through the bootstrap, so a component calling t() must find a ready
+// instance or it renders raw keys. Loading pt-BR statically also means the
+// existing assertions — which query by Portuguese accessible names — keep
+// describing what a Brazilian user actually sees.
+initI18nForTests();
 
 // jsdom has no matchMedia; the theme store queries it. Default to light.
 if (!window.matchMedia) {

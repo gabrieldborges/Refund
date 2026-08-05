@@ -1,0 +1,29 @@
+{
+  "nav.refunds": "Requests",
+  "nav.dashboard": "Dashboard",
+  "nav.team": "Team",
+  "nav.calendar": "Calendar",
+  "nav.comingSoon": "coming soon",
+
+  "shell.toggleMenu": "Toggle menu",
+  "shell.toggleTheme": "Toggle theme",
+  "shell.toggleLocale": "Change language",
+  "shell.logout": "Sign out",
+  "shell.newRefund": "New request",
+
+  "routes.home": "Expense reimbursements",
+  "routes.review": "Review request",
+  "routes.detail": "Request details",
+  "routes.success": "Success",
+  "routes.components": "Components",
+
+  "error.title": "Something went wrong",
+  "error.bootFailed": "The application could not start. Reload the page to try again.",
+  "error.reload": "Reload the page",
+  "error.notFound": "The requested content could not be found.",
+  "error.badRequest": "The address provided is not valid.",
+  "error.generic": "This page could not be loaded. Please try again.",
+  "error.retry": "Try again",
+  "error.retrying": "Trying…",
+  "error.backToRefunds": "Back to requests"
+}

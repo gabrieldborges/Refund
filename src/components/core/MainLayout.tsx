@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet, useMatches } from "react-router";
+import { useTranslation } from "react-i18next";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "./Sidebar";
 import Topbar from "./Topbar";
@@ -15,13 +16,18 @@ export interface MainLayoutOutletContext {
   openNewRefund: () => void;
 }
 
-// Reads the deepest route handle that defines a title.
+// Reads the deepest route handle that defines a title. The handle carries a
+// catalogue KEY, not display text: route definitions are evaluated once at
+// module load, long before a locale is chosen, so translating there would
+// freeze the title in whatever language happened to be active.
 function useRouteTitle(): string {
+  const { t } = useTranslation();
   const matches = useMatches();
   const withTitle = [...matches]
     .reverse()
-    .find((m) => (m.handle as { title?: string } | undefined)?.title);
-  return (withTitle?.handle as { title?: string } | undefined)?.title ?? "";
+    .find((m) => (m.handle as { titleKey?: string } | undefined)?.titleKey);
+  const titleKey = (withTitle?.handle as { titleKey?: string } | undefined)?.titleKey;
+  return titleKey ? t(titleKey) : "";
 }
 
 export default function MainLayout() {
