@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   flexRender,
@@ -133,6 +133,16 @@ export default function RefundsTable({
   order,
   onSortChange,
 }: RefundsTableProps) {
+  // Flips false once the entrance has played. A ref would not re-render, and
+  // state set during render would loop; the timeout is cleared on unmount so a
+  // fast navigation cannot set state on a gone component.
+  const [isFirstPaint, setIsFirstPaint] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsFirstPaint(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   const { t } = useTranslation();
   const columns = useMemo(() => createRefundColumns(viewer, t), [viewer, t]);
 
@@ -231,8 +241,23 @@ export default function RefundsTable({
               </TableCell>
             </TableRow>
           )}
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+          {table.getRowModel().rows.map((row, index) => (
+            <TableRow
+              key={row.id}
+              // Only the first mount is decorated. Paginating or filtering
+              // replaces the rows, and animating those too would turn a
+              // one-off "here is your data" into a flourish on every
+              // interaction — the opposite of motion with a purpose.
+              className={cn(isFirstPaint && "table-row-enter")}
+              // The stagger depends on the row index, so it cannot live in a
+              // class. Capped so a full page never delays the last row by more
+              // than a fraction of a second.
+              style={
+                isFirstPaint
+                  ? { animationDelay: `${Math.min(index, 9) * 30}ms` }
+                  : undefined
+              }
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className={cn(cell.column.columnDef.meta?.className)}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

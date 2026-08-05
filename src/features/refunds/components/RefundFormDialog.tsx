@@ -198,7 +198,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
             />
 
             {submitError && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="animate-in fade-in-0 duration-150 text-sm text-destructive">
                 {submitError}
               </p>
             )}

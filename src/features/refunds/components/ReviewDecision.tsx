@@ -163,7 +163,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
       </div>
 
       {submitError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="animate-in fade-in-0 duration-150 text-sm text-destructive">
           {submitError}
         </p>
       )}

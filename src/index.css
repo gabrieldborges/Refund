@@ -174,3 +174,93 @@
     transition-property: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Animações com propósito (Item 15). Cada uma explica uma mudança de estado;
+   nenhuma é decoração de fundo. Todas herdam a proteção de reduced-motion
+   acima — o fade sobrevive, o deslocamento é neutralizado.
+   --------------------------------------------------------------------------- */
+
+/* Entrada de um item novo na linha do tempo do histórico.
+   Duas coisas acontecem juntas: o item CHEGA (translateX) e ABRE ESPAÇO
+   (grid-template-rows de 0fr para 1fr). É a segunda que faz os itens de baixo
+   se afastarem em vez de serem atropelados — animar `height: auto` não é
+   possível, mas a fração de grid é. */
+@keyframes timeline-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateX(-1.5rem);
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+/* min-height:0 é obrigatório: sem ele o conteúdo impõe altura mínima e a
+   linha de grid nunca chega de fato a 0fr. */
+.timeline-item > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.timeline-item--entering {
+  animation: timeline-enter 320ms ease-out;
+}
+
+/* Badge confirmando que o status mudou: cresce pouco e volta. O exagero é
+   deliberadamente pequeno (6%) — a função é dizer "isto acabou de mudar",
+   não chamar atenção para si. */
+@keyframes badge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.badge-pop {
+  animation: badge-pop 260ms ease-out;
+}
+
+/* Entrada das linhas da tabela, só na primeira montagem. O atraso escalonado
+   é aplicado inline (style), porque depende do índice da linha. */
+@keyframes table-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row-enter {
+  animation: table-row-enter 260ms ease-out both;
+}
+
+/* Sob reduced-motion, o movimento sai e o significado fica: a linha do tempo
+   ainda abre espaço (sem deslizar), o badge não pulsa, as linhas aparecem sem
+   subir. Repetido aqui porque estas keyframes são nossas — a regra genérica
+   acima só alcança as variáveis do tw-animate-css. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes timeline-enter {
+    from { grid-template-rows: 0fr; opacity: 0; }
+    to { grid-template-rows: 1fr; opacity: 1; }
+  }
+
+  .badge-pop {
+    animation: none !important;
+  }
+
+  @keyframes table-row-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

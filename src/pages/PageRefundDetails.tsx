@@ -27,6 +27,8 @@ import {
 import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { useValueChanged } from "@/hooks/useEnteredItems";
 
 export default function PageRefundDetails() {
   const { t } = useTranslation();
@@ -36,6 +38,12 @@ export default function PageRefundDetails() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: refund, isLoading, isError } = useRefund(id);
+
+  // True only for the render where the status actually changed — approving or
+  // paying from the review screen invalidates this query, so the new value
+  // arrives here without a remount. Not true on first render: a badge that
+  // pulses every time the page opens says "this just changed" when nothing did.
+  const statusChanged = useValueChanged(refund?.status);
   const { mutateAsync: deleteRefund, isPending: isDeleting } = useDeleteRefund();
 
   // `isDeleting` covers only the DELETE request; it falls the instant it
@@ -87,7 +95,10 @@ export default function PageRefundDetails() {
             <CardHeader>
               <CardTitle>{refund.name}</CardTitle>
               <CardDescription>{t(CATEGORIES[refund.category].labelKey)}</CardDescription>
-              <Badge variant={REFUND_STATUS[refund.status].variant} className="w-fit">
+              <Badge
+                variant={REFUND_STATUS[refund.status].variant}
+                className={cn("w-fit", statusChanged && "badge-pop")}
+              >
                 {t(REFUND_STATUS[refund.status].labelKey)}
               </Badge>
             </CardHeader>

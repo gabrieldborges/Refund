@@ -137,4 +137,20 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
     },
   },
+  // react-hooks/refs forbids reading ref.current during render, and is right
+  // almost everywhere. useEnteredItems answers "what changed since the last
+  // render", which has no correct state-based equivalent here: holding the
+  // seen ids in state needs setState inside an effect (trading this rule for
+  // set-state-in-effect) and re-renders immediately after, stripping the
+  // animation class while it is still playing. Writing still happens in an
+  // effect — that part is what makes StrictMode's double render safe, and
+  // useEnteredItems.test.tsx renders under StrictMode precisely to prove it.
+  //
+  // Silenced per-file, by name, following the block above: an inline directive
+  // does not work because the rule follows the value through the local alias,
+  // so it would have to be repeated at every use site.
+  {
+    files: ['src/hooks/useEnteredItems.ts'],
+    rules: { 'react-hooks/refs': 'off' },
+  },
 ])

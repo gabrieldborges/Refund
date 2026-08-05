@@ -21,6 +21,8 @@ import {
 import { formatCentsToBRL } from "@/lib/format";
 import { useAuth } from "@/context/useAuth";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { useValueChanged } from "@/hooks/useEnteredItems";
 
 // reviewLoader (router-loaders.ts) already guarantees only an admin reviewing
 // someone else's refund reaches this component.
@@ -29,6 +31,11 @@ export default function PageRefundReview() {
   const { id } = useParams();
   const { user } = useAuth();
   const { data: refund, isLoading, isError } = useRefund(id);
+
+  // True only for the render where the status actually changed. This is the
+  // screen where approving, rejecting and paying happen, so it is the one place
+  // the pulse is genuinely earned: the value changes under the user's eyes.
+  const statusChanged = useValueChanged(refund?.status);
   const [isPayOpen, setIsPayOpen] = useState(false);
   const { nextRefund } = useNextPendingRefund(refund?.id ?? 0, user);
 
@@ -78,7 +85,10 @@ export default function PageRefundReview() {
             <CardHeader>
               <CardTitle>{refund.name}</CardTitle>
               <CardDescription>{t(CATEGORIES[refund.category].labelKey)}</CardDescription>
-              <Badge variant={REFUND_STATUS[refund.status].variant} className="w-fit">
+              <Badge
+                variant={REFUND_STATUS[refund.status].variant}
+                className={cn("w-fit", statusChanged && "badge-pop")}
+              >
                 {t(REFUND_STATUS[refund.status].labelKey)}
               </Badge>
             </CardHeader>
