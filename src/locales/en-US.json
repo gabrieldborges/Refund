@@ -4,19 +4,16 @@
   "nav.team": "Team",
   "nav.calendar": "Calendar",
   "nav.comingSoon": "coming soon",
-
   "shell.toggleMenu": "Toggle menu",
   "shell.toggleTheme": "Toggle theme",
   "shell.toggleLocale": "Change language",
   "shell.logout": "Sign out",
   "shell.newRefund": "New request",
-
   "routes.home": "Expense reimbursements",
   "routes.review": "Review request",
   "routes.detail": "Request details",
   "routes.success": "Success",
   "routes.components": "Components",
-
   "error.title": "Something went wrong",
   "error.bootFailed": "The application could not start. Reload the page to try again.",
   "error.reload": "Reload the page",
@@ -25,5 +22,21 @@
   "error.generic": "This page could not be loaded. Please try again.",
   "error.retry": "Try again",
   "error.retrying": "Trying…",
-  "error.backToRefunds": "Back to requests"
+  "error.backToRefunds": "Back to requests",
+  "status.pending": "Pending",
+  "status.approved": "Approved",
+  "status.rejected": "Rejected",
+  "status.paid": "Paid",
+  "category.food": "Food",
+  "category.lodging": "Lodging",
+  "category.transport": "Transport",
+  "category.service": "Services",
+  "category.others": "Others",
+  "validation.nameRequired": "Name is required",
+  "validation.categoryRequired": "Select a category",
+  "validation.amountPositive": "Amount must be greater than zero",
+  "validation.receiptRequired": "Attach the receipt",
+  "validation.paymentReceiptRequired": "Attach the payment receipt",
+  "validation.fileTooLarge": "File must be at most 4MB",
+  "validation.fileType": "File must be JPG, PNG or PDF"
 }

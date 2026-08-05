@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import type { Label as LabelPrimitive } from "radix-ui"
 import { Slot } from "radix-ui"
 import {
@@ -137,7 +138,14 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const { t } = useTranslation()
+  // EDITADO À MÃO (não vem assim do registry do shadcn): as mensagens dos
+  // schemas Zod são CHAVES de catálogo, porque os schemas são avaliados na
+  // importação, antes de existir locale. Este é o único ponto onde qualquer
+  // mensagem de validação chega à tela, então traduzir aqui cobre todos os
+  // formulários. t() devolve a string intacta quando ela não é uma chave, o
+  // que torna a passagem segura para mensagens literais.
+  const body = error ? t(String(error?.message ?? "")) : props.children
 
   if (!body) {
     return null

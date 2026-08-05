@@ -20,10 +20,12 @@ import {
 } from "@/features/refunds";
 import { formatCentsToBRL } from "@/lib/format";
 import { useAuth } from "@/context/useAuth";
+import { useTranslation } from "react-i18next";
 
 // reviewLoader (router-loaders.ts) already guarantees only an admin reviewing
 // someone else's refund reaches this component.
 export default function PageRefundReview() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const { user } = useAuth();
   const { data: refund, isLoading, isError } = useRefund(id);
@@ -75,9 +77,9 @@ export default function PageRefundReview() {
           <>
             <CardHeader>
               <CardTitle>{refund.name}</CardTitle>
-              <CardDescription>{CATEGORIES[refund.category].label}</CardDescription>
+              <CardDescription>{t(CATEGORIES[refund.category].labelKey)}</CardDescription>
               <Badge variant={REFUND_STATUS[refund.status].variant} className="w-fit">
-                {REFUND_STATUS[refund.status].label}
+                {t(REFUND_STATUS[refund.status].labelKey)}
               </Badge>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">

@@ -26,8 +26,10 @@ import {
 } from "@/features/refunds";
 import { getApiErrorMessage } from "@/lib/api";
 import { formatCentsToBRL } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 export default function PageRefundDetails() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -84,9 +86,9 @@ export default function PageRefundDetails() {
           <>
             <CardHeader>
               <CardTitle>{refund.name}</CardTitle>
-              <CardDescription>{CATEGORIES[refund.category].label}</CardDescription>
+              <CardDescription>{t(CATEGORIES[refund.category].labelKey)}</CardDescription>
               <Badge variant={REFUND_STATUS[refund.status].variant} className="w-fit">
-                {REFUND_STATUS[refund.status].label}
+                {t(REFUND_STATUS[refund.status].labelKey)}
               </Badge>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">

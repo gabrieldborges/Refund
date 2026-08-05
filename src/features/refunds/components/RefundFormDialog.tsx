@@ -36,6 +36,7 @@ import {
 } from "../schemas/refund";
 import { useCreateRefund } from "../hooks/useCreateRefund";
 import { getApiErrorMessage } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface RefundFormDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ interface RefundFormDialogProps {
 }
 
 export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialogProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateRefund();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -145,7 +147,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
                       <SelectContent>
                         {CATEGORY_OPTIONS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                            {t(option.labelKey)}
                           </SelectItem>
                         ))}
                       </SelectContent>

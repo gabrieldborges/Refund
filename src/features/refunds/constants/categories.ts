@@ -2,17 +2,18 @@ import { UtensilsCrossed, Bed, Car, Monitor, Wrench, type LucideIcon } from "luc
 
 export type RefundCategory = "food" | "lodging" | "transport" | "service" | "others";
 
-export const CATEGORIES: Record<RefundCategory, { label: string; icon: LucideIcon }> = {
-  food: { label: "Alimentação", icon: UtensilsCrossed },
-  lodging: { label: "Hospedagem", icon: Bed },
-  transport: { label: "Transporte", icon: Car },
-  service: { label: "Serviços", icon: Wrench },
-  others: { label: "Outros", icon: Monitor },
+// labelKey, não label: avaliado na importação, antes de existir locale.
+export const CATEGORIES: Record<RefundCategory, { labelKey: string; icon: LucideIcon }> = {
+  food: { labelKey: "category.food", icon: UtensilsCrossed },
+  lodging: { labelKey: "category.lodging", icon: Bed },
+  transport: { labelKey: "category.transport", icon: Car },
+  service: { labelKey: "category.service", icon: Wrench },
+  others: { labelKey: "category.others", icon: Monitor },
 };
 
-export const CATEGORY_OPTIONS = Object.entries(CATEGORIES).map(([value, { label }]) => ({
+export const CATEGORY_OPTIONS = Object.entries(CATEGORIES).map(([value, { labelKey }]) => ({
   value: value as RefundCategory,
-  label,
+  labelKey,
 }));
 
 // Tupla de valores (não só o tipo) — o z.enum do Zod precisa disso em tempo

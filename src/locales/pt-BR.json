@@ -4,19 +4,16 @@
   "nav.team": "Time",
   "nav.calendar": "Calendário",
   "nav.comingSoon": "em breve",
-
   "shell.toggleMenu": "Alternar menu",
   "shell.toggleTheme": "Alternar tema",
   "shell.toggleLocale": "Alternar idioma",
   "shell.logout": "Sair",
   "shell.newRefund": "Nova solicitação",
-
   "routes.home": "Solicitações de reembolso",
   "routes.review": "Revisar solicitação",
   "routes.detail": "Detalhe da solicitação",
   "routes.success": "Sucesso",
   "routes.components": "Componentes",
-
   "error.title": "Algo deu errado",
   "error.bootFailed": "A aplicação não conseguiu iniciar. Recarregue a página para tentar de novo.",
   "error.reload": "Recarregar a página",
@@ -25,5 +22,21 @@
   "error.generic": "Não foi possível carregar esta página. Tente novamente.",
   "error.retry": "Tentar novamente",
   "error.retrying": "Tentando…",
-  "error.backToRefunds": "Voltar para solicitações"
+  "error.backToRefunds": "Voltar para solicitações",
+  "status.pending": "Pendente",
+  "status.approved": "Aprovado",
+  "status.rejected": "Rejeitado",
+  "status.paid": "Pago",
+  "category.food": "Alimentação",
+  "category.lodging": "Hospedagem",
+  "category.transport": "Transporte",
+  "category.service": "Serviços",
+  "category.others": "Outros",
+  "validation.nameRequired": "Nome é obrigatório",
+  "validation.categoryRequired": "Selecione uma categoria",
+  "validation.amountPositive": "Valor deve ser maior que zero",
+  "validation.receiptRequired": "Anexe o comprovante",
+  "validation.paymentReceiptRequired": "Anexe o comprovante de pagamento",
+  "validation.fileTooLarge": "Arquivo deve ter no máximo 4MB",
+  "validation.fileType": "Arquivo deve ser JPG, PNG ou PDF"
 }

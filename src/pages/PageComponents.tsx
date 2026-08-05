@@ -22,11 +22,13 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORY_OPTIONS } from "@/features/refunds";
+import { useTranslation } from "react-i18next";
 
 // Vitrine dos componentes shadcn disponíveis no projeto. Página sem lógica,
 // usada apenas para inspecionar variantes e tamanhos lado a lado — não tem
 // teste (ver brief da Task 8).
 export default function PageComponents() {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <div>
@@ -82,7 +84,7 @@ export default function PageComponents() {
             <SelectContent>
               {CATEGORY_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>

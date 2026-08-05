@@ -25,6 +25,8 @@ import { CATEGORIES } from "../constants/categories";
 import { REFUND_STATUS } from "../constants/status";
 import { getRefundHref, type RefundViewer } from "../lib/getRefundHref";
 import type { Refund, RefundOrder, RefundSort } from "../schemas/refund";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 // Column-level styling hook. The TanStack types carry no `className`, so the
 // table's own meta slot is augmented instead of threading a parallel lookup
@@ -48,7 +50,11 @@ interface RefundsTableProps {
 // Os ids das colunas ordenáveis são EXATAMENTE os valores que `sort` aceita em
 // UC-004. Isso não é coincidência: a Task 5 usa `column.id` direto como
 // parâmetro, então um id divergente viraria um 422 silencioso.
-function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
+// `t` entra por parâmetro: esta é uma função pura, não um componente, então
+// não pode chamar useTranslation. Passá-la explicitamente também deixa a
+// dependência visível no useMemo abaixo — trocar de idioma reconstrói as
+// colunas, que é exatamente o necessário para os rótulos acompanharem.
+function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnDef<Refund>[] {
   return [
     {
       id: "category",
@@ -63,7 +69,7 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
             <CategoryIcon className="size-5 text-muted-foreground" aria-hidden />
             {/* O ícone sozinho é silencioso para leitor de tela; na lista
                 antiga o rótulo da categoria ficava ao lado do título. */}
-            <span className="sr-only">{category.label}</span>
+            <span className="sr-only">{t(category.labelKey)}</span>
           </>
         );
       },
@@ -105,7 +111,7 @@ function createRefundColumns(viewer: RefundViewer | null): ColumnDef<Refund>[] {
       accessorFn: (refund) => refund.status,
       cell: ({ row }) => (
         <Badge variant={REFUND_STATUS[row.original.status].variant}>
-          {REFUND_STATUS[row.original.status].label}
+          {t(REFUND_STATUS[row.original.status].labelKey)}
         </Badge>
       ),
     },
@@ -127,7 +133,8 @@ export default function RefundsTable({
   order,
   onSortChange,
 }: RefundsTableProps) {
-  const columns = useMemo(() => createRefundColumns(viewer), [viewer]);
+  const { t } = useTranslation();
+  const columns = useMemo(() => createRefundColumns(viewer, t), [viewer, t]);
 
   // Two mechanisms with different purposes: screen width is CSS
   // (meta.className), role is table state. Mixing them would make a media

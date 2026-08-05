@@ -11,6 +11,7 @@ import { useRefundStats } from "../hooks/useRefundStats";
 import { useRefunds } from "../hooks/useRefunds";
 import { getRefundHref, type RefundViewer } from "../lib/getRefundHref";
 import type { Refund, RefundStatus } from "../schemas/refund";
+import { useTranslation } from "react-i18next";
 
 // Fixed render order for the four counters — the same four keys UC-014
 // always returns, zeros included, so this never needs a data-driven length.
@@ -65,6 +66,7 @@ function NavigationArrow({
 // so a photo would render as initials for everyone — deferred to the
 // profile-picture cycle.
 export default function RequesterPanel({ requester, viewer, currentRefundId }: RequesterPanelProps) {
+  const { t } = useTranslation();
   const { data: stats, isLoading: isStatsLoading, isError: isStatsError } = useRefundStats(requester.id);
   const {
     data: list,
@@ -121,7 +123,7 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
             </div>
             {STATUS_ORDER.map((status) => (
               <div key={status} className="flex flex-col gap-1 rounded-lg border p-3">
-                <span className="text-xs text-muted-foreground">{REFUND_STATUS[status].label}</span>
+                <span className="text-xs text-muted-foreground">{t(REFUND_STATUS[status].labelKey)}</span>
                 <span className="text-lg font-semibold">{stats.by_status[status].count}</span>
               </div>
             ))}
@@ -189,7 +191,7 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
                       >
                         <span className="truncate">{refund.name}</span>
                         <Badge variant={REFUND_STATUS[refund.status].variant}>
-                          {REFUND_STATUS[refund.status].label}
+                          {t(REFUND_STATUS[refund.status].labelKey)}
                         </Badge>
                       </Link>
                     </li>

@@ -20,6 +20,7 @@ import { formatCentsToBRL } from "@/lib/format";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAuth } from "@/context/useAuth";
 import type { homeLoader } from "@/router-loaders";
+import { useTranslation } from "react-i18next";
 
 // Coluna nova começa na direção que faz sentido para o tipo do dado; a mesma
 // coluna clicada de novo inverte. Tabela de lookup em vez de ternários
@@ -71,6 +72,7 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
 }
 
 export default function PageHome() {
+  const { t } = useTranslation();
   const { page, perPage, name, status, sort, order } = useLoaderData<typeof homeLoader>();
   const [, setSearchParams] = useSearchParams();
   const { user } = useAuth();
@@ -207,9 +209,9 @@ export default function PageHome() {
   // número filtrado pelos dois aparecia como se só o status explicasse o
   // recorte. Repetir o termo buscado deixaria o card poluído, então "busca"
   // apenas sinaliza que esse filtro também está ativo, no mesmo formato que
-  // REFUND_STATUS[status].label já usa para o status.
+  // t(REFUND_STATUS[status].labelKey) já usa para o status.
   const requestsCardLabel = (() => {
-    const activeFilters = [status && REFUND_STATUS[status].label, name && "busca"].filter(Boolean);
+    const activeFilters = [status && t(REFUND_STATUS[status].labelKey), name && "busca"].filter(Boolean);
     return activeFilters.length > 0 ? `Solicitações (${activeFilters.join(", ")})` : "Solicitações";
   })();
 
@@ -218,7 +220,7 @@ export default function PageHome() {
   // nenhum dos dois.
   const moneyCardLabel = isAdmin
     ? status
-      ? REFUND_STATUS[status].label
+      ? t(REFUND_STATUS[status].labelKey)
       : "Solicitado"
     : "Aprovado + pago";
 

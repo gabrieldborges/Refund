@@ -77,7 +77,9 @@ describe("payRefundSchema.shape.file", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Arquivo deve ser JPG, PNG ou PDF");
+      // A key, not copy. The accessible-description assertions further down
+      // this file check the translated result on screen.
+      expect(result.error.issues[0].message).toBe("validation.fileType");
     }
   });
 
@@ -92,7 +94,7 @@ describe("payRefundSchema.shape.file", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Arquivo deve ter no máximo 4MB");
+      expect(result.error.issues[0].message).toBe("validation.fileTooLarge");
     }
   });
 });

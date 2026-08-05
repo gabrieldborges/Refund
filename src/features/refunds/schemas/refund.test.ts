@@ -12,7 +12,11 @@ describe("refundCreateSchema.shape.name", () => {
     const result = refundCreateSchema.shape.name.safeParse("");
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Nome é obrigatório");
+      // The schema now carries a catalogue KEY, not display text: schemas are
+      // evaluated at import time, before a locale exists. FormMessage resolves
+      // it — PageRegister.test.tsx asserts the rendered Portuguese, which is
+      // what proves the two halves connect.
+      expect(result.error.issues[0].message).toBe("validation.nameRequired");
     }
   });
 
@@ -50,7 +54,7 @@ describe("refundCreateSchema.shape.amount", () => {
     const result = refundCreateSchema.shape.amount.safeParse("-5");
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Valor deve ser maior que zero");
+      expect(result.error.issues[0].message).toBe("validation.amountPositive");
     }
   });
 

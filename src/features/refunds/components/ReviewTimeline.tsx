@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { REFUND_STATUS } from "../constants/status";
 import { useRefundReviews } from "../hooks/useRefundReviews";
+import { useTranslation } from "react-i18next";
 
 interface ReviewTimelineProps {
   refundId: string;
@@ -13,6 +14,7 @@ interface ReviewTimelineProps {
 // list from the API; that is the normal absence of history, not an error, so
 // this component renders nothing at all for it — no heading, no empty box.
 export default function ReviewTimeline({ refundId }: ReviewTimelineProps) {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = useRefundReviews(refundId);
 
   if (isLoading) {
@@ -55,7 +57,7 @@ export default function ReviewTimeline({ refundId }: ReviewTimelineProps) {
           >
             <div className="flex items-center justify-between gap-2">
               <Badge variant={REFUND_STATUS[review.to_status].variant}>
-                {REFUND_STATUS[review.to_status].label}
+                {t(REFUND_STATUS[review.to_status].labelKey)}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 {new Date(review.created_at).toLocaleDateString("pt-BR")}

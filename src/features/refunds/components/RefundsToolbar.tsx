@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/select";
 import { REFUND_STATUS, STATUS_FILTER_ORDER } from "../constants/status";
 import type { RefundStatus } from "../schemas/refund";
+import { useTranslation } from "react-i18next";
 
 // O Radix Select recusa um SelectItem com value="" (string vazia é o valor
 // "sem seleção" dele), então "todos" precisa de um valor próprio. Ele existe
@@ -21,6 +22,7 @@ interface RefundsToolbarProps {
 }
 
 export default function RefundsToolbar({ status, onStatusChange }: RefundsToolbarProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
       <Label htmlFor="refund-status-filter" className="sr-only">
@@ -39,7 +41,7 @@ export default function RefundsToolbar({ status, onStatusChange }: RefundsToolba
           <SelectItem value={EVERY_STATUS}>Todos</SelectItem>
           {STATUS_FILTER_ORDER.map((value) => (
             <SelectItem key={value} value={value}>
-              {REFUND_STATUS[value].label}
+              {t(REFUND_STATUS[value].labelKey)}
             </SelectItem>
           ))}
         </SelectContent>

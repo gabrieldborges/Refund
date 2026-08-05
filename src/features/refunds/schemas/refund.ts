@@ -3,21 +3,21 @@ import { CATEGORY_VALUES } from "../constants/categories";
 import { RECEIPT_ALLOWED_EXTENSIONS, RECEIPT_MAX_FILE_SIZE_BYTES } from "../constants/receiptFile";
 
 export const refundCreateSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  category: z.enum(CATEGORY_VALUES, { message: "Selecione uma categoria" }),
-  amount: z.coerce.number().positive("Valor deve ser maior que zero"),
+  name: z.string().min(1, "validation.nameRequired"),
+  category: z.enum(CATEGORY_VALUES, { message: "validation.categoryRequired" }),
+  amount: z.coerce.number().positive("validation.amountPositive"),
   file: z
     .instanceof(FileList)
-    .refine((files) => files.length > 0, "Anexe o comprovante")
+    .refine((files) => files.length > 0, "validation.receiptRequired")
     .refine(
       (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,
-      "Arquivo deve ter no máximo 4MB"
+      "validation.fileTooLarge"
     )
     .refine(
       (files) =>
         !files[0] ||
         RECEIPT_ALLOWED_EXTENSIONS.some((ext) => files[0].name.toLowerCase().endsWith(ext)),
-      "Arquivo deve ser JPG, PNG ou PDF"
+      "validation.fileType"
     ),
 });
 
@@ -28,16 +28,16 @@ export const refundCreateSchema = z.object({
 export const payRefundSchema = z.object({
   file: z
     .instanceof(FileList)
-    .refine((files) => files.length > 0, "Anexe o comprovante de pagamento")
+    .refine((files) => files.length > 0, "validation.paymentReceiptRequired")
     .refine(
       (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,
-      "Arquivo deve ter no máximo 4MB"
+      "validation.fileTooLarge"
     )
     .refine(
       (files) =>
         !files[0] ||
         RECEIPT_ALLOWED_EXTENSIONS.some((ext) => files[0].name.toLowerCase().endsWith(ext)),
-      "Arquivo deve ser JPG, PNG ou PDF"
+      "validation.fileType"
     ),
 });
 
