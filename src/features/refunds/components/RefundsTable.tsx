@@ -77,6 +77,11 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
     {
       id: "name",
       header: t("common.title"),
+      // Larguras fixas em TODAS as colunas, com `table-fixed` na tabela: sem
+      // isso o navegador dimensiona cada coluna pelo conteúdo daquela página,
+      // então trocar de página mexe na largura de tudo. `truncate` corta o que
+      // não couber com reticências em vez de empurrar as vizinhas.
+      meta: { className: "w-[45%] truncate sm:w-[38%]" },
       // TanStack only considers a column sortable when it has an accessor
       // (getCanSort checks `!!column.accessorFn`); the value itself is
       // unused, sorting happens on the server, but the accessor is what
@@ -95,19 +100,20 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
       id: "user",
       header: t("common.requester"),
       enableSorting: false,
-      meta: { className: "hidden sm:table-cell" },
+      meta: { className: "hidden truncate sm:table-cell sm:w-[22%]" },
       cell: ({ row }) => row.original.user.name,
     },
     {
       id: "created_at",
       header: t("common.date"),
       accessorFn: (refund) => refund.created_at,
-      meta: { className: "hidden sm:table-cell" },
+      meta: { className: "hidden sm:table-cell sm:w-28" },
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       id: "status",
       header: t("common.status"),
+      meta: { className: "w-28" },
       accessorFn: (refund) => refund.status,
       cell: ({ row }) => (
         <Badge variant={REFUND_STATUS[row.original.status].variant}>
@@ -120,7 +126,7 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
       header: t("common.amount"),
       accessorFn: (refund) => refund.amount_in_cents,
       cell: ({ row }) => formatCentsToBRL(row.original.amount_in_cents),
-      meta: { className: "text-right" },
+      meta: { className: "w-28 text-right tabular-nums" },
     },
   ];
 }
@@ -185,7 +191,7 @@ export default function RefundsTable({
 
   return (
     <div className="rounded-xl border">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>

@@ -86,6 +86,14 @@ export default function PageRefundReview() {
               <CardTitle>{refund.name}</CardTitle>
               <CardDescription>{t(CATEGORIES[refund.category].labelKey)}</CardDescription>
               <Badge
+                // The key is what makes the pulse repeat. A CSS animation only
+                // plays when the class appears on a node that did not have it,
+                // and between two consecutive status changes there is no render
+                // where `statusChanged` is false — so the class never left and
+                // the browser saw nothing to restart. Keying by status gives
+                // each value a fresh node, so every transition animates, not
+                // just the first.
+                key={refund.status}
                 variant={REFUND_STATUS[refund.status].variant}
                 className={cn("w-fit", statusChanged && "badge-pop")}
               >
