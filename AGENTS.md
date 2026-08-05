@@ -39,7 +39,12 @@ nível por tecnologia, padrões recorrentes e como prefiro que a IA colabore com
 - Componentes novos do design system vêm do registry (`npx shadcn@latest add
   <componente>`) e ficam em `src/components/ui`. Só escreva um componente de
   UI à mão quando o registry não tiver equivalente.
-- Rode `npx tsc -b --noEmit` depois de qualquer mudança.
+- Rode `npm run typecheck` depois de qualquer mudança (é o `tsc -b --noEmit`,
+  agora com script próprio).
+- As quatro verificações — `typecheck`, `lint`, `test`, `build` — rodam no CI
+  (`.github/workflows/ci.yml`) a cada push, na mesma ordem, do mais barato ao
+  mais caro. **O CI é a fonte da verdade**: ele parte de um runner vazio e
+  instala com `npm ci`, então não herda nada da sua máquina.
 - Se forem adicionados testes, escreva os comentários descritivos em inglês.
 - Consulte a documentação canônica em vez de inferir ou repetir regras
   funcionais neste repositório.
