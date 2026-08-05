@@ -24,7 +24,13 @@ jobs:
       # `uses` runs a pre-built action instead of a shell command. This one
       # clones the repository into the runner — without it there is nothing
       # here to check.
-      - uses: actions/checkout@v4
+      #
+      # The version after @ is pinned deliberately: actions are third-party
+      # code running with access to the repository, and @v5 tracks a major
+      # line rather than whatever was pushed to a branch today. The first run
+      # of this file used @v4 and GitHub warned that it still targets the
+      # deprecated Node 20 runtime.
+      - uses: actions/checkout@v5
 
       # Installs Node. The version is pinned to match local development: a CI
       # running a different major would be verifying something nobody actually
@@ -33,7 +39,7 @@ jobs:
       # `cache: npm` stores ~/.npm between runs, keyed by the lockfile. It does
       # not cache node_modules — the install still happens, it just stops
       # re-downloading unchanged packages.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
