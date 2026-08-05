@@ -1,0 +1,57 @@
+# Runs the same checks AGENTS.md already asks for, on a machine that cannot
+# forget to run them.
+#
+# The gap this closes has a name: commit 2d07a8d left an unused import in
+# Topbar.tsx and broke tsc, eslint AND build on main. Nobody noticed for days,
+# because no verification ran in that window.
+name: CI
+
+# WHEN this runs. `push` covers every branch, so a check fails while the work
+# is still on a branch rather than after it reaches main. `pull_request` is
+# listed as well because a PR can be opened from a fork, whose pushes do not
+# trigger this repository's workflows.
+on:
+  push:
+  pull_request:
+
+jobs:
+  # One job, one fresh Ubuntu virtual machine. It starts EMPTY: no repository,
+  # no Node, no node_modules. Every step below exists because of that.
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      # `uses` runs a pre-built action instead of a shell command. This one
+      # clones the repository into the runner — without it there is nothing
+      # here to check.
+      - uses: actions/checkout@v4
+
+      # Installs Node. The version is pinned to match local development: a CI
+      # running a different major would be verifying something nobody actually
+      # runs.
+      #
+      # `cache: npm` stores ~/.npm between runs, keyed by the lockfile. It does
+      # not cache node_modules — the install still happens, it just stops
+      # re-downloading unchanged packages.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      # `npm ci`, not `npm install`. The difference matters here: ci installs
+      # exactly what package-lock.json pins and fails outright if the lockfile
+      # and package.json disagree, so CI can never silently test a different
+      # dependency tree than the one committed.
+      - run: npm ci
+
+      # The four checks, in the order that fails cheapest first. Steps run
+      # sequentially and the job stops at the first failure, so a type error
+      # does not wait behind a 10-second test run to be reported.
+      #
+      # They are npm scripts rather than raw commands on purpose: CI and a
+      # developer's terminal then run the same thing by construction, and
+      # changing a check in one place changes it in both.
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
