@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
@@ -27,6 +27,12 @@ function renderProbe() {
 }
 
 describe("AuthProvider stored session", () => {
+  // The blocked-storage test below stubs Storage.prototype; without this the
+  // stub would leak into every test that runs after it in this file.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   // A session persisted in the new shape is restored on boot.
   it("restores a valid stored session", () => {
     localStorage.setItem(
@@ -58,6 +64,21 @@ describe("AuthProvider stored session", () => {
 
     renderProbe();
 
+    expect(screen.getByText("anonymous")).toBeInTheDocument();
+  });
+
+  // Reading localStorage is itself a throwing operation when the browser
+  // blocks site data (privacy settings, enterprise policy). Because this read
+  // runs inside a useState initializer, an uncaught throw happens during
+  // render and unmounts the whole tree — a blank page. Booting anonymous is
+  // the correct outcome: an unreadable session should drop the session, not
+  // the application.
+  it("boots anonymous when localStorage access itself throws", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("The operation is insecure.", "SecurityError");
+    });
+
+    expect(() => renderProbe()).not.toThrow();
     expect(screen.getByText("anonymous")).toBeInTheDocument();
   });
 });

@@ -8,10 +8,14 @@ import { queryClient } from "@/lib/query-client";
 // corrompida) deve derrubar a sessão, não a aplicação inteira no primeiro
 // render.
 function loadStoredUser(): AuthUser | null {
-  const raw = localStorage.getItem(USER_STORAGE_KEY);
-  if (!raw) return null;
-
   try {
+    // O getItem fica DENTRO do try: acessar localStorage joga quando o
+    // navegador bloqueia dados do site (configuração de privacidade, política
+    // corporativa). Como isto roda no inicializador do useState, uma exceção
+    // aqui acontece durante o render — antes, derrubava a aplicação inteira.
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+
     const result = storedUserSchema.safeParse(JSON.parse(raw));
     return result.success ? result.data : null;
   } catch {
