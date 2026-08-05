@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { REFUND_STATUS } from "../constants/status";
 import { useRefundReviews } from "../hooks/useRefundReviews";
 import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/format";
 
 interface ReviewTimelineProps {
   refundId: string;
@@ -44,7 +45,7 @@ export default function ReviewTimeline({ refundId }: ReviewTimelineProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-medium">Histórico</h3>
+      <h3 className="text-sm font-medium">{t("review.history")}</h3>
       {/* Shown most recent to oldest. This is PRESENTATION order: the data
           layer (api/reviewQueries.ts) still hands back exactly what the API
           sent, with no reordering by field, and `toReversed` does not
@@ -60,7 +61,7 @@ export default function ReviewTimeline({ refundId }: ReviewTimelineProps) {
                 {t(REFUND_STATUS[review.to_status].labelKey)}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {new Date(review.created_at).toLocaleDateString("pt-BR")}
+                {formatDate(review.created_at)}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">{review.reviewer.name}</p>

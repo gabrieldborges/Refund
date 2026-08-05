@@ -17,15 +17,17 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/useAuth";
 import { getApiErrorMessage } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 const loginFormSchema = z.object({
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
-  password: z.string().min(1, "Senha é obrigatória"),
+  password: z.string().min(1, "validation.passwordRequired"),
 });
 
 type LoginFormData = z.output<typeof loginFormSchema>;
 
 export default function PageLogin() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export default function PageLogin() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <FormLabel>{t("common.password")}</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -99,7 +101,7 @@ export default function PageLogin() {
 
             <Button type="submit" disabled={isBusy} aria-busy={isBusy}>
               {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              {isBusy ? "Entrando…" : "Entrar"}
+              {isBusy ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
         </Form>

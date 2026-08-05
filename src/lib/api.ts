@@ -1,3 +1,5 @@
+import i18next from "i18next";
+import { DEFAULT_LOCALE } from "@/stores/ui";
 import axios from "axios";
 
 export const TOKEN_STORAGE_KEY = "refund:token";
@@ -7,12 +9,17 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// Roda antes de toda requisição: anexa o token salvo no login, se existir.
+// Roda antes de toda requisição: anexa o token salvo no login, se existir, e
+// declara o idioma ativo. O backend hoje **ignora** o Accept-Language — todas
+// as mensagens dele são em inglês e nenhuma é exibida ao usuário (o frontend
+// tem as próprias). O header é preparação deliberada, não efeito imediato: no
+// dia em que a API traduzir algo, o cliente já diz o que quer.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_STORAGE_KEY);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers["Accept-Language"] = i18next.language || DEFAULT_LOCALE;
   return config;
 });
 

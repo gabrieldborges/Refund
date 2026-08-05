@@ -93,7 +93,7 @@ export default function PageRefundDetails() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="refund-amount">Valor</Label>
+                <Label htmlFor="refund-amount">{t("common.amount")}</Label>
                 <Input
                   id="refund-amount"
                   readOnly
@@ -122,7 +122,7 @@ export default function PageRefundDetails() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir solicitação</DialogTitle>
+            <DialogTitle>{t("refund.delete")}</DialogTitle>
             <DialogDescription>
               Tem certeza que deseja excluir essa solicitação? Essa ação é irreversível.
             </DialogDescription>
@@ -134,11 +134,11 @@ export default function PageRefundDetails() {
           )}
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
+              <Button variant="outline">{t("common.cancel")}</Button>
             </DialogClose>
             <Button variant="destructive" onClick={handleConfirmDelete} disabled={isBusy} aria-busy={isBusy}>
               {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              {isBusy ? "Excluindo…" : "Confirmar"}
+              {isBusy ? t("refund.deleting") : t("common.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

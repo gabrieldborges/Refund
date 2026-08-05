@@ -34,11 +34,11 @@ export default function RefundsToolbar({ status, onStatusChange }: RefundsToolba
           onStatusChange(value === EVERY_STATUS ? undefined : (value as RefundStatus))
         }
       >
-        <SelectTrigger id="refund-status-filter" aria-label="Filtrar por status" className="w-44">
+        <SelectTrigger id="refund-status-filter" aria-label={t("home.filterByStatus")} className="w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={EVERY_STATUS}>Todos</SelectItem>
+          <SelectItem value={EVERY_STATUS}>{t("common.all")}</SelectItem>
           {STATUS_FILTER_ORDER.map((value) => (
             <SelectItem key={value} value={value}>
               {t(REFUND_STATUS[value].labelKey)}

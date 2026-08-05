@@ -1,3 +1,13 @@
+// Vitrine do design system, não uma tela de produto.
+//
+// DELIBERADAMENTE FORA DO i18n (Item 14): o texto aqui é rótulo de amostra
+// ("Placeholder", "Desabilitado", "Inválido") e dado fictício de demonstração,
+// existindo para exibir estados de componente — não é cópia de produto que um
+// usuário leia para realizar uma tarefa. Traduzi-lo dobraria a manutenção do
+// catálogo sem nenhum leitor. O único texto real desta página vem dos
+// componentes do design system, que já são traduzidos onde importam.
+//
+// Se esta página um dia virar documentação para outra pessoa, a decisão muda.
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

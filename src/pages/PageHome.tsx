@@ -38,6 +38,7 @@ interface RefundSearchProps {
 }
 
 function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebouncedValue(search);
 
@@ -60,8 +61,8 @@ function RefundSearch({ initialSearch, updateListLocation }: RefundSearchProps) 
           aria-hidden
         />
         <Input
-          placeholder="Pesquisar pelo nome"
-          aria-label="Pesquisar pelo nome"
+          placeholder={t("home.searchByName")}
+          aria-label={t("home.searchByName")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="pl-9"
@@ -211,8 +212,13 @@ export default function PageHome() {
   // apenas sinaliza que esse filtro também está ativo, no mesmo formato que
   // t(REFUND_STATUS[status].labelKey) já usa para o status.
   const requestsCardLabel = (() => {
-    const activeFilters = [status && t(REFUND_STATUS[status].labelKey), name && "busca"].filter(Boolean);
-    return activeFilters.length > 0 ? `Solicitações (${activeFilters.join(", ")})` : "Solicitações";
+    const activeFilters = [
+      status && t(REFUND_STATUS[status].labelKey),
+      name && t("home.searchFilter"),
+    ].filter(Boolean);
+    return activeFilters.length > 0
+      ? t("home.requestsFiltered", { filters: activeFilters.join(", ") })
+      : t("home.requests");
   })();
 
   // Com filtro ativo, `sum_amount_in_cents` cobre só aquele status (UC-004).
@@ -221,16 +227,16 @@ export default function PageHome() {
   const moneyCardLabel = isAdmin
     ? status
       ? t(REFUND_STATUS[status].labelKey)
-      : "Solicitado"
-    : "Aprovado + pago";
+      : t("home.requested")
+    : t("home.approvedAndPaid");
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Solicitações</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("home.requests")}</h1>
           <p className="text-sm text-muted-foreground">
-            {data ? `${data.total} ${data.total === 1 ? "solicitação" : "solicitações"}` : " "}
+            {data ? t("home.requestCount", { count: data.total }) : " "}
           </p>
         </div>
       </div>
@@ -293,7 +299,7 @@ export default function PageHome() {
               ) : (
                 <>
                   <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
-                  {status && <p className="text-xs text-muted-foreground">Todas, sem o filtro</p>}
+                  {status && <p className="text-xs text-muted-foreground">{t("home.allNoFilter")}</p>}
                 </>
               )}
             </CardContent>
@@ -320,7 +326,7 @@ export default function PageHome() {
               ) : (
                 <>
                   <p className="text-2xl font-semibold">{pendingCount ?? 0}</p>
-                  {status && <p className="text-xs text-muted-foreground">Todas, sem o filtro</p>}
+                  {status && <p className="text-xs text-muted-foreground">{t("home.allNoFilter")}</p>}
                 </>
               )}
             </CardContent>
@@ -361,7 +367,7 @@ export default function PageHome() {
           <Button
             variant="outline"
             size="icon"
-            aria-label="Página anterior"
+            aria-label={t("home.previousPage")}
             aria-busy={isLoadingPreviousPage}
             disabled={data.page === 1 || navigation.state !== "idle"}
             onClick={() => updateListLocation(name ?? "", Math.max(1, data.page - 1))}
@@ -378,7 +384,7 @@ export default function PageHome() {
           <Button
             variant="outline"
             size="icon"
-            aria-label="Próxima página"
+            aria-label={t("home.nextPage")}
             aria-busy={isLoadingNextPage}
             disabled={data.page === data.total_pages || navigation.state !== "idle"}
             onClick={() => updateListLocation(name ?? "", Math.min(data.total_pages, data.page + 1))}

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/lib/api";
 import { payRefundSchema, type PayRefundFormData, type PayRefundFormInput } from "../schemas/refund";
 import { usePayRefund } from "../hooks/usePayRefund";
+import { useTranslation } from "react-i18next";
 
 interface PayRefundDialogProps {
   refundId: string;
@@ -28,13 +29,14 @@ interface PayRefundDialogProps {
 // payRefundSchema's first refinement rejects an empty FileList before the
 // mutation ever fires.
 export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRefundDialogProps) {
+  const { t } = useTranslation();
   const { mutateAsync, isPending } = usePayRefund();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Clears the error the instant `open` flips to true, during render rather
   // than in an effect: this dialog has no internal trigger (its parent,
   // PageRefundReview, flips `open` straight to true from ReviewDecision's
-  // "Marcar como pago" button), so Radix never calls `onOpenChange(true)` —
+  // t("payment.markAsPaid") button), so Radix never calls `onOpenChange(true)` —
   // only its own close gestures do, always with `false` (see
   // handleOpenChange below, which is where CLOSE is handled). Tracking the
   // previous `open` in state and comparing during render is React's
@@ -90,7 +92,7 @@ export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRef
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Marcar como pago</DialogTitle>
+          <DialogTitle>{t("payment.markAsPaid")}</DialogTitle>
           <DialogDescription>
             Anexe o comprovante de pagamento para concluir a solicitação.
           </DialogDescription>
@@ -105,7 +107,7 @@ export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRef
                 <FormItem>
                   <FormControl>
                     <InputFile
-                      label="Comprovante de pagamento"
+                      label={t("payment.receipt")}
                       accept=".jpg,.jpeg,.png,.pdf"
                       {...form.register("file")}
                     />
@@ -123,7 +125,7 @@ export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRef
 
             <Button type="submit" disabled={isPending} aria-busy={isPending}>
               {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              {isPending ? "Marcando como pago…" : "Confirmar pagamento"}
+              {isPending ? t("payment.marking") : t("payment.confirm")}
             </Button>
           </form>
         </Form>

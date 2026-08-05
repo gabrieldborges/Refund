@@ -116,7 +116,7 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
                 comentário de refundStatsResponseSchema registra, e ele já
                 prevê esta soma de CONTAGENS no cliente. */}
             <div className="flex flex-col gap-1 rounded-lg border p-3">
-              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xs text-muted-foreground">{t("common.total")}</span>
               <span className="text-xl font-semibold">
                 {STATUS_ORDER.reduce((sum, status) => sum + stats.by_status[status].count, 0)}
               </span>
@@ -137,14 +137,14 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
               <NavigationArrow
                 refund={previousRefund}
                 viewer={viewer}
-                label="Solicitação anterior deste solicitante"
+                label={t("review.previousRequest")}
               >
                 <ChevronLeft className="size-4" aria-hidden />
               </NavigationArrow>
               <NavigationArrow
                 refund={nextRefund}
                 viewer={viewer}
-                label="Próxima solicitação deste solicitante"
+                label={t("review.nextRequest")}
               >
                 <ChevronRight className="size-4" aria-hidden />
               </NavigationArrow>

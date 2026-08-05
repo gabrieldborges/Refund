@@ -24,11 +24,12 @@ import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/lib/api";
 import type { RefundStatus } from "../schemas/refund";
 import { useReviewRefund } from "../hooks/useReviewRefund";
+import { useTranslation } from "react-i18next";
 
 // Validação só do diálogo de rejeição: a API responde 422 sem `reason`, então
 // o formulário nunca deixa a mutation disparar com o campo vazio.
 const rejectSchema = z.object({
-  reason: z.string().trim().min(1, "Motivo é obrigatório"),
+  reason: z.string().trim().min(1, "validation.reasonRequired"),
 });
 type RejectFormData = z.infer<typeof rejectSchema>;
 
@@ -44,6 +45,7 @@ interface ReviewDecisionProps {
 // (UC-007), e não oferecer esse botão torna o erro impossível de disparar
 // pela UI. `paid` é terminal: nenhum botão de decisão é mostrado.
 export default function ReviewDecision({ refundId, status, onMarkAsPaid }: ReviewDecisionProps) {
+  const { t } = useTranslation();
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { mutateAsync, isPending } = useReviewRefund();
@@ -94,7 +96,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
   }
 
   // Resetar ao FECHAR, não só ao enviar: quem preenche, desiste (pelo botão
-  // "Cancelar", pelo X ou pelo Escape) e reabre encontrava o motivo da
+  // t("common.cancel"), pelo X ou pelo Escape) e reabre encontrava o motivo da
   // tentativa anterior à espera. `submitError` só é limpo junto se ele
   // pertence à rejeição: o banner é compartilhado com `handleApprove`, e uma
   // aprovação que falhou não tem nenhuma relação com cancelar uma rejeição
@@ -126,7 +128,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
             className="flex-1"
           >
             {pendingAction === "approve" && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            {pendingAction === "approve" ? "Aprovando…" : "Aprovar"}
+            {pendingAction === "approve" ? t("review.approving") : t("review.approve")}
           </Button>
         )}
 
@@ -138,7 +140,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
             className="w-full"
           >
             {pendingAction === "approve" && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            {pendingAction === "approve" ? "Aprovando…" : "Aprovar"}
+            {pendingAction === "approve" ? t("review.approving") : t("review.approve")}
           </Button>
         )}
 
@@ -169,7 +171,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
       <Dialog open={isRejectOpen} onOpenChange={handleRejectOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rejeitar solicitação</DialogTitle>
+            <DialogTitle>{t("review.reject")}</DialogTitle>
             <DialogDescription>
               Informe o motivo da rejeição. Ele fica registrado no histórico da solicitação.
             </DialogDescription>
@@ -182,9 +184,9 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
                 name="reason"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Motivo</FormLabel>
+                    <FormLabel>{t("review.reason")}</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Descreva o motivo da rejeição" {...field} />
+                      <Textarea placeholder={t("review.reasonPlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,7 +204,7 @@ export default function ReviewDecision({ refundId, status, onMarkAsPaid }: Revie
                   aria-busy={pendingAction === "reject"}
                 >
                   {pendingAction === "reject" && <Loader2 className="size-4 animate-spin" aria-hidden />}
-                  {pendingAction === "reject" ? "Rejeitando…" : "Confirmar"}
+                  {pendingAction === "reject" ? t("review.rejecting") : t("common.confirm")}
                 </Button>
               </DialogFooter>
             </form>

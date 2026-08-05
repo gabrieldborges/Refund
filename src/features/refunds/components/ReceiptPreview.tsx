@@ -11,6 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useObjectUrl } from "@/hooks/useObjectUrl";
 import { useReceipt, type ReceiptKind } from "../hooks/useReceipt";
+import { useTranslation } from "react-i18next";
 
 interface ReceiptPreviewProps {
   refundId: string;
@@ -28,18 +29,23 @@ interface ReceiptPreviewProps {
 // expense and payment previews — see the "Ver ... em tela cheia" trap this
 // fixes: with two previews on one screen, an unqualified "Ver em tela cheia"
 // button would be indistinguishable to a screen reader.
-const RECEIPT_COPY: Record<ReceiptKind, { name: (refundName: string) => string; button: string }> = {
+// Catalogue keys, not copy: this Record is evaluated at import time, before a
+// locale exists. The name key interpolates {{name}} rather than concatenating,
+// so a language that puts the qualifier first can reorder it in the catalogue
+// without touching this file.
+const RECEIPT_COPY: Record<ReceiptKind, { nameKey: string; buttonKey: string }> = {
   expense: {
-    name: (refundName) => `Comprovante de ${refundName}`,
-    button: "Ver comprovante em tela cheia",
+    nameKey: "receipt.expenseName",
+    buttonKey: "receipt.viewFullscreen",
   },
   payment: {
-    name: (refundName) => `Comprovante de pagamento de ${refundName}`,
-    button: "Ver comprovante de pagamento em tela cheia",
+    nameKey: "receipt.paymentName",
+    buttonKey: "receipt.viewPaymentFullscreen",
   },
 };
 
 export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPreviewProps) {
+  const { t } = useTranslation();
   const { data: blob, isPending, isError } = useReceipt(refundId, kind);
   // Uma URL, um dono: ela é criada aqui e a MESMA string vai para o diálogo de
   // tela cheia. Se o diálogo criasse a sua, seriam dois donos de um recurso que
@@ -66,8 +72,9 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
   // O tipo vem de graça: o backend define o Content-Type pela extensão
   // armazenada e o Blob carrega isso. Nenhum campo novo no contrato.
   const isImage = blob.type.startsWith("image/");
-  const { name: nameFor, button: fullscreenButtonLabel } = RECEIPT_COPY[kind];
-  const alt = nameFor(refundName);
+  const { nameKey, buttonKey } = RECEIPT_COPY[kind];
+  const alt = t(nameKey, { name: refundName });
+  const fullscreenButtonLabel = t(buttonKey);
 
   return (
     <div className="flex flex-col gap-2">
@@ -82,7 +89,7 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
           title={alt}
         >
           <a href={objectUrl} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-            Abrir comprovante
+            {t("receipt.open")}
           </a>
         </object>
       )}
@@ -96,7 +103,7 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{alt}</DialogTitle>
-            <DialogDescription>Visualização em tela cheia do comprovante.</DialogDescription>
+            <DialogDescription>{t("receipt.fullscreenDescription")}</DialogDescription>
           </DialogHeader>
           {isImage ? (
             <img src={objectUrl} alt={alt} className="max-h-[70vh] w-full object-contain" />

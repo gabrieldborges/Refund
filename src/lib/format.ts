@@ -1,5 +1,16 @@
+import i18next from "i18next";
+import { DEFAULT_LOCALE } from "@/stores/ui";
+
+// A moeda acompanha o locale ativo. Não é só formatação: BRL e USD são valores
+// diferentes, então trocar o símbolo sem converter o valor seria mentir. O
+// backend guarda centavos de real, então a moeda continua BRL nos dois idiomas;
+// o que muda é a convenção de escrita (R$ 1.234,56 vs R$1,234.56).
+function activeLocale(): string {
+  return i18next.language || DEFAULT_LOCALE;
+}
+
 export function formatCentsToBRL(cents: number): string {
-  return (cents / 100).toLocaleString("pt-BR", {
+  return (cents / 100).toLocaleString(activeLocale(), {
     style: "currency",
     currency: "BRL",
   });
@@ -14,7 +25,7 @@ export function formatDate(value: string | null): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
-  return date.toLocaleDateString("pt-BR", {
+  return date.toLocaleDateString(activeLocale(), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

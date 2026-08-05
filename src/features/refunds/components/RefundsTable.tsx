@@ -58,7 +58,7 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
   return [
     {
       id: "category",
-      header: () => <span className="sr-only">Categoria</span>,
+      header: () => <span className="sr-only">{t("common.category")}</span>,
       enableSorting: false,
       meta: { className: "hidden w-10 sm:table-cell" },
       cell: ({ row }) => {
@@ -76,7 +76,7 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
     },
     {
       id: "name",
-      header: "Título",
+      header: t("common.title"),
       // TanStack only considers a column sortable when it has an accessor
       // (getCanSort checks `!!column.accessorFn`); the value itself is
       // unused, sorting happens on the server, but the accessor is what
@@ -93,21 +93,21 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
     },
     {
       id: "user",
-      header: "Solicitante",
+      header: t("common.requester"),
       enableSorting: false,
       meta: { className: "hidden sm:table-cell" },
       cell: ({ row }) => row.original.user.name,
     },
     {
       id: "created_at",
-      header: "Data",
+      header: t("common.date"),
       accessorFn: (refund) => refund.created_at,
       meta: { className: "hidden sm:table-cell" },
       cell: ({ row }) => formatDate(row.original.created_at),
     },
     {
       id: "status",
-      header: "Status",
+      header: t("common.status"),
       accessorFn: (refund) => refund.status,
       cell: ({ row }) => (
         <Badge variant={REFUND_STATUS[row.original.status].variant}>
@@ -117,7 +117,7 @@ function createRefundColumns(viewer: RefundViewer | null, t: TFunction): ColumnD
     },
     {
       id: "amount_in_cents",
-      header: "Valor",
+      header: t("common.amount"),
       accessorFn: (refund) => refund.amount_in_cents,
       cell: ({ row }) => formatCentsToBRL(row.original.amount_in_cents),
       meta: { className: "text-right" },

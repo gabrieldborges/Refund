@@ -16,16 +16,18 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/useAuth";
 import { getApiErrorMessage } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 const registerFormSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
+  name: z.string().min(1, "validation.nameRequired"),
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
-  password: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  password: z.string().min(6, "validation.passwordMinLength"),
 });
 
 type RegisterFormData = z.output<typeof registerFormSchema>;
 
 export default function PageRegister() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -60,9 +62,9 @@ export default function PageRegister() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>{t("common.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Seu nome" {...field} />
+                    <Input placeholder={t("auth.namePlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -88,7 +90,7 @@ export default function PageRegister() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <FormLabel>{t("common.password")}</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -104,7 +106,7 @@ export default function PageRegister() {
             )}
 
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Cadastrando…" : "Cadastrar"}
+              {form.formState.isSubmitting ? t("auth.signingUp") : t("auth.signUp")}
             </Button>
           </form>
         </Form>

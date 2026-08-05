@@ -111,8 +111,8 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nova solicitação de reembolso</DialogTitle>
-          <DialogDescription>Dados da despesa para solicitar reembolso.</DialogDescription>
+          <DialogTitle>{t("refund.newTitle")}</DialogTitle>
+          <DialogDescription>{t("refund.newDescription")}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -122,7 +122,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da solicitação</FormLabel>
+                  <FormLabel>{t("refund.nameLabel")}</FormLabel>
                   <FormControl>
                     <Input placeholder="Nome" {...field} />
                   </FormControl>
@@ -137,11 +137,11 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
                 name="category"
                 render={({ field }) => (
                   <FormItem className="flex-1 ">
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>{t("common.category")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="w-full ">
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder={t("refund.selectPlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -162,7 +162,7 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
                 name="amount"
                 render={({ field }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Valor</FormLabel>
+                    <FormLabel>{t("common.amount")}</FormLabel>
                     <FormControl>
                       {/* `amount` is `z.coerce.number()`, whose zod-v4 input type is
                           `unknown` (it accepts anything pre-coercion) — react-hook-form
@@ -205,14 +205,14 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
 
             {/* The button stays disabled for any in-flight navigation (`isBusy`,
                 including one this dialog didn't start — see `isBusy` above), so a
-                click can't race an unrelated transition. But the "Enviando…" label
+                click can't race an unrelated transition. But the t("refund.submitting") label
                 and spinner must track only `isPending`, the create mutation itself:
                 this dialog is mounted on every protected route, so an unrelated
                 navigation (e.g. typing in the Home search) could otherwise make it
                 claim work is in flight when nothing is. */}
             <Button type="submit" disabled={isBusy} aria-busy={isPending}>
               {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-              {isPending ? "Enviando…" : "Enviar"}
+              {isPending ? t("refund.submitting") : t("refund.submit")}
             </Button>
           </form>
         </Form>

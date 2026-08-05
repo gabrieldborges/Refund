@@ -84,7 +84,7 @@ export default function PageRefundReview() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="refund-amount">Valor</Label>
+                <Label htmlFor="refund-amount">{t("common.amount")}</Label>
                 <Input
                   id="refund-amount"
                   readOnly
