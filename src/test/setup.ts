@@ -47,6 +47,31 @@ if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};
 }
 
+// jsdom has no ResizeObserver. Radix's useSize hook constructs one in a layout
+// effect, so any Tooltip/Popper content that mounts blows up with
+// "ResizeObserver is not defined" — an uncaught exception, which fails
+// whichever test happens to be running rather than the one that mounted it.
+//
+// This is the flake that had been reported since 2026-07-29 as pre-existing,
+// intermittent and never isolated. It was finally captured with full output on
+// 2026-08-05 (2 occurrences in 5 full-suite runs), and the stack trace named
+// @radix-ui/react-use-size directly.
+//
+// It is intermittent because the tooltip only mounts when hover/focus timing
+// lines up, which depends on how the suite is scheduled — hence "only in full
+// runs, never in isolation".
+//
+// The stub reports a zero-size box. Nothing asserts on measured size (jsdom
+// has no layout engine, so every measurement is zero anyway); it exists so the
+// constructor call succeeds.
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 // Fallback only. Under Vitest's jsdom environment, the global `URL` is
 // actually Node's, which already implements createObjectURL/revokeObjectURL
 // (returning unique `blob:nodedata:<uuid>` values) — verified directly, not
