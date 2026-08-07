@@ -21,16 +21,17 @@ describe("ReceiptPreview", () => {
     renderPreview();
 
     const image = await screen.findByRole("img", { name: /Almoço com cliente/ });
-    expect(image).toHaveAttribute("src", expect.stringMatching(/^blob:/));
+    expect(image).toHaveAttribute("src", expect.stringContaining("token=signed"));
   });
 
-  // A PDF cannot go in an <img>. The component must branch on the blob's type
+  // A PDF cannot go in an <img>. The component must branch on media_type
   // and render an embed with a link fallback instead.
   it("renders a PDF receipt as an embed with a fallback link", async () => {
     server.use(
       http.get("*/refunds/:id/receipt", () =>
-        new HttpResponse(new Uint8Array([37, 80, 68, 70]), {
-          headers: { "Content-Type": "application/pdf" },
+        HttpResponse.json({
+          url: "https://files.example.test/f.pdf?token=signed",
+          media_type: "application/pdf",
         })
       )
     );
@@ -39,7 +40,7 @@ describe("ReceiptPreview", () => {
 
     expect(await screen.findByRole("link", { name: "Abrir comprovante" })).toHaveAttribute(
       "href",
-      expect.stringMatching(/^blob:/)
+      expect.stringContaining("token=signed")
     );
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
@@ -60,9 +61,9 @@ describe("ReceiptPreview", () => {
     );
   });
 
-  // Fullscreen reuses the very same object URL: creating a second one would
+  // Fullscreen reuses the very same signed URL: fetching a second one would
   // mean two owners for a resource that has to be revoked exactly once.
-  it("opens the receipt in a dialog reusing the same object URL", async () => {
+  it("opens the receipt in a dialog reusing the same signed URL", async () => {
     const user = userEvent.setup();
     renderPreview();
 
@@ -78,12 +79,13 @@ describe("ReceiptPreview", () => {
   // The image/PDF branch is duplicated (inline vs. dialog) by design, so the
   // dialog copy needs its own coverage — it is the one most likely to drift
   // from the inline copy unnoticed.
-  it("opens a PDF receipt in a dialog reusing the same object URL", async () => {
+  it("opens a PDF receipt in a dialog reusing the same signed URL", async () => {
     const user = userEvent.setup();
     server.use(
       http.get("*/refunds/:id/receipt", () =>
-        new HttpResponse(new Uint8Array([37, 80, 68, 70]), {
-          headers: { "Content-Type": "application/pdf" },
+        HttpResponse.json({
+          url: "https://files.example.test/f.pdf?token=signed",
+          media_type: "application/pdf",
         })
       )
     );

@@ -1,23 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { REFUNDS_PER_PAGE } from "@/features/refunds";
 
-// A real 1x1 transparent PNG. The bytes matter less than the Content-Type —
-// the preview branches on blob.type — but a decodable image keeps the fixture
-// honest if it is ever opened in a real browser.
-const PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-
-const receiptPngBytes = Uint8Array.from(atob(PNG_BASE64), (char) => char.charCodeAt(0));
-
-// The %PDF magic bytes. Deliberately a DIFFERENT format from the expense
-// fixture above, not just different bytes of the same type: ReceiptPreview
-// branches its markup on blob.type (<img> vs. <object> + fallback <a>), so a
-// test can tell "the payment-receipt endpoint was actually hit" from "the
-// expense endpoint was hit and the result was merely labelled as payment" —
-// the latter would still produce byte-identical PNG output if useReceipt
-// silently ignored `kind`, but it cannot produce a PDF-shaped DOM.
-const paymentReceiptPdfBytes = new Uint8Array([37, 80, 68, 70]);
-
 // Shared fixtures. Tests import these to assert against the exact data the
 // mocked network returned, instead of duplicating literals. Shapes mirror the
 // Zod schemas in src/schemas (refund.ts / auth.ts).
@@ -111,25 +94,30 @@ export const handlers = [
     });
   }),
 
-  // Receipt: binary body, with the Content-Type the backend derives from the
-  // stored extension. There is no JSON here to validate. Registered before
-  // `*/refunds/:id` below purely as hygiene (most-specific-first); path-to-
-  // regexp's `:id` never spans a `/`, so `*/refunds/:id` does not actually
-  // match `/refunds/1/receipt` — this was verified, not assumed.
-  http.get("*/refunds/:id/receipt", () => {
-    return new HttpResponse(receiptPngBytes, {
-      headers: { "Content-Type": "image/png" },
+  // Receipt: since Item 22 this answers a short-lived SIGNED URL plus the
+  // media type, not the bytes. The media type is what the preview branches on
+  // to pick <img> or <object>, and it has to arrive with the URL because a URL
+  // carries no type. Registered before `*/refunds/:id` below purely as hygiene
+  // (most-specific-first); path-to-regexp's `:id` never spans a `/`, so
+  // `*/refunds/:id` does not actually match `/refunds/1/receipt` — this was
+  // verified, not assumed.
+  http.get("*/refunds/:id/receipt", ({ params }) => {
+    return HttpResponse.json({
+      url: `https://files.example.test/receipts/${params.id}.png?token=signed`,
+      media_type: "image/png",
     });
   }),
 
   // Payment receipt (UC-012's sibling of the handler above): same shape, same
   // most-specific-first registration reasoning, distinct path so a test can
-  // tell the two apart or override just one. Serves a PDF on purpose — see
-  // paymentReceiptPdfBytes above — so a test can distinguish "fetched this
-  // endpoint" from "fetched the expense one and just labelled it payment".
-  http.get("*/refunds/:id/payment-receipt", () => {
-    return new HttpResponse(paymentReceiptPdfBytes, {
-      headers: { "Content-Type": "application/pdf" },
+  // tell the two apart or override just one. Answers a PDF media type on
+  // purpose, so a test can distinguish "fetched this endpoint" from "fetched
+  // the expense one and just labelled it payment": the preview renders an
+  // <object>, not an <img>.
+  http.get("*/refunds/:id/payment-receipt", ({ params }) => {
+    return HttpResponse.json({
+      url: `https://files.example.test/payments/${params.id}.pdf?token=signed`,
+      media_type: "application/pdf",
     });
   }),
 

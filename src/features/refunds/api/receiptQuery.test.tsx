@@ -6,14 +6,16 @@ import { QueryWrapper } from "@/test/utils";
 import { useReceipt } from "../hooks/useReceipt";
 
 describe("useReceipt", () => {
-  // The query must hand back a Blob carrying the Content-Type the API sent:
-  // that type is what the preview branches on to choose <img> or <object>.
-  it("returns a Blob typed by the response Content-Type", async () => {
+  // Item 22: the query hands back a signed URL plus the media type the API
+  // derived from the stored extension. That media type is what the preview
+  // branches on to choose <img> or <object>, and it has to travel WITH the URL
+  // because a URL carries no type of its own.
+  it("returns the signed url and its media type", async () => {
     const { result } = renderHook(() => useReceipt("1"), { wrapper: QueryWrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBeInstanceOf(Blob);
-    expect(result.current.data?.type).toContain("image/png");
+    expect(result.current.data?.url).toContain("token=signed");
+    expect(result.current.data?.media_type).toBe("image/png");
   });
 
   // A refund belonging to someone else answers 404 — the query must end in
@@ -46,8 +48,9 @@ describe("useReceipt", () => {
         HttpResponse.json({ detail: "should not be called" }, { status: 500 })
       ),
       http.get("*/refunds/:id/payment-receipt", () =>
-        new HttpResponse(new Uint8Array([1, 2, 3, 4]), {
-          headers: { "Content-Type": "image/jpeg" },
+        HttpResponse.json({
+          url: "https://files.example.test/payments/1.jpg?token=signed",
+          media_type: "image/jpeg",
         })
       )
     );
@@ -55,6 +58,6 @@ describe("useReceipt", () => {
     const { result } = renderHook(() => useReceipt("1", "payment"), { wrapper: QueryWrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.type).toContain("image/jpeg");
+    expect(result.current.data?.media_type).toBe("image/jpeg");
   });
 });

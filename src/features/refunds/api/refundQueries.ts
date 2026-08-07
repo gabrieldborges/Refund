@@ -1,6 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { refundResponseSchema, refundsListResponseSchema } from "../schemas/refund";
+
+// Metade do TTL de 300s que o backend assina. Uma URL guardada mais tempo que
+// isso pode chegar à tela já vencida — e o sintoma seria uma imagem quebrada,
+// não um erro que a UI saiba mostrar.
+const SIGNED_URL_STALE_TIME_MS = 150_000;
+import {
+  fileUrlResponseSchema,
+  refundResponseSchema,
+  refundsListResponseSchema,
+} from "../schemas/refund";
 import type { RefundOrder, RefundSort, RefundStatus } from "../schemas/refund";
 
 interface RefundListParams {
@@ -89,19 +98,23 @@ export function refundDetailQuery(id: string) {
   });
 }
 
-// Única query do projeto sem Zod, e por um motivo legítimo: as outras validam
-// JSON, aqui a resposta é binária. A fronteira já é o Content-Type, derivado
-// pelo backend da extensão armazenada — não há estrutura a parsear.
+// Item 22: devolve uma URL assinada, não os bytes. Isso passou a ser JSON,
+// então voltou a ter Zod como todas as outras — o motivo que isentava esta
+// query ("a resposta é binária") deixou de existir.
+//
+// O que é cacheado agora é a URL, e ela EXPIRA (FILE_URL_TTL_SECONDS no
+// backend, 300s). Daí o staleTime abaixo, menor que o TTL: sem ele o TanStack
+// serviria por 30s (o default global) uma URL que pode estar a segundos de
+// vencer, e a imagem quebraria na tela sem erro nenhum na camada de dados.
 export function receiptQuery(id: string) {
   return queryOptions({
     queryKey: refundKeys.receipt(id),
     queryFn: async ({ signal }) => {
-      const { data } = await api.get<Blob>(`/refunds/${id}/receipt`, {
-        responseType: "blob",
-        signal,
-      });
-      return data;
+      const response = await api.get<unknown>(`/refunds/${id}/receipt`, { signal });
+      return fileUrlResponseSchema.parse(response.data);
     },
+    staleTime: SIGNED_URL_STALE_TIME_MS,
+    gcTime: SIGNED_URL_STALE_TIME_MS,
   });
 }
 
@@ -114,11 +127,10 @@ export function paymentReceiptQuery(id: string) {
   return queryOptions({
     queryKey: refundKeys.paymentReceipt(id),
     queryFn: async ({ signal }) => {
-      const { data } = await api.get<Blob>(`/refunds/${id}/payment-receipt`, {
-        responseType: "blob",
-        signal,
-      });
-      return data;
+      const response = await api.get<unknown>(`/refunds/${id}/payment-receipt`, { signal });
+      return fileUrlResponseSchema.parse(response.data);
     },
+    staleTime: SIGNED_URL_STALE_TIME_MS,
+    gcTime: SIGNED_URL_STALE_TIME_MS,
   });
 }

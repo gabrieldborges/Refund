@@ -152,3 +152,18 @@ export type RefundsListResponse = z.output<typeof refundsListResponseSchema>;
 export type RefundListSearchParams = z.output<typeof refundListSearchParamsSchema>;
 export type RefundReview = z.output<typeof refundReviewSchema>;
 export type RefundStats = z.output<typeof refundStatsResponseSchema>;
+
+// Item 22: as rotas de arquivo deixaram de devolver bytes e passaram a
+// devolver uma URL assinada de vida curta. O `media_type` vem junto porque o
+// cliente escolhe entre <img> e <object> ANTES de buscar, e uma URL não
+// carrega tipo.
+//
+// Ao contrário do que valia antes, aqui HÁ estrutura a validar — a resposta
+// virou JSON. O comentário de `receiptQuery` que dizia "única query do projeto
+// sem Zod, porque a resposta é binária" deixou de valer.
+export const fileUrlResponseSchema = z.object({
+  url: z.string().url(),
+  media_type: z.string(),
+});
+
+export type FileUrlResponse = z.infer<typeof fileUrlResponseSchema>;

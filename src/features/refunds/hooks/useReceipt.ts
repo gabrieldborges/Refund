@@ -3,7 +3,7 @@ import { paymentReceiptQuery, receiptQuery } from "../api/refundQueries";
 
 // Which file to fetch: the expense receipt the requester attached (UC-010) or
 // the payment receipt an admin attached when marking the refund as paid
-// (UC-012's sibling download). Same Blob shape, different endpoint and cache
+// (UC-012's sibling download). Same {url, media_type} shape, different endpoint and cache
 // key — see paymentReceiptQuery/refundKeys.paymentReceipt in refundQueries.ts.
 export type ReceiptKind = "expense" | "payment";
 
