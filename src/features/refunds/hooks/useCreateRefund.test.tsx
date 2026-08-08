@@ -30,12 +30,26 @@ describe("useCreateRefund", () => {
     expect(result.current.data?.name).toBe(refundFixture.name);
   });
 
-  // Error path: a 422 (FastAPI validation) makes the mutation fail, and
-  // getApiErrorMessage extracts the message from the list-shaped detail.
+  // Error path: a 422 makes the mutation fail and getApiErrorMessage reads the
+  // message. Since Item 23 the API answers RFC 9457, so `detail` is a sentence
+  // and the per-field information sits in `errors` — this fixture used to
+  // carry the old list-shaped detail, which is the format that no longer
+  // exists.
   it("surfaces a 422 validation message", async () => {
     server.use(
       http.post("*/refunds", () =>
-        HttpResponse.json({ detail: [{ msg: "Arquivo é obrigatório" }] }, { status: 422 })
+        HttpResponse.json(
+          {
+            type: "about:blank",
+            title: "Unprocessable Entity",
+            status: 422,
+            detail: "Arquivo é obrigatório",
+            instance: "/refunds",
+            request_id: "req-test",
+            errors: [{ field: "file", message: "Arquivo é obrigatório" }],
+          },
+          { status: 422 }
+        )
       )
     );
     const { result } = renderHook(() => useCreateRefund(), { wrapper: QueryWrapper });

@@ -38,20 +38,35 @@ api.interceptors.response.use(
   }
 );
 
-// O backend devolve erro de duas formas: uma string ({"detail": "..."})
-// quando é uma regra de negócio nossa, ou uma lista de objetos de validação
-// do próprio FastAPI ({"detail": [{"msg": "...", ...}]}) quando o corpo da
-// requisição nem chegou a ser processado pelo nosso código. Essa função
-// entende os dois formatos e sempre devolve uma mensagem exibível.
+// O backend fala RFC 9457 (Problem Details) desde o Item 23: TODO erro chega
+// como {type, title, status, detail, instance, request_id}, servido como
+// application/problem+json. O `detail` é sempre uma string.
+//
+// Esta função tinha um segundo ramo, para quando a validação do próprio
+// FastAPI devolvia `detail` como LISTA de objetos. Esse formato deixou de
+// existir — os erros por campo agora vêm na extensão `errors`, e o `detail`
+// virou uma frase como em qualquer outro erro. O ramo foi removido por estar
+// morto, não por ter deixado de ser necessário: mantê-lo sugeriria que a API
+// ainda pode responder daquele jeito.
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const detail = error.response?.data?.detail;
     if (typeof detail === "string") {
       return detail;
     }
-    if (Array.isArray(detail) && typeof detail[0]?.msg === "string") {
-      return detail[0].msg;
-    }
   }
   return "Algo deu errado. Tente novamente.";
+}
+
+// O id que correlaciona o erro que o usuário viu com o log do servidor. Ainda
+// não é mostrado em tela — quem quiser exibi-lo num 500 tem isto pronto, e o
+// Item 24 é quem coloca o mesmo id nos logs.
+export function getApiRequestId(error: unknown): string | undefined {
+  if (axios.isAxiosError(error)) {
+    const requestId = error.response?.data?.request_id;
+    if (typeof requestId === "string") {
+      return requestId;
+    }
+  }
+  return undefined;
 }
