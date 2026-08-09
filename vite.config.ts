@@ -33,5 +33,24 @@ export default defineConfig({
     environment: 'jsdom',
     // Runs before each test file: registers jest-dom matchers globally.
     setupFiles: './src/test/setup.ts',
+    // Coverage answers one question — "which lines never ran?" — and never
+    // "is this correct". Nothing fails on the number: the three most recent
+    // defects in this project all lived on covered lines, so a threshold here
+    // would buy a feeling of safety the project's own history contradicts.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        // Design-system components copied from the shadcn registry. Their
+        // tests belong upstream, and at ~2000 lines they bury our own code in
+        // the report — sidebar.tsx alone is bigger than most features here.
+        'src/components/ui/**',
+        'src/**/*.d.ts',
+        'src/main.tsx',
+      ],
+    },
   },
 })

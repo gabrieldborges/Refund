@@ -26,3 +26,4 @@ dist-ssr
 
 # Brainstorming visual companion (local only)
 .superpowers/
+coverage
