@@ -2,12 +2,24 @@ import { z } from "zod";
 import { CATEGORY_VALUES } from "../constants/categories";
 import { RECEIPT_ALLOWED_EXTENSIONS, RECEIPT_MAX_FILE_SIZE_BYTES } from "../constants/receiptFile";
 
+// Every rule below carries a translation key, INCLUDING the type-level check,
+// and that second part is the fix for a bug found in the browser: a field the
+// user never touched arrives as `undefined`, Zod fails on TYPE before reaching
+// .min()/.positive(), and the type-level message is the library's English
+// default — never a key, so untranslatable by construction. Four of them showed
+// at once on an empty submit, in a Portuguese UI.
+//
+// The dialog also sets defaultValues now, which is the other half: with "" the
+// value-level rules are the ones that fire. Both halves are needed — a user can
+// still clear a field back to undefined-ish states the defaults do not cover.
 export const refundCreateSchema = z.object({
-  name: z.string().min(1, "validation.nameRequired"),
+  name: z.string("validation.nameRequired").min(1, "validation.nameRequired"),
   category: z.enum(CATEGORY_VALUES, { message: "validation.categoryRequired" }),
-  amount: z.coerce.number().positive("validation.amountPositive"),
+  amount: z.coerce
+    .number("validation.amountPositive")
+    .positive("validation.amountPositive"),
   file: z
-    .instanceof(FileList)
+    .instanceof(FileList, { message: "validation.receiptRequired" })
     .refine((files) => files.length > 0, "validation.receiptRequired")
     .refine(
       (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,
@@ -27,7 +39,7 @@ export const refundCreateSchema = z.object({
 // one silently reaching the other.
 export const payRefundSchema = z.object({
   file: z
-    .instanceof(FileList)
+    .instanceof(FileList, { message: "validation.paymentReceiptRequired" })
     .refine((files) => files.length > 0, "validation.paymentReceiptRequired")
     .refine(
       (files) => !files[0] || files[0].size <= RECEIPT_MAX_FILE_SIZE_BYTES,

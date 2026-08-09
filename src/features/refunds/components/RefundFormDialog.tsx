@@ -79,8 +79,12 @@ export default function RefundFormDialog({ open, onOpenChange }: RefundFormDialo
   const navigation = useNavigation();
   const isBusy = isPending || navigation.state !== "idle";
 
+  // defaultValues is not cosmetic here. Without it react-hook-form hands Zod
+  // `undefined` for every untouched field, which fails the TYPE check before
+  // any of our messages are reached — see the note on refundCreateSchema.
   const form = useForm<RefundCreateFormInput, unknown, RefundCreateFormData>({
     resolver: zodResolver(refundCreateSchema),
+    defaultValues: { name: "", category: undefined, amount: "", file: undefined },
   });
 
   async function onSubmit(data: RefundCreateFormData) {

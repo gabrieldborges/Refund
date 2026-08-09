@@ -20,7 +20,10 @@ import { getApiErrorMessage } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 
 const loginFormSchema = z.object({
-  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
+  email: z
+    .string("validation.emailRequired")
+    .min(1, "validation.emailRequired")
+    .email("validation.emailInvalid"),
   password: z.string().min(1, "validation.passwordRequired"),
 });
 

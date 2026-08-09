@@ -283,3 +283,22 @@ describe("RefundFormDialog", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
+
+// REGRESSION — the untranslated Zod default leaking to the screen.
+//
+// useForm was called without defaultValues, so a field the user never touched
+// reached Zod as `undefined` instead of "". Zod fails the TYPE check first,
+// before ever reaching .min(1, "validation.nameRequired"), and the type-level
+// message is the library's English default — which was never a key and
+// therefore cannot be translated. Found in a browser, in Portuguese UI.
+it("shows the translated message when a required field is left empty", async () => {
+  const user = userEvent.setup();
+  renderDialog();
+
+  await user.click(screen.getByRole("button", { name: /enviar|salvar|criar/i }));
+
+  await waitFor(() => {
+    expect(screen.queryByText(/Invalid input: expected/i)).not.toBeInTheDocument();
+  });
+  expect(await screen.findByText("Nome é obrigatório")).toBeInTheDocument();
+});

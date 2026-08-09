@@ -56,8 +56,12 @@ export default function PayRefundDialog({ refundId, open, onOpenChange }: PayRef
     if (open) setSubmitError(null);
   }
 
+  // Same reason as RefundFormDialog: without this the untouched file field
+  // reaches Zod as undefined and fails the type check, whose message is the
+  // library's English default rather than one of our keys.
   const form = useForm<PayRefundFormInput, unknown, PayRefundFormData>({
     resolver: zodResolver(payRefundSchema),
+    defaultValues: { file: undefined },
   });
 
   async function onSubmit(data: PayRefundFormData) {

@@ -297,3 +297,17 @@ describe("PayRefundDialog", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
+
+// Same regression as RefundFormDialog: an untouched file field reached Zod as
+// undefined, failing the type check, whose message is the library's English
+// default and therefore untranslatable.
+it("shows the translated message when no file is attached", async () => {
+  const user = userEvent.setup();
+  renderDialog();
+
+  await user.click(screen.getByRole("button", { name: "Confirmar pagamento" }));
+
+  await waitFor(() => {
+    expect(screen.queryByText(/Invalid input|not instance of/i)).not.toBeInTheDocument();
+  });
+});

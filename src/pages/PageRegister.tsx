@@ -20,7 +20,10 @@ import { useTranslation } from "react-i18next";
 
 const registerFormSchema = z.object({
   name: z.string().min(1, "validation.nameRequired"),
-  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
+  email: z
+    .string("validation.emailRequired")
+    .min(1, "validation.emailRequired")
+    .email("validation.emailInvalid"),
   password: z.string().min(6, "validation.passwordMinLength"),
 });
 
