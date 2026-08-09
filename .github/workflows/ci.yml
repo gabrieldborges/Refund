@@ -59,5 +59,15 @@ jobs:
       # changing a check in one place changes it in both.
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test
+      - run: npm run test:coverage
+      # Same reasoning as the backend: the number says that something is
+      # uncovered, the HTML says which lines.
+      - name: Coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: coverage/
+          retention-days: 14
+
       - run: npm run build
