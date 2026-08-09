@@ -30,6 +30,7 @@
   "error.retry": "Try again",
   "error.retrying": "Trying…",
   "error.title": "Something went wrong",
+  "file.chooseButton": "Choose file",
   "home.allNoFilter": "All, unfiltered",
   "home.approvedAndPaid": "Approved + paid",
   "home.filterByStatus": "Filter by status",

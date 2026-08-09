@@ -43,4 +43,38 @@ describe("InputFile", () => {
     expect(input).toHaveAttribute("aria-describedby", "file-form-item-message");
     expect(input).toHaveAttribute("aria-invalid", "true");
   });
+
+  // The native control renders "Choose File / No file chosen" from the
+  // BROWSER's locale, and that text is reachable from neither CSS nor JS. It
+  // showed in English inside a Portuguese interface, permanently — the only
+  // fix is to replace the control, so this asserts the replacement is there.
+  it("shows a translated trigger instead of the browser's own text", () => {
+    render(<InputFile label="Comprovante" />);
+
+    expect(screen.getByText("Escolher arquivo")).toBeInTheDocument();
+  });
+
+  // Hiding the input must not hide it from assistive technology: sr-only, not
+  // display:none. A file field nobody can reach by keyboard is worse than one
+  // labelled in the wrong language.
+  it("keeps the real input focusable and named by its field label", () => {
+    render(<InputFile label="Comprovante" />);
+
+    const input = screen.getByLabelText("Comprovante");
+    input.focus();
+
+    expect(input).toHaveFocus();
+    // The visible trigger is a second <label> for the same input; without
+    // aria-labelledby the accessible name would become both concatenated.
+    expect(input).toHaveAccessibleName("Comprovante");
+  });
+
+  // Clicking the visible surface must open the picker — that is what makes the
+  // replacement a replacement and not just decoration.
+  it("the visible trigger is wired to the input", () => {
+    render(<InputFile label="Comprovante" id="meu-arquivo" />);
+
+    const trigger = screen.getByText("Escolher arquivo").closest("label");
+    expect(trigger).toHaveAttribute("for", "meu-arquivo");
+  });
 });

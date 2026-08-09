@@ -30,6 +30,7 @@
   "error.retry": "Tentar novamente",
   "error.retrying": "Tentando…",
   "error.title": "Algo deu errado",
+  "file.chooseButton": "Escolher arquivo",
   "home.allNoFilter": "Todas, sem o filtro",
   "home.approvedAndPaid": "Aprovado + pago",
   "home.filterByStatus": "Filtrar por status",
