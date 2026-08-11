@@ -38,18 +38,22 @@ export const refundSummaryResponseSchema = z.object({
   type: z.literal("RefundSummary"),
   // O único campo pelo qual o cliente sabe se está lendo a empresa ou uma pessoa.
   scope: z.enum(["all", "user"]),
-  months: z.number().int().min(1).max(12),
+  year: z.number().int(),
+  // Só os anos que têm solicitações, para o seletor não convidar ninguém a abrir
+  // um gráfico vazio por construção.
+  available_years: z.array(z.number().int()),
   by_status: byStatusSchema,
   by_category: byCategorySchema,
-  // Todos os meses da janela, do mais antigo ao mais recente, inclusive os
-  // zerados — um buraco faria o gráfico de linha mentir sobre a inclinação.
+  // Sempre doze, de janeiro a dezembro, inclusive os zerados — um buraco faria o
+  // gráfico de linha mentir sobre a inclinação.
   by_month: z.array(monthSchema),
 });
 
-// `.catch()` porque a janela vem da URL e é editável por quem usa: um valor
-// inválido cai no padrão em vez de pôr a tela inteira em erro.
+// O ano vem da URL e é editável por quem usa, então um valor inválido tem de cair
+// em "sem ano pedido" — e quem resolve o padrão é o servidor, com o relógio dele.
+// `.catch(undefined)` e não um ano literal: um literal envelheceria no código.
 export const refundSummarySearchParamsSchema = z.object({
-  months: z.coerce.number().int().min(1).max(12).catch(6),
+  year: z.coerce.number().int().min(2000).max(2100).optional().catch(undefined),
 });
 
 export type RefundSummary = z.output<typeof refundSummaryResponseSchema>;

@@ -92,3 +92,8 @@ export type { RefundSummary } from "./schemas/summary";
 // nenhum. O contêiner faz o import() dinâmico por dentro — ver
 // docs/performance-budget.md.
 export { default as DashboardCharts } from "./components/DashboardCharts";
+
+// As cores de fundo dos três indicadores do Dashboard, derivadas da paleta dos
+// gráficos com o texto calculado para contraste. Exportado como dado, não como
+// componente: quem monta o card é a página.
+export { KPI_TONES } from "./lib/kpiTones";

@@ -31,7 +31,18 @@ interface DashboardChartsProps {
   isError?: boolean;
 }
 
-function ChartCard({ titleKey, children }: { titleKey: string; children: React.ReactNode }) {
+function ChartCard({
+  titleKey,
+  period,
+  children,
+}: {
+  titleKey: string;
+  // O período do gráfico — o ano, hoje; o mês e o ano quando existir visualização
+  // dia a dia (Ciclo 3). Fica no TÍTULO porque é o mesmo para todas as marcas do
+  // eixo, e no eixo gastaria a largura que falta no mobile.
+  period?: string;
+  children: React.ReactNode;
+}) {
   const { t } = useTranslation();
   return (
     <Card>
@@ -40,7 +51,20 @@ function ChartCard({ titleKey, children }: { titleKey: string; children: React.R
           {/* <h2> aninhado porque o CardTitle do registry é uma <div>: ela dá o
               estilo, não a semântica. Sem heading, uma tela de quatro gráficos não
               tem estrutura para quem navega por headings. */}
-          <h2 className="text-sm font-medium">{t(titleKey)}</h2>
+          <h2 className="text-sm font-medium">
+            {t(titleKey)}
+            {period && (
+              <>
+                {/* Espaço EXPLÍCITO, e não só a margem do `ml-2`: margem separa
+                    pixels, não texto. Sem ele o nome acessível do heading sai
+                    "Solicitações por status2026" — o leitor de tela lê os dois
+                    colados, porque o JSX descarta o espaço entre elementos em
+                    linhas diferentes. */}
+                {" "}
+                <span className="ml-1 font-normal text-muted-foreground">{period}</span>
+              </>
+            )}
+          </h2>
         </CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -68,17 +92,21 @@ export default function DashboardCharts({
   const categoryBars = CATEGORY_ORDER.map((category) => ({
     id: category,
     labelKey: CATEGORIES[category].labelKey,
-    value: summary?.by_category[category].amount_in_cents ?? 0,
+    cents: summary?.by_category[category].amount_in_cents ?? 0,
   }));
 
-  const linePoints = (summary?.by_month ?? []).map((month) => ({
-    label: month.month,
-    value: month.amount_in_cents,
+  const lineMonths = (summary?.by_month ?? []).map((month) => ({
+    month: month.month,
+    cents: month.amount_in_cents,
   }));
+
+  // O ano vem da resposta, não da URL: sem ano pedido, quem escolhe é o servidor,
+  // e o título tem de dizer o que está sendo mostrado de verdade.
+  const period = summary ? String(summary.year) : undefined;
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <ChartCard titleKey="chart.statusTitle">
+      <ChartCard titleKey="chart.statusTitle" period={period}>
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <RefundDonutChart
             slices={statusSlices}
@@ -91,31 +119,29 @@ export default function DashboardCharts({
         </Suspense>
       </ChartCard>
 
-      <ChartCard titleKey="chart.categoryTitle">
+      <ChartCard titleKey="chart.categoryTitle" period={period}>
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <RefundBarChart
             bars={categoryBars}
             titleKey="chart.categoryTitle"
-            metric="currency"
             isLoading={isLoading}
             isError={isError}
           />
         </Suspense>
       </ChartCard>
 
-      <ChartCard titleKey="chart.monthlyValueTitle">
+      <ChartCard titleKey="chart.monthlyValueTitle" period={period}>
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <RefundLineChart
-            points={linePoints}
+            months={lineMonths}
             titleKey="chart.monthlyValueTitle"
-            metric="currency"
             isLoading={isLoading}
             isError={isError}
           />
         </Suspense>
       </ChartCard>
 
-      <ChartCard titleKey="chart.monthlyStatusTitle">
+      <ChartCard titleKey="chart.monthlyStatusTitle" period={period}>
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <RefundStackedBarChart
             months={summary?.by_month ?? []}

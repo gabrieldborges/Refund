@@ -164,21 +164,23 @@ export async function dashboardLoader({ request }: LoaderFunctionArgs) {
   // mesmo Dashboard com os próprios números.
 
   const url = new URL(request.url);
-  const { months } = refundSummarySearchParamsSchema.parse({
-    months: url.searchParams.get("months") ?? undefined,
+  const { year } = refundSummarySearchParamsSchema.parse({
+    year: url.searchParams.get("year") ?? undefined,
   });
 
   const normalizedSearchParams = new URLSearchParams(url.searchParams);
-  setOrDelete(normalizedSearchParams, "months", months !== 6 ? String(months) : undefined);
+  // Ausente sai da URL: "sem ano" é o padrão, e o servidor resolve qual é. Fixar
+  // o ano corrente na URL o congelaria no link compartilhado.
+  setOrDelete(normalizedSearchParams, "year", year ? String(year) : undefined);
 
   if (normalizedSearchParams.toString() !== url.searchParams.toString()) {
     const normalizedSearch = normalizedSearchParams.toString();
     throw redirect(`${url.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`);
   }
 
-  await queryClient.ensureQueryData(refundSummaryQuery(months));
+  await queryClient.ensureQueryData(refundSummaryQuery(year));
 
-  return { months };
+  return { year };
 }
 
 export async function refundDetailLoader({ params }: LoaderFunctionArgs) {

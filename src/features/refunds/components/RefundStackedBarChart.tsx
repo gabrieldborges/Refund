@@ -1,9 +1,11 @@
 import { ResponsiveBar } from "@nivo/bar";
 import { useTranslation } from "react-i18next";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useUiStore } from "@/stores/ui";
 import { axisChartTheme, chartChrome } from "../lib/chartChrome";
 import { sliceColor, type DonutSlice } from "../lib/chartPalette";
+import { monthLabel, visibleMonthTicks } from "../lib/monthLabel";
 import { REFUND_STATUS } from "../constants/status";
 import type { RefundStatus } from "../schemas/refund";
 import type { RefundSummaryMonth } from "../schemas/summary";
@@ -38,25 +40,35 @@ export default function RefundStackedBarChart({
   isError = false,
 }: RefundStackedBarChartProps) {
   const { t, i18n } = useTranslation();
+  const isMobile = useIsMobile();
   const prefersReducedMotion = usePrefersReducedMotion();
   const theme = useUiStore((s) => s.theme);
   const chrome = chartChrome(theme);
 
   const format = (value: number) => new Intl.NumberFormat(i18n.language).format(value);
 
+  // Rótulo só com o MÊS: o ano vive no título do card, e repeti-lo em doze marcas
+  // gastaria a largura que falta no mobile com a informação que não muda.
   const data = months.map((month) => ({
-    month: month.month,
+    month: monthLabel(month.month, i18n.language),
     ...Object.fromEntries(
       STATUS_ORDER.map((status) => [status, month.by_status[status].count])
     ),
   }));
+
+  // Doze rótulos não cabem em 390px. No mobile rotulamos um a cada dois — as doze
+  // barras continuam lá, só a rotulagem rareia.
+  const ticks = visibleMonthTicks(
+    data.map((entry) => entry.month as string),
+    isMobile
+  );
 
   const total = months.reduce((sum, month) => sum + month.count, 0);
 
   const ariaLabel = `${t(titleKey)}. ${months
     .map(
       (month) =>
-        `${month.month}: ${format(month.count)} — ${STATUS_ORDER.map(
+        `${monthLabel(month.month, i18n.language)}: ${format(month.count)} — ${STATUS_ORDER.map(
           (status) => `${t(REFUND_STATUS[status].labelKey)} ${format(month.by_status[status].count)}`
         ).join(", ")}`
     )
@@ -73,7 +85,7 @@ export default function RefundStackedBarChart({
         data={data}
         keys={[...STATUS_ORDER]}
         indexBy="month"
-        margin={{ top: 8, right: 16, bottom: 56, left: 44 }}
+        margin={{ top: 8, right: 16, bottom: 56, left: 40 }}
         colors={(bar: { id: string | number }) => sliceColor(COLOR_SLICES, String(bar.id))}
         padding={0.3}
         // MITIGAÇÃO, e o motivo está registrado no spec: duas cores desta paleta
@@ -88,7 +100,7 @@ export default function RefundStackedBarChart({
         enableGridX={false}
         enableGridY
         axisLeft={{ tickSize: 0, tickPadding: 8, format: (value: number) => format(value) }}
-        axisBottom={{ tickSize: 0, tickPadding: 8 }}
+        axisBottom={{ tickSize: 0, tickPadding: 8, tickValues: ticks }}
         // Sem rótulo dentro dos segmentos: eles são finos quando a contagem é
         // baixa, e um número que aparece só nos grossos é pior que nenhum.
         enableLabel={false}
@@ -100,7 +112,7 @@ export default function RefundStackedBarChart({
             anchor: "bottom",
             direction: "row",
             translateY: 48,
-            itemWidth: 92,
+            itemWidth: isMobile ? 74 : 92,
             itemHeight: 16,
             symbolSize: 10,
             // Quadrado com borda, e não círculo: o contorno é o que separa as duas

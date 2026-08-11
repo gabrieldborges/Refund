@@ -30,11 +30,14 @@ function renderPage(entry = "/dashboard", { stubLoader = false } = {}) {
     ],
     { initialEntries: [entry] }
   );
-  return render(
-    <QueryWrapper>
-      <RouterProvider router={router} />
-    </QueryWrapper>
-  );
+  return {
+    router,
+    ...render(
+      <QueryWrapper>
+        <RouterProvider router={router} />
+      </QueryWrapper>
+    ),
+  };
 }
 
 beforeEach(() => {
@@ -88,18 +91,60 @@ describe("PageDashboard", () => {
     expect(await screen.findByText("Toda a empresa")).toBeInTheDocument();
   });
 
-  it("renders the four chart cards", async () => {
+  // The year lives in the card title, not on the axis: it is the same for all
+  // twelve ticks, and on the axis it would spend the width mobile does not have.
+  it("renders the four chart cards, each naming the year", async () => {
     renderPage();
     await screen.findByText("10");
 
     for (const title of [
-      "Solicitações por status",
-      "Valor por categoria",
-      "Valor solicitado por mês",
-      "Solicitações por status, mês a mês",
+      /Solicitações por status 2026/,
+      /Valor por categoria 2026/,
+      /Valor solicitado por mês 2026/,
+      /Solicitações por status, mês a mês 2026/,
     ]) {
       expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
     }
+  });
+
+  // The unit sits above the chart rather than repeated on every tick. With the
+  // fixture's small values it must read "em reais", not "em milhares" — a fixed
+  // thousands scale would show 0 for everything here.
+  it("labels the value charts with the unit the data deserves", async () => {
+    renderPage();
+    await screen.findByText("10");
+
+    expect(screen.getAllByText("em reais").length).toBeGreaterThan(0);
+    expect(screen.queryByText("em milhares de reais")).toBeNull();
+  });
+
+  it("offers a year picker with the years that have data", async () => {
+    renderPage();
+    await screen.findByText("10");
+
+    expect(screen.getByLabelText("Ano")).toBeInTheDocument();
+  });
+
+  // The picker must change the REQUEST, not only the URL — the handler echoes the
+  // year back, so a stale request would show 2026 in the titles.
+  it("reloads the summary for the chosen year", async () => {
+    const { router } = renderPage("/dashboard?year=2025");
+
+    expect(await screen.findByRole("heading", { name: /Solicitações por status 2025/ })).toBeInTheDocument();
+    expect(router.state.location.search).toContain("year=2025");
+  });
+
+  // One year is not a choice: the picker hides rather than showing a single option.
+  it("hides the picker when there is only one year", async () => {
+    server.use(
+      http.get("*/refunds/summary", () =>
+        HttpResponse.json({ ...refundSummaryFixture, available_years: [2026] })
+      )
+    );
+    renderPage();
+    await screen.findByText("10");
+
+    expect(screen.queryByLabelText("Ano")).toBeNull();
   });
 
   // Loader stubbed: dashboardLoader prefetches with ensureQueryData, which rejects

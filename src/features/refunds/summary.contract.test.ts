@@ -45,9 +45,18 @@ describe("the refund summary contract", () => {
     ]);
   });
 
-  // Every month of the window, so the line chart has no gap to lie with.
-  it("carries one entry per month of the window", () => {
-    expect(contract.refundSummary.by_month).toHaveLength(contract.refundSummary.months);
+  // Twelve months, January to December, so the line chart has no gap to lie with
+  // and the axis can carry bare month names under a year in the card title.
+  it("carries twelve months, january to december", () => {
+    const months = contract.refundSummary.by_month.map((month) => month.month.split("-")[1]);
+    expect(months).toEqual([
+      "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12",
+    ]);
+  });
+
+  it("names the year and the years that have data", () => {
+    expect(typeof contract.refundSummary.year).toBe("number");
+    expect(Array.isArray(contract.refundSummary.available_years)).toBe(true);
   });
 
   it("gives every month a full status breakdown", () => {
@@ -63,16 +72,17 @@ describe("the refund summary contract", () => {
 });
 
 describe("refundSummarySearchParamsSchema", () => {
-  // The window comes from the URL, which a person can edit: an invalid value falls
-  // back to the default instead of putting the whole screen into isError.
-  it("falls back to six months for anything invalid", () => {
-    expect(refundSummarySearchParamsSchema.parse({ months: "abc" }).months).toBe(6);
-    expect(refundSummarySearchParamsSchema.parse({ months: "0" }).months).toBe(6);
-    expect(refundSummarySearchParamsSchema.parse({ months: "13" }).months).toBe(6);
-    expect(refundSummarySearchParamsSchema.parse({}).months).toBe(6);
+  // The year comes from the URL, which a person can edit. An invalid value falls
+  // back to "no year asked for" rather than to a literal year: a literal would age
+  // inside the code, and the server already knows what today is.
+  it("falls back to undefined for anything invalid", () => {
+    expect(refundSummarySearchParamsSchema.parse({ year: "abc" }).year).toBeUndefined();
+    expect(refundSummarySearchParamsSchema.parse({ year: "1999" }).year).toBeUndefined();
+    expect(refundSummarySearchParamsSchema.parse({ year: "2101" }).year).toBeUndefined();
+    expect(refundSummarySearchParamsSchema.parse({}).year).toBeUndefined();
   });
 
-  it("accepts a value inside the range", () => {
-    expect(refundSummarySearchParamsSchema.parse({ months: "12" }).months).toBe(12);
+  it("accepts a year inside the range", () => {
+    expect(refundSummarySearchParamsSchema.parse({ year: "2025" }).year).toBe(2025);
   });
 });

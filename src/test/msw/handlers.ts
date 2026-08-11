@@ -60,7 +60,10 @@ const EMPTY_STATUSES = {
 export const refundSummaryFixture = {
   type: "RefundSummary" as const,
   scope: "user" as const,
-  months: 3,
+  year: 2026,
+  // Two years, so the year picker has something to pick between — with one year it
+  // hides itself, and a test of the picker would silently pass on an absent one.
+  available_years: [2025, 2026],
   by_status: {
     pending: bucket(2, 3000),
     approved: bucket(3, 5000),
@@ -74,22 +77,28 @@ export const refundSummaryFixture = {
     service: bucket(1, 90000),
     others: bucket(0, 0),
   },
-  by_month: [
-    {
-      month: "2026-06",
-      count: 3,
-      amount_in_cents: 4000,
-      by_status: { ...EMPTY_STATUSES, paid: bucket(1, 1000), pending: bucket(2, 3000) },
-    },
-    // The empty month sits in the middle on purpose.
-    { month: "2026-07", count: 0, amount_in_cents: 0, by_status: { ...EMPTY_STATUSES } },
-    {
-      month: "2026-08",
-      count: 7,
-      amount_in_cents: 14000,
-      by_status: { ...EMPTY_STATUSES, approved: bucket(3, 5000), rejected: bucket(4, 9000) },
-    },
-  ],
+  // Twelve months, January to December, like the API. Only two carry data, so the
+  // zero-filling is exercised by the ten empty ones rather than assumed.
+  by_month: Array.from({ length: 12 }, (_, index) => {
+    const month = `2026-${String(index + 1).padStart(2, "0")}`;
+    if (month === "2026-06") {
+      return {
+        month,
+        count: 3,
+        amount_in_cents: 4000,
+        by_status: { ...EMPTY_STATUSES, paid: bucket(1, 1000), pending: bucket(2, 3000) },
+      };
+    }
+    if (month === "2026-08") {
+      return {
+        month,
+        count: 7,
+        amount_in_cents: 14000,
+        by_status: { ...EMPTY_STATUSES, approved: bucket(3, 5000), rejected: bucket(4, 9000) },
+      };
+    }
+    return { month, count: 0, amount_in_cents: 0, by_status: { ...EMPTY_STATUSES } };
+  }),
 };
 
 // The login payload, matching loginResponseSchema.
@@ -210,8 +219,18 @@ export const handlers = [
   // The summary must be registered BEFORE "*/refunds/:id", or the bare id handler
   // swallows "/refunds/summary" — the same ordering trap the API itself has.
   http.get("*/refunds/summary", ({ request }) => {
-    const months = Number(new URL(request.url).searchParams.get("months") ?? 6);
-    return HttpResponse.json({ ...refundSummaryFixture, months });
+    // Echoes the requested year, so a test can assert the picker actually changed
+    // the request instead of only the URL.
+    const asked = new URL(request.url).searchParams.get("year");
+    const year = asked ? Number(asked) : refundSummaryFixture.year;
+    return HttpResponse.json({
+      ...refundSummaryFixture,
+      year,
+      by_month: refundSummaryFixture.by_month.map((month) => ({
+        ...month,
+        month: `${year}-${month.month.split("-")[1]}`,
+      })),
+    });
   }),
 
   // Refund detail: echoes the requested id into the fixture.
