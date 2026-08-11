@@ -95,7 +95,6 @@ export default function RequesterPanel({
       <CardContent>
         <RefundStatsPanel
           userId={requester.id}
-          userName={requester.name}
           viewer={viewer}
           currentRefundId={currentRefundId}
           headerActions={
@@ -117,6 +116,24 @@ export default function RequesterPanel({
             </div>
           }
         />
+
+        {/* O link vive AQUI, e não no painel compartilhado, porque na página do
+            membro do time ele seria um link para a própria página.
+            
+            Aponta para o cadastro da pessoa, não para a Home com `?name=`: o `name`
+            da listagem filtra o nome da SOLICITAÇÃO, não o da pessoa, então aquele
+            link nunca casava com nada. Era um link que existia e não funcionava.
+            
+            Só para admin: /team/:id é admin-only (BR-025), e um usuário padrão
+            clicando aqui seria redirecionado pelo teamMemberLoader. */}
+        {viewer?.role === "admin" && (
+          <Link
+            to={`/team/${requester.id}`}
+            className="mt-4 inline-block text-sm text-primary underline-offset-2 hover:underline"
+          >
+            {t("panel.seeProfile", { name: requester.name })}
+          </Link>
+        )}
       </CardContent>
     </Card>
   );

@@ -205,13 +205,11 @@ describe("RequesterPanel", () => {
     expect(row).toHaveAttribute("href", "/refunds/5");
   });
 
-  it("links to the Home filtered by the requester's name", async () => {
-    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
-    renderPanel();
-
-    const homeLink = await screen.findByRole("link", { name: /na Home/i });
-    expect(homeLink).toHaveAttribute("href", `/?name=${encodeURIComponent(requester.name)}`);
-  });
+  // REMOVED: this test asserted the defect. It pinned a link to
+  // "/?name=<person>", which never worked — the listing's `name` filters the
+  // REFUND's name, not the person's, so the Home always came back empty. A test can
+  // hold a broken behaviour in place; the replacement, further down, asserts the link
+  // goes to that person's own page.
 
   // The four per-status counters answer "how is this person's history split";
   // the total answers "how often has this person asked at all". It now lives in
@@ -320,5 +318,35 @@ describe("RequesterPanel navigation arrows", () => {
     expect(
       screen.getByRole("button", { name: "Próxima solicitação deste solicitante" })
     ).toBeDisabled();
+  });
+
+  // The link used to point at "/?name=<person>", and it never worked: the listing's
+  // `name` filters the REFUND's name, not the person's, so it always found nothing.
+  // It now points at that person's own page.
+  it("links to the requester's profile, not to a name search", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel();
+
+    const link = await screen.findByRole("link", { name: /cadastro de Bruno Lima/ });
+    expect(link).toHaveAttribute("href", `/team/${requester.id}`);
+  });
+
+  it("never points at the home's name search", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel();
+
+    await screen.findByText("Bruno Lima");
+    const links = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "");
+    expect(links.some((href) => href.startsWith("/?name="))).toBe(false);
+  });
+
+  // /team/:id is admin-only (BR-025), so offering it to a standard viewer would be
+  // offering a page the loader bounces.
+  it("hides the profile link from a non-admin viewer", async () => {
+    server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
+    renderPanel({ id: 5, role: "standard" });
+
+    await screen.findByText("Bruno Lima");
+    expect(screen.queryByRole("link", { name: /cadastro/ })).toBeNull();
   });
 });

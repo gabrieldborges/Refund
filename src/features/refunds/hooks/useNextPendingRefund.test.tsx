@@ -72,6 +72,97 @@ describe("useNextPendingRefund", () => {
 
   // "Next" must mean a different refund. Without this the button would point
   // at the screen the admin is already on.
+  // THE regression this pins. "Next" is the one AFTER the current in the queue, not
+  // "the first that is not the current".
+  //
+  // The old version returned the first non-current match, so with [10, 20, 30] it
+  // answered 20 from 10 and answered 10 from 20 — the button ping-ponged between two
+  // refunds forever, and because neighbours in the queue are usually the same
+  // person's, it read as "it only ever goes to that user's pending".
+  it("advances past the current refund instead of returning to the start", async () => {
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json(
+          pendingListResponse([
+            { id: 10, userId: 1 },
+            { id: 20, userId: 2 },
+            { id: 30, userId: 3 },
+          ])
+        )
+      )
+    );
+
+    const { result } = renderNextPending(20);
+
+    await waitFor(() => expect(result.current.nextRefund?.id).toBe(30));
+  });
+
+  // Walking the whole queue must never revisit: three positions, three distinct
+  // answers, and then the end.
+  it("walks the queue forward without repeating", async () => {
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json(
+          pendingListResponse([
+            { id: 10, userId: 1 },
+            { id: 20, userId: 2 },
+            { id: 30, userId: 3 },
+          ])
+        )
+      )
+    );
+
+    const first = renderNextPending(10);
+    await waitFor(() => expect(first.result.current.nextRefund?.id).toBe(20));
+
+    const second = renderNextPending(20);
+    await waitFor(() => expect(second.result.current.nextRefund?.id).toBe(30));
+
+    // The last one has nothing after it: the queue is finished, and the button
+    // disables rather than looping back to the oldest.
+    const third = renderNextPending(30);
+    await waitFor(() => expect(third.result.current.nextRefund).toBeNull());
+  });
+
+  // The refund open on screen is not always in the queue — it may be approved, or the
+  // admin's own. Then "next" is the start of the queue, which is the oldest.
+  it("returns the oldest when the open refund is not in the queue", async () => {
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json(
+          pendingListResponse([
+            { id: 10, userId: 1 },
+            { id: 20, userId: 2 },
+          ])
+        )
+      )
+    );
+
+    const { result } = renderNextPending(999);
+
+    await waitFor(() => expect(result.current.nextRefund?.id).toBe(10));
+  });
+
+  // The admin's own refunds leave the queue entirely (BR-016), so advancing past one
+  // must skip it rather than land on it.
+  it("advances over the admin's own refunds", async () => {
+    server.use(
+      http.get("*/refunds", () =>
+        HttpResponse.json(
+          pendingListResponse([
+            { id: 10, userId: 1 },
+            { id: 20, userId: 99 },
+            { id: 30, userId: 3 },
+          ])
+        )
+      )
+    );
+
+    const { result } = renderNextPending(10);
+
+    await waitFor(() => expect(result.current.nextRefund?.id).toBe(30));
+  });
+
   it("skips the refund currently open", async () => {
     server.use(
       http.get("*/refunds", () =>

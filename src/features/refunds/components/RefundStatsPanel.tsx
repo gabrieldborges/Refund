@@ -29,11 +29,6 @@ const RefundDonutChart = lazy(() => import("./RefundDonutChart"));
 interface RefundStatsPanelProps {
   // De quem são as estatísticas e a lista.
   userId: number;
-  // Usado só no link para a Home, que busca por nome. O painel deliberadamente
-  // NÃO desenha o nome como título: quem monta decide o invólucro, e é isso que
-  // evita o nome duplicado na página do membro do time, cujo cartão de
-  // identidade já o mostra.
-  userName: string;
   // Quem está olhando, necessário para calcular o destino de cada linha pela
   // regra compartilhada do getRefundHref. Não vem de contexto aqui — um
   // componente de feature não pode importar `@/context` — então a página passa.
@@ -57,7 +52,6 @@ interface RefundStatsPanelProps {
 // iniciais para todo mundo — adiado para o ciclo de foto de perfil.
 export default function RefundStatsPanel({
   userId,
-  userName,
   viewer,
   currentRefundId,
   headerActions,
@@ -166,16 +160,6 @@ export default function RefundStatsPanel({
               })}
             </ul>
 
-            {/* No pagination here on purpose — the Home already paginates, so
-                point there instead of reimplementing it. Reuses the Home's
-                existing `name` search (there is no `user_id` filter in its UI)
-                rather than adding one. */}
-            <Link
-              to={`/?name=${encodeURIComponent(userName)}`}
-              className="text-sm text-primary underline-offset-2 hover:underline"
-            >
-              {t("panel.seeAll", { name: userName })}
-            </Link>
           </>
         )}
       </div>

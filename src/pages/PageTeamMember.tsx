@@ -77,7 +77,6 @@ export default function PageTeamMember() {
         <CardContent className="pt-6">
           <RefundStatsPanel
             userId={member.id}
-            userName={member.name}
             viewer={viewer}
           />
         </CardContent>

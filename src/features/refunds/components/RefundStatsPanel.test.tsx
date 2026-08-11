@@ -43,7 +43,6 @@ function renderPanel(
         Component: () => (
           <RefundStatsPanel
             userId={USER.id}
-            userName={USER.name}
             viewer={adminViewer}
             {...props}
           />
@@ -103,13 +102,14 @@ describe("RefundStatsPanel", () => {
     expect(screen.queryByRole("heading", { name: USER.name })).toBeNull();
   });
 
-  // The name is still needed for the link to the Home, which searches by name.
-  it("links to the Home filtered by that person's name", async () => {
+  // O link para o cadastro saiu deste painel: na página do membro do time ele seria
+  // um link para a própria página. Agora vive no RequesterPanel, e o teste dele
+  // também.
+  it("renders no profile link of its own", async () => {
     renderPanel();
 
     await screen.findByText("Solicitação 1");
-    const link = screen.getByRole("link", { name: /Bruno Lima/ });
-    expect(link).toHaveAttribute("href", `/?name=${encodeURIComponent(USER.name)}`);
+    expect(screen.queryByRole("link", { name: /cadastro/ })).toBeNull();
   });
 
   // Silence on error would be indistinguishable from a person with no refunds.
@@ -121,7 +121,7 @@ describe("RefundStatsPanel", () => {
         {
           path: "/",
           Component: () => (
-            <RefundStatsPanel userId={USER.id} userName={USER.name} viewer={adminViewer} />
+            <RefundStatsPanel userId={USER.id} viewer={adminViewer} />
           ),
         },
       ],

@@ -84,7 +84,7 @@
   "panel.empty": "No requests found.",
   "panel.listError": "Could not load the requests.",
   "panel.requests": "Requests",
-  "panel.seeAll": "See all of {{name}}'s requests on the Home",
+  "panel.seeProfile": "View {{name}}'s profile",
   "payment.confirm": "Confirm payment",
   "payment.markAsPaid": "Mark as paid",
   "payment.marking": "Marking as paid…",

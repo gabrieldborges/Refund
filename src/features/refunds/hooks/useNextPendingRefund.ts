@@ -32,15 +32,24 @@ export function useNextPendingRefund(currentRefundId: number, viewer: RefundView
     enabled: isAdmin,
   });
 
-  // Duas exclusões, por motivos diferentes: a atual porque "próxima" precisa
-  // ser outra tela, e as do próprio admin por BR-016 — delegada a
-  // `canReviewRefund` (getRefundHref.ts), a única implementação da regra.
-  // Reescrever a condição aqui seria a segunda cópia que o comentário de lá
-  // avisa para não criar.
-  const nextRefund: Refund | null =
-    data?.attributes.find(
-      (refund) => refund.id !== currentRefundId && canReviewRefund(refund, viewer)
-    ) ?? null;
+  // A fila revisável, na ordem em que se trabalha nela. As solicitações do próprio
+  // admin saem por BR-016 — via `canReviewRefund` (getRefundHref.ts), a única
+  // implementação da regra; reescrever a condição aqui seria a segunda cópia que o
+  // comentário de lá avisa para não criar.
+  const queue = (data?.attributes ?? []).filter((refund) => canReviewRefund(refund, viewer));
+
+  // "Próxima" é a SEGUINTE À ATUAL na fila, não "a primeira que não é a atual".
+  //
+  // A diferença não é sutil: com a fila [B, C, D] e a versão antiga, estando em B ela
+  // devolvia C, e estando em C devolvia B — porque B é a primeira e não é a atual.
+  // O botão ficava em pingue-pongue entre duas solicitações, que por serem vizinhas
+  // na fila normalmente eram do mesmo solicitante. Era exatamente esse o sintoma
+  // relatado.
+  //
+  // -1 quando a solicitação aberta não está na fila (ela não é pendente, ou é do
+  // próprio admin): aí a próxima é a mais antiga, que é o começo da fila.
+  const currentIndex = queue.findIndex((refund) => refund.id === currentRefundId);
+  const nextRefund: Refund | null = queue[currentIndex + 1] ?? null;
 
   return { nextRefund, isLoading };
 }

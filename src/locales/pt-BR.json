@@ -84,7 +84,7 @@
   "panel.empty": "Nenhuma solicitação encontrada.",
   "panel.listError": "Não foi possível carregar as solicitações.",
   "panel.requests": "Solicitações",
-  "panel.seeAll": "Ver todas as solicitações de {{name}} na Home",
+  "panel.seeProfile": "Ver o cadastro de {{name}}",
   "payment.confirm": "Confirmar pagamento",
   "payment.markAsPaid": "Marcar como pago",
   "payment.marking": "Marcando como pago…",

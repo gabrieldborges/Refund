@@ -1,7 +1,7 @@
 import { useLoaderData, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/useAuth";
@@ -94,17 +94,27 @@ export default function PageCalendar() {
                 onSelect={(next) => updateParams({ day: next ? toIso(next) : null })}
                 className="w-full"
                 components={{
-                  // A contagem do dia dentro do próprio botão. SEM badge nos dias
-                  // zerados: num calendário a ausência de marca já lê como zero, e 31
-                  // zeros seriam ruído.
+                  // ENVOLVE o CalendarDayButton do registry em vez de substituí-lo.
+                  //
+                  // A primeira versão reimplementava o botão do zero, e com isso
+                  // perdia o `data-selected-single` e as classes
+                  // `data-[selected-single=true]:bg-primary` que o registry aplica —
+                  // era por isso que escolher um dia não dava retorno visual nenhum.
+                  // O marcador de HOJE sobrevivia porque vem da célula
+                  // (classNames.today), não do botão.
+                  //
+                  // Envolvendo, seleção, foco, teclado e o estilo de hoje continuam
+                  // sendo do registry, e só o badge de contagem é nosso.
                   DayButton: ({ day: dayInfo, modifiers, ...props }) => {
                     const iso = toIso(dayInfo.date);
                     const count = countByDate.get(iso) ?? 0;
                     return (
-                      <button
+                      <CalendarDayButton
+                        day={dayInfo}
+                        modifiers={modifiers}
                         {...props}
-                        // O nome acessível traz a contagem: quem usa leitor de tela
-                        // não vê o badge, e "3" sozinho não diz o que é.
+                        // A contagem no nome acessível: quem usa leitor de tela não vê
+                        // o badge, e "3" sozinho não diz o que é.
                         aria-label={
                           count > 0
                             ? t("calendar.dayWithCount", {
@@ -116,14 +126,14 @@ export default function PageCalendar() {
                       >
                         {dayInfo.date.getDate()}
                         {count > 0 && !modifiers.outside && (
-                          <span
-                            aria-hidden
-                            className="absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-1 text-[0.625rem] leading-tight text-primary-foreground"
-                          >
-                            {count}
-                          </span>
+                          // <span> dentro do CalendarDayButton: ele é flex-col e já
+                          // estiliza `[&>span]` menor e translúcido, então a contagem
+                          // fica como segunda linha do próprio botão em vez de
+                          // posicionada em absoluto sobre ele — o que também evita
+                          // cobrir o número do dia quando ele fica selecionado.
+                          <span aria-hidden>{count}</span>
                         )}
-                      </button>
+                      </CalendarDayButton>
                     );
                   },
                 }}
