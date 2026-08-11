@@ -34,8 +34,16 @@ export function valueScaleFor(centsValues: readonly number[]): ValueScale {
   return { divisor: CENTS_PER_REAL, unitLabelKey: "chart.unitReais" };
 }
 
-// O número do eixo: inteiro, sempre. O rótulo acima do gráfico é o que carrega a
-// unidade, então repetir "R$" em cada marca do eixo seria ruído.
+// O valor na unidade do eixo, SEM arredondar.
+//
+// Arredondar aqui foi um defeito: quando uma categoria era grande o bastante para a
+// escala virar milhares, todas as menores caíam para 0 — e 0 já significa "categoria
+// sem nenhuma solicitação". Uma barra de R$ 300 ao lado de uma de R$ 15.000 é fina,
+// mas não é zero, e o gráfico afirmava que era.
+//
+// A raiz do erro foi arredondar a GEOMETRIA em vez do rótulo. A barra desenha a
+// partir do valor cru; quem arredonda é o formatador das marcas do eixo, que é onde
+// inteiro faz sentido. O valor exato continua no tooltip.
 export function scaleValue(cents: number, scale: ValueScale): number {
-  return Math.round(cents / scale.divisor);
+  return cents / scale.divisor;
 }
