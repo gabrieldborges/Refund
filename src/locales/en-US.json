@@ -26,6 +26,7 @@
   "calendar.dayWithCount_one": "Day {{day}}, {{count}} request",
   "calendar.dayWithCount_other": "Day {{day}}, {{count}} requests",
   "calendar.gridTitle": "Requests in",
+  "calendar.legendLabel": "Requests per day, up to:",
   "calendar.loadError": "Could not load the calendar.",
   "calendar.monthChartTitle": "Requests per day",
   "category.food": "Food",

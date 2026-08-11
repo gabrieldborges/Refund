@@ -107,3 +107,9 @@ export { calendarSearchParamsSchema } from "./schemas/dailyCounts";
 export type { RefundDailyCounts, RefundDayCount } from "./schemas/dailyCounts";
 export { default as DayRefundsPanel } from "./components/DayRefundsPanel";
 export { default as MonthCountsChart } from "./components/MonthCountsChart";
+
+// Mapa de calor do calendário: a rampa medida e a legenda que a explica. A legenda
+// não é opcional — a escala é adaptativa ao mês, então a mesma cor vale contagens
+// diferentes em meses diferentes.
+export { heatMax, heatStepIndex, heatSteps } from "./lib/heatScale";
+export { default as HeatLegend } from "./components/HeatLegend";

@@ -26,6 +26,7 @@
   "calendar.dayWithCount_one": "Dia {{day}}, {{count}} solicitação",
   "calendar.dayWithCount_other": "Dia {{day}}, {{count}} solicitações",
   "calendar.gridTitle": "Solicitações em",
+  "calendar.legendLabel": "Solicitações por dia, até:",
   "calendar.loadError": "Não foi possível carregar o calendário.",
   "calendar.monthChartTitle": "Solicitações por dia",
   "category.food": "Alimentação",

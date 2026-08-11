@@ -5,7 +5,16 @@ import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/useAuth";
-import { DayRefundsPanel, MonthCountsChart, useDailyCounts } from "@/features/refunds";
+import {
+  DayRefundsPanel,
+  HeatLegend,
+  MonthCountsChart,
+  heatMax,
+  heatStepIndex,
+  heatSteps,
+  useDailyCounts,
+} from "@/features/refunds";
+import { useUiStore } from "@/stores/ui";
 import type { calendarLoader } from "../router-loaders";
 
 // "2026-08" -> "agosto de 2026", para o título dos cards. O período completo vai no
@@ -39,6 +48,13 @@ export default function PageCalendar() {
   const { data, isLoading, isError } = useDailyCounts(month);
 
   const countByDate = new Map((data?.days ?? []).map((entry) => [entry.date, entry.count]));
+
+  // A escala sai do maior valor DO MÊS: com poucos por dia ela ainda usa a faixa
+  // inteira, e com muitos ela continua usando. Um domínio fixo funcionaria numa
+  // ponta e mentiria na outra.
+  const theme = useUiStore((s) => s.theme);
+  const steps = heatSteps(theme);
+  const max = heatMax((data?.days ?? []).map((entry) => entry.count));
 
   function updateParams(next: { month?: string; day?: string | null }) {
     setSearchParams((previous) => {
@@ -74,7 +90,7 @@ export default function PageCalendar() {
               </h2>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             {isLoading && <Skeleton className="h-72 w-full" />}
 
             {isError && !isLoading && (
@@ -108,13 +124,28 @@ export default function PageCalendar() {
                   DayButton: ({ day: dayInfo, modifiers, ...props }) => {
                     const iso = toIso(dayInfo.date);
                     const count = countByDate.get(iso) ?? 0;
+                    const stepIndex = heatStepIndex(count, max);
+                    // `outside` são os dias dos meses vizinhos que a grade mostra:
+                    // eles não pertencem a este mês, então não entram na escala.
+                    const step =
+                      stepIndex !== null && !modifiers.outside ? steps[stepIndex] : null;
+
                     return (
                       <CalendarDayButton
                         day={dayInfo}
                         modifiers={modifiers}
                         {...props}
-                        // A contagem no nome acessível: quem usa leitor de tela não vê
-                        // o badge, e "3" sozinho não diz o que é.
+                        // A cor É o dado. O número contínua sendo o do dia, e a cor
+                        // dele vem medida junto com o fundo — cada par da rampa
+                        // passa 4,5:1.
+                        style={
+                          step
+                            ? { backgroundColor: step.background, color: step.foreground }
+                            : undefined
+                        }
+                        // A contagem vive no nome acessível, porque cor não é
+                        // informação para quem não a vê — e aqui ela é a única
+                        // codificação visual, ao contrário do badge de antes.
                         aria-label={
                           count > 0
                             ? t("calendar.dayWithCount", {
@@ -125,20 +156,14 @@ export default function PageCalendar() {
                         }
                       >
                         {dayInfo.date.getDate()}
-                        {count > 0 && !modifiers.outside && (
-                          // <span> dentro do CalendarDayButton: ele é flex-col e já
-                          // estiliza `[&>span]` menor e translúcido, então a contagem
-                          // fica como segunda linha do próprio botão em vez de
-                          // posicionada em absoluto sobre ele — o que também evita
-                          // cobrir o número do dia quando ele fica selecionado.
-                          <span aria-hidden>{count}</span>
-                        )}
                       </CalendarDayButton>
                     );
                   },
                 }}
               />
             )}
+
+            {!isLoading && !isError && <HeatLegend max={max} />}
           </CardContent>
         </Card>
 
