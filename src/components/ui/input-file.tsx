@@ -77,7 +77,10 @@ export default function InputFile({
         <label
           htmlFor={inputId}
           className={cn(
-            "flex h-9 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs",
+            // pr-10 (e não px-3 dos dois lados): o ícone de nuvem é absoluto e
+            // fica por cima da direita do campo. Sem essa reserva, um nome de
+            // arquivo longo corre por baixo dele.
+            "flex h-9 w-full cursor-pointer items-center gap-3 rounded-md border border-input bg-transparent py-1 pl-3 pr-10 text-sm shadow-xs",
             // The focus ring lives here because the input it belongs to is
             // visually hidden; `peer` is what lets this element react to it.
             "peer-focus-visible:border-ring peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50",
@@ -88,7 +91,14 @@ export default function InputFile({
           <span className="shrink-0 rounded bg-secondary px-2 py-1 text-sm font-medium">
             {t("file.chooseButton")}
           </span>
-          <span className="truncate text-muted-foreground">{fileName ?? placeholder}</span>
+          {/* min-w-0 é o que faz o truncate funcionar: um item de flex mantém a
+              largura mínima automática do próprio conteúdo, então sem ele um
+              nome de arquivo longo EMPURRA o campo em vez de encurtar — era o
+              que quebrava o layout do upload. Mesma armadilha do título da
+              Topbar. */}
+          <span className="min-w-0 flex-1 truncate text-muted-foreground">
+            {fileName ?? placeholder}
+          </span>
         </label>
 
         <CloudUpload
