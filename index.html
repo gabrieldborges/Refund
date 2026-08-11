@@ -7,7 +7,11 @@
          <link>, measured at 0.43-0.51s before anything could paint. -->
     <link rel="preload" href="/fonts/open-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: sem ele o Safari do iOS mantém a página dentro da
+         área "segura" e TODOS os env(safe-area-inset-*) valem 0 — ou seja, o
+         painel do menu lateral não consegue chegar à borda física da tela nem
+         que se peça. É o que destrava o recorte de altura em ui/sidebar.tsx. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>refund</title>
   </head>
   <body>

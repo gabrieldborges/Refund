@@ -184,7 +184,16 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // Altura: o SheetContent do registry vem com `inset-y-0 ... h-full`,
+          // e os dois se contradizem — com altura explícita o `bottom: 0` é
+          // ignorado, e `height: 100%` num elemento fixed resolve contra o
+          // bloco contentor inicial, que no Safari do iOS NÃO acompanha a barra
+          // de endereço aparecendo e sumindo. Daí a faixa de fundo da página
+          // sobrando embaixo do painel. `h-screen` (100vh) é o piso e
+          // `100dvh` — a altura da viewport VISÍVEL agora — assume onde houver
+          // suporte. O overlay escuro já estava certo porque só usa `inset-0`,
+          // sem altura explícita.
+          className="h-screen supports-[height:100dvh]:h-dvh w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -196,7 +205,15 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          {/* O padding de área segura fica AQUI, no wrapper interno, e não no
+              SheetContent: o fundo do painel é pintado pelo pai, então ele
+              continua indo até a borda física da tela enquanto só o conteúdo
+              (avatar, itens, Sair) ganha o respiro para não ficar embaixo da
+              status bar nem do home indicator. Fora do iOS os env() valem 0 e
+              isto não muda nada. */}
+          <div className="flex h-full w-full flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )
