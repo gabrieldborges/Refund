@@ -64,6 +64,14 @@ describe("translation catalogues", () => {
       (key) => ptBR[key as keyof typeof ptBR] === enUS[key as keyof typeof enUS]
     );
 
-    expect(shared.sort()).toEqual(["common.status", "common.total", "nav.dashboard"]);
+    // routes.dashboard joined the list with the dashboard cycle: it is the page
+    // title for the same screen nav.dashboard labels, so it is the same word for
+    // the same reason — deliberate, not forgotten.
+    expect(shared.sort()).toEqual([
+      "common.status",
+      "common.total",
+      "nav.dashboard",
+      "routes.dashboard",
+    ]);
   });
 });

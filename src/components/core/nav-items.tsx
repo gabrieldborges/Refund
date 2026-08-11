@@ -14,11 +14,10 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-// Dashboard e Calendário seguem como placeholders dos ciclos 2 e 3 do panorama
-// das três telas.
+// Calendário segue como placeholder do ciclo 3 do panorama das três telas.
 export const NAV_ITEMS: NavItem[] = [
   { labelKey: "nav.refunds", to: "/", icon: ReceiptText, enabled: true },
-  { labelKey: "nav.dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: false },
+  { labelKey: "nav.dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: true },
   { labelKey: "nav.team", to: "/team", icon: Users, enabled: true, adminOnly: true },
   { labelKey: "nav.calendar", to: "/calendar", icon: CalendarDays, enabled: false },
 ];

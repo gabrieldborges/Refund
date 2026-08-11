@@ -40,6 +40,58 @@ export const usersFixture = [
   },
 ];
 
+
+// The aggregate the dashboard reads (UC-017). Deliberately shaped so the tests can
+// tell real behaviour from coincidence: one month in the MIDDLE of the window is
+// zero (so the zero-filling test cannot pass by accident), and approved + paid is
+// different from the sum of all four (so the settled-value test cannot pass by
+// summing everything).
+function bucket(count: number, cents: number) {
+  return { count, amount_in_cents: cents };
+}
+
+const EMPTY_STATUSES = {
+  pending: bucket(0, 0),
+  approved: bucket(0, 0),
+  paid: bucket(0, 0),
+  rejected: bucket(0, 0),
+};
+
+export const refundSummaryFixture = {
+  type: "RefundSummary" as const,
+  scope: "user" as const,
+  months: 3,
+  by_status: {
+    pending: bucket(2, 3000),
+    approved: bucket(3, 5000),
+    paid: bucket(1, 1000),
+    rejected: bucket(4, 9000),
+  },
+  by_category: {
+    food: bucket(4, 18000),
+    lodging: bucket(0, 0),
+    transport: bucket(5, 37000),
+    service: bucket(1, 90000),
+    others: bucket(0, 0),
+  },
+  by_month: [
+    {
+      month: "2026-06",
+      count: 3,
+      amount_in_cents: 4000,
+      by_status: { ...EMPTY_STATUSES, paid: bucket(1, 1000), pending: bucket(2, 3000) },
+    },
+    // The empty month sits in the middle on purpose.
+    { month: "2026-07", count: 0, amount_in_cents: 0, by_status: { ...EMPTY_STATUSES } },
+    {
+      month: "2026-08",
+      count: 7,
+      amount_in_cents: 14000,
+      by_status: { ...EMPTY_STATUSES, approved: bucket(3, 5000), rejected: bucket(4, 9000) },
+    },
+  ],
+};
+
 // The login payload, matching loginResponseSchema.
 export const loginFixture = {
   access: true,
@@ -152,6 +204,14 @@ export const handlers = [
       count: refundReviewsFixture.length,
       attributes: refundReviewsFixture,
     });
+  }),
+
+
+  // The summary must be registered BEFORE "*/refunds/:id", or the bare id handler
+  // swallows "/refunds/summary" — the same ordering trap the API itself has.
+  http.get("*/refunds/summary", ({ request }) => {
+    const months = Number(new URL(request.url).searchParams.get("months") ?? 6);
+    return HttpResponse.json({ ...refundSummaryFixture, months });
   }),
 
   // Refund detail: echoes the requested id into the fixture.

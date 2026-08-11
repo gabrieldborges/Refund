@@ -78,3 +78,17 @@ export { default as RefundsTable } from "./components/RefundsTable";
 // Toolbar da listagem: filtro por status, escrito na URL e resolvido no
 // servidor (UC-004).
 export { default as RefundsToolbar } from "./components/RefundsToolbar";
+
+// A query e o hook do resumo agregado (UC-017), que alimenta o Dashboard inteiro
+// numa requisição.
+export { refundSummaryQuery } from "./api/summaryQueries";
+export { useRefundSummary } from "./hooks/useRefundSummary";
+export { refundSummarySearchParamsSchema } from "./schemas/summary";
+export type { RefundSummary } from "./schemas/summary";
+
+// Os quatro gráficos do Dashboard, atrás de UM contêiner. Os gráficos em si NÃO
+// são exportados aqui, e isso não é organização: uma reexportação estática de
+// qualquer um deles traria o chunk do Nivo de volta ao bundle de entrada sem erro
+// nenhum. O contêiner faz o import() dinâmico por dentro — ver
+// docs/performance-budget.md.
+export { default as DashboardCharts } from "./components/DashboardCharts";

@@ -59,15 +59,15 @@ describe("Sidebar", () => {
 
   it("does not render coming-soon items as links", () => {
     renderSidebar();
-    expect(screen.queryByRole("link", { name: /Dashboard/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Calend/ })).not.toBeInTheDocument();
   });
 
   it("shows the coming-soon badge on disabled items", () => {
     renderSidebar();
-    expect(screen.getByRole("button", { name: /Dashboard/ })).toBeDisabled();
-    // One badge per disabled item. Time left this list when the team directory
-    // shipped, so two remain: Dashboard and Calendário, cycles 2 and 3.
-    expect(screen.getAllByText("em breve")).toHaveLength(2);
+        // One badge per disabled item. Time left when the team directory shipped and
+    // Dashboard left with this cycle, so only Calendário remains — cycle 3.
+    expect(screen.getByRole("button", { name: /Calend/ })).toBeDisabled();
+    expect(screen.getAllByText("em breve")).toHaveLength(1);
   });
 
   // Time is admin-only. It disappears for a standard user rather than rendering
@@ -88,7 +88,7 @@ describe("Sidebar", () => {
   // regression in either mechanism pass.
   it("keeps the coming-soon count the same for an admin", () => {
     renderSidebar("admin");
-    expect(screen.getAllByText("em breve")).toHaveLength(2);
+    expect(screen.getAllByText("em breve")).toHaveLength(1);
   });
 
   it("logs out and navigates when Sair is clicked", async () => {

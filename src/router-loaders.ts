@@ -7,6 +7,8 @@ import {
   refundDetailQuery,
   refundListQuery,
   refundListSearchParamsSchema,
+  refundSummaryQuery,
+  refundSummarySearchParamsSchema,
 } from "@/features/refunds";
 import {
   USERS_PER_PAGE,
@@ -153,6 +155,30 @@ export async function teamMemberLoader({ params }: LoaderFunctionArgs) {
   await queryClient.ensureQueryData(userDetailQuery(params.id));
 
   return { id: params.id };
+}
+
+export async function dashboardLoader({ request }: LoaderFunctionArgs) {
+  requireSession();
+  // SEM requireAdmin: a tela é para todos. O escopo dos dados é decidido no
+  // servidor a partir do papel no token (UC-017), então um usuário padrão vê o
+  // mesmo Dashboard com os próprios números.
+
+  const url = new URL(request.url);
+  const { months } = refundSummarySearchParamsSchema.parse({
+    months: url.searchParams.get("months") ?? undefined,
+  });
+
+  const normalizedSearchParams = new URLSearchParams(url.searchParams);
+  setOrDelete(normalizedSearchParams, "months", months !== 6 ? String(months) : undefined);
+
+  if (normalizedSearchParams.toString() !== url.searchParams.toString()) {
+    const normalizedSearch = normalizedSearchParams.toString();
+    throw redirect(`${url.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`);
+  }
+
+  await queryClient.ensureQueryData(refundSummaryQuery(months));
+
+  return { months };
 }
 
 export async function refundDetailLoader({ params }: LoaderFunctionArgs) {
