@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { formatCentsToBRL } from "@/lib/format";
 import { useUiStore, resolveTheme } from "@/stores/ui";
-import { readableTextOn, sliceColor, type DonutSlice } from "../lib/donutPalette";
+import { readableTextOn, sliceColor, type DonutSlice } from "../lib/chartPalette";
 
 interface RefundDonutChartProps {
   slices: DonutSlice[];
@@ -195,7 +195,7 @@ export default function RefundDonutChart({
         arcLinkLabelsColor={{ from: "color" }}
         arcLabelsSkipAngle={10}
         // O exemplo do nivo usa modifiers [['darker', 2]], que só funciona com
-        // a paleta pastel dele. Ver readableTextOn em lib/donutPalette.ts.
+        // a paleta pastel dele. Ver readableTextOn em lib/chartPalette.ts.
         arcLabelsTextColor={(slice: Slice) => readableTextOn(slice.color)}
         // O total no miolo não é camada do nivo — a rosca não tem slot para o
         // centro, o buraco é só ausência de arco. As quatro camadas padrão

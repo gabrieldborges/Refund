@@ -38,6 +38,17 @@ export function readableTextOn(hex: string): string {
   return luminance > 0.5 ? "#1F2933" : "#FFFFFF";
 }
 
+// APENAS para status, que tem exatamente 4 valores — o mesmo tamanho de PALETTE.
+//
+// Esta função indexa por posição e fecha com `% PALETTE.length`, então chamá-la
+// com 5 itens (as categorias, por exemplo) devolve a PRIMEIRA cor na quinta fatia,
+// sem erro nenhum e sem aviso. Ciclar cor categórica é proibido por um motivo
+// concreto: a cor existe para identificar a entidade, e duas entidades da mesma
+// cor não identificam nada.
+//
+// Um gráfico com mais entidades que a paleta não ganha cores novas — ele usa uma
+// cor só e deixa a identidade para o eixo. É o que o gráfico de categorias do
+// Dashboard faz: cinco barras, uma cor, e o rótulo de cada uma no eixo.
 export function sliceColor(slices: readonly DonutSlice[], id: string): string {
   const slice = slices.find((candidate) => candidate.id === id);
   if (slice?.isNegative) return NEGATIVE_COLOR;

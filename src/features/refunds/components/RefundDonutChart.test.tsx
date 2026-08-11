@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import RefundDonutChart from "./RefundDonutChart";
-import { readableTextOn, sliceColor, type DonutSlice } from "../lib/donutPalette";
+import { readableTextOn, sliceColor, type DonutSlice } from "../lib/chartPalette";
 
 // Slices in the shape RequesterPanel builds them: the four UC-014 statuses,
 // with "rejected" flagged as the negative one.
