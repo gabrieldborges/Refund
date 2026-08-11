@@ -65,6 +65,13 @@ export default function UsersTable({ users }: UsersTableProps) {
     }),
   ];
 
+  // Mesma supressão, pela mesma razão, do RefundsTable: o
+  // `eslint-plugin-react-hooks` acusa as closures headless do TanStack Table
+  // (getHeaderGroups, getRowModel, …) como "incompatible library" porque não
+  // consegue provar que a identidade de referência delas é estável. Nada aqui
+  // memoiza sobre a referência de `table`, então o diagnóstico é falso positivo
+  // — suprimido em uma linha e explicado, não desligado no arquivo.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: users,
     columns,
