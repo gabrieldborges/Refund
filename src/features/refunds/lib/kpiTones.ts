@@ -18,15 +18,29 @@ function tone(background: string) {
   return { background, foreground: readableTextOn(background) };
 }
 
-// Semântico onde dá, neutro onde não dá.
+// A sequência dos três indicadores, usada tanto pelo Dashboard quanto pela Home —
+// as duas telas mostram os mesmos três números na mesma ordem, então mostram as
+// mesmas três cores na mesma ordem.
 //
-// "Pendentes" recebe exatamente a cor que a rosca usa para pendente — mesma
-// entidade, mesma cor, que é o que faz a cor significar algo em vez de decorar.
-// "Aprovado + pago" recebe a de aprovada, a mais próxima de honesta para um card
-// que soma dois status. E "Solicitações" é o total, que não é status nenhum: recebe
-// o azul escuro da paleta, que nenhuma fatia usa nesta tela.
+// "Aprovado + pago" e "Pendentes" ficam com as cores que a rosca usa para aprovado
+// e pendente: mesma entidade, mesma cor. "Solicitações" é um total, que não é
+// status nenhum, e recebe `#A8DADC` por escolha visual — é a cor que a rosca dá a
+// "pago", então aqui a cor NÃO carrega significado de status. Registrado porque a
+// versão anterior tentava ser semântica nos três e caía numa colisão: o total e
+// "Pendentes" acabavam ambos em `#1D3557`, dois cards da mesma cor lado a lado.
+//
+// Contraste medido (WCAG, contra o texto que readableTextOn escolhe): #A8DADC
+// 9,64:1, #457B9D 4,59:1, #1D3557 12,36:1 — os três passam AA para texto normal.
 export const KPI_TONES = {
-  total: tone(PALETTE[0]),
+  total: tone(PALETTE[2]),
   settled: tone(sliceColor(STATUS_SLICES, "approved")),
   pending: tone(sliceColor(STATUS_SLICES, "pending")),
 } as const;
+
+// A mesma sequência como lista, para a Home percorrer os cards na ordem sem
+// repetir os nomes das chaves.
+export const KPI_TONE_SEQUENCE = [
+  KPI_TONES.total,
+  KPI_TONES.settled,
+  KPI_TONES.pending,
+] as const;

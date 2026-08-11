@@ -3,9 +3,9 @@ import { useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import StatCard from "@/components/core/StatCard";
 import {
+  KPI_TONES,
   RefundsTable,
   RefundsToolbar,
   useRefunds,
@@ -247,97 +247,44 @@ export default function PageHome() {
         </div>
       </div>
 
+      {/* Os três cards repetem a sequência de cores do Dashboard, na mesma ordem:
+          as duas telas mostram os mesmos três números — contagem, dinheiro e
+          pendentes — então mostram as mesmas três cores, na mesma posição. */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {requestsCardLabel}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <p className="text-2xl font-semibold">{data?.total ?? 0}</p>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          label={requestsCardLabel}
+          value={String(data?.total ?? 0)}
+          tone={KPI_TONES.total}
+          isLoading={isLoading}
+          errorMessage={t("home.loadSummaryError")}
+        />
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {moneyCardLabel}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(isAdmin ? isLoading : isStatsLoading) ? (
-              <Skeleton className="h-8 w-28" />
-            ) : !isAdmin && isStatsError ? (
-              // A failed stats request must not silently render as R$ 0,00 —
-              // that would be indistinguishable from a user who genuinely has
-              // nothing approved or paid. Same idiom as the list's own error
-              // banner below (role="alert", destructive text).
-              <p role="alert" className="text-sm text-destructive">
-                Não foi possível carregar.
-              </p>
-            ) : (
-              <p className="text-2xl font-semibold">
-                {formatCentsToBRL(isAdmin ? (data?.sum_amount_in_cents ?? 0) : approvedAndPaidCents)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          label={moneyCardLabel}
+          value={formatCentsToBRL(
+            isAdmin ? (data?.sum_amount_in_cents ?? 0) : approvedAndPaidCents
+          )}
+          tone={KPI_TONES.settled}
+          // O admin lê da listagem; o usuário comum, das próprias estatísticas.
+          // Dois carregamentos diferentes para o mesmo card.
+          isLoading={isAdmin ? isLoading : isStatsLoading}
+          isError={!isAdmin && isStatsError}
+          errorMessage={t("home.loadSummaryError")}
+        />
 
-        {!isAdmin && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isStatsLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : isStatsError ? (
-                <p role="alert" className="text-sm text-destructive">
-                  Não foi possível carregar.
-                </p>
-              ) : (
-                <>
-                  <p className="text-2xl font-semibold">{stats?.by_status.pending.count ?? 0}</p>
-                  {status && <p className="text-xs text-muted-foreground">{t("home.allNoFilter")}</p>}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {isAdmin && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isPendingLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : isPendingError ? (
-                // Same idiom as the standard user's card above: a failed
-                // request must not fall through to "0", which would read as
-                // "nothing is pending" instead of "we don't know".
-                <p role="alert" className="text-sm text-destructive">
-                  Não foi possível carregar.
-                </p>
-              ) : (
-                <>
-                  <p className="text-2xl font-semibold">{pendingCount ?? 0}</p>
-                  {status && <p className="text-xs text-muted-foreground">{t("home.allNoFilter")}</p>}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+        <StatCard
+          label={t("home.pendingCard")}
+          value={String((isAdmin ? pendingCount : stats?.by_status.pending.count) ?? 0)}
+          tone={KPI_TONES.pending}
+          isLoading={isAdmin ? isPendingLoading : isStatsLoading}
+          // Erro nunca cai em "0", que leria como "nada pendente" em vez de "não
+          // sabemos" — o idioma que os dois cards de pendentes já seguiam.
+          isError={isAdmin ? isPendingError : isStatsError}
+          errorMessage={t("home.loadSummaryError")}
+          // O card de pendentes ignora o filtro de status ativo, de propósito, e
+          // precisa dizer isso.
+          footnote={status ? t("home.allNoFilter") : undefined}
+        />
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

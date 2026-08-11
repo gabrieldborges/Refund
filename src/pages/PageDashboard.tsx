@@ -1,7 +1,6 @@
 import { useLoaderData, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,78 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import StatCard from "@/components/core/StatCard";
 import { formatCentsToBRL } from "@/lib/format";
 import { DashboardCharts, KPI_TONES, useRefundSummary } from "@/features/refunds";
 import type { dashboardLoader } from "../router-loaders";
-
-function Kpi({
-  labelKey,
-  value,
-  tone,
-  isLoading,
-  isError,
-}: {
-  labelKey: string;
-  value: string;
-  // Fundo e texto vêm juntos, calculados da mesma cor: separá-los é como se
-  // produz texto branco sobre um pastel claro.
-  tone: { background: string; foreground: string };
-  isLoading: boolean;
-  isError: boolean;
-}) {
-  const { t } = useTranslation();
-
-  // O card colorido só aparece quando há número. Enquanto carrega ou em erro ele
-  // fica neutro: um bloco de cor com uma mensagem de erro dentro parece um estado
-  // válido, e não é.
-  if (isLoading || isError) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t(labelKey)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            // Erro não vira zero: um "R$ 0,00" por falha de rede é
-            // indistinguível de quem de fato não tem nada.
-            <p role="alert" className="text-sm text-destructive">
-              {t("dashboard.loadError")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card
-      // Cor por style e não por classe utilitária: os valores vêm da paleta dos
-      // gráficos, em hexadecimal, e não existem como token do Tailwind. É o mesmo
-      // motivo pelo qual o Nivo recebe hexadecimal.
-      style={{ backgroundColor: tone.background, color: tone.foreground }}
-      className="border-transparent"
-    >
-      <CardHeader>
-        <CardTitle
-          className="text-xs font-medium uppercase tracking-wide opacity-80"
-          style={{ color: tone.foreground }}
-        >
-          {t(labelKey)}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold" style={{ fontVariantNumeric: "tabular-nums" }}>
-          {value}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function YearPicker({ summary }: { summary: { year: number; available_years: number[] } }) {
   const { t } = useTranslation();
@@ -158,26 +89,29 @@ export default function PageDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Kpi
-          labelKey="dashboard.totalRequests"
+        <StatCard
+          label={t("dashboard.totalRequests")}
           value={String(totalRequests)}
           tone={KPI_TONES.total}
           isLoading={isLoading}
           isError={isError}
+          errorMessage={t("dashboard.loadError")}
         />
-        <Kpi
-          labelKey="dashboard.settledValue"
+        <StatCard
+          label={t("dashboard.settledValue")}
           value={formatCentsToBRL(settled)}
           tone={KPI_TONES.settled}
           isLoading={isLoading}
           isError={isError}
+          errorMessage={t("dashboard.loadError")}
         />
-        <Kpi
-          labelKey="dashboard.pending"
+        <StatCard
+          label={t("dashboard.pending")}
           value={String(byStatus?.pending.count ?? 0)}
           tone={KPI_TONES.pending}
           isLoading={isLoading}
           isError={isError}
+          errorMessage={t("dashboard.loadError")}
         />
       </div>
 
