@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,16 @@ import { useTranslation } from "react-i18next";
 // Fixed render order for the four counters — the same four keys UC-014
 // always returns, zeros included, so this never needs a data-driven length.
 const STATUS_ORDER: readonly RefundStatus[] = ["pending", "approved", "paid", "rejected"];
+
+// Carregado sob demanda porque o @nivo/pie e sua árvore (react-spring, sete
+// pacotes d3, lodash) pesam na mesma ordem de grandeza que TODO o bundle atual
+// da aplicação — ver docs/performance-budget.md. Esta tela não é a rota
+// inicial, então quem só usa a Home nunca baixa nada disso.
+//
+// A importação dinâmica só rende chunk separado enquanto NINGUÉM importar este
+// módulo estaticamente: por isso ele não é reexportado pela fachada da feature
+// (index.ts) — se fosse, o bundler o traria de volta para o pacote principal.
+const RefundDonutChart = lazy(() => import("./RefundDonutChart"));
 
 interface RequesterPanelProps {
   requester: { id: number; name: string };
@@ -90,45 +101,36 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
         <CardTitle>{requester.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {isStatsLoading && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            <Skeleton className="h-16 w-full" />
-            {STATUS_ORDER.map((status) => (
-              <Skeleton key={status} className="h-16 w-full" />
-            ))}
-          </div>
-        )}
+        {/* Os cinco cards (total + quatro status) viraram uma rosca. O total
+            deixou de ser um card e passou a ocupar o miolo do gráfico; os
+            quatro status viraram fatias, com o percentual em cada leader line.
 
-        {/* A failed stats request must not fall through to a rendered zero —
-            that would be indistinguishable from a requester who genuinely
-            has nothing in every status (the same gap Task 2 fixed on the
-            Home). */}
-        {isStatsError && !isStatsLoading && (
-          <p role="alert" className="text-sm text-destructive">
-            Não foi possível carregar as estatísticas do solicitante.
-          </p>
-        )}
+            Contagem, não valor: somar dinheiro dos quatro status juntaria
+            previsão, passivo, despesa liquidada e nada — é o que o comentário
+            de refundStatsResponseSchema registra, e ele já prevê esta soma de
+            CONTAGENS no cliente.
 
-        {stats && !isStatsLoading && !isStatsError && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {/* Contagem, não valor: somar dinheiro dos quatro status juntaria
-                previsão, passivo, despesa liquidada e nada — é o que o
-                comentário de refundStatsResponseSchema registra, e ele já
-                prevê esta soma de CONTAGENS no cliente. */}
-            <div className="flex flex-col gap-1 rounded-lg border p-3">
-              <span className="text-xs text-muted-foreground">{t("common.total")}</span>
-              <span className="text-xl font-semibold">
-                {STATUS_ORDER.reduce((sum, status) => sum + stats.by_status[status].count, 0)}
-              </span>
-            </div>
-            {STATUS_ORDER.map((status) => (
-              <div key={status} className="flex flex-col gap-1 rounded-lg border p-3">
-                <span className="text-xs text-muted-foreground">{t(REFUND_STATUS[status].labelKey)}</span>
-                <span className="text-lg font-semibold">{stats.by_status[status].count}</span>
-              </div>
-            ))}
-          </div>
-        )}
+            Carregamento e erro são delegados ao gráfico (props isLoading /
+            isError) em vez de tratados aqui: um erro de estatísticas não pode
+            cair em "zero renderizado", porque uma rosca zerada seria
+            indistinguível de um solicitante que de fato não tem nada. */}
+        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+          <RefundDonutChart
+            slices={STATUS_ORDER.map((status) => ({
+              id: status,
+              labelKey: REFUND_STATUS[status].labelKey,
+              value: stats?.by_status[status].count ?? 0,
+              // O vermelho da paleta é desta fatia por significado, não por
+              // tamanho — mesmo quando "rejeitado" é a maior de todas.
+              isNegative: status === "rejected",
+            }))}
+            unitLabelKey="chart.requestsUnit"
+            titleKey="chart.statusTitle"
+            metric="count"
+            isLoading={isStatsLoading}
+            isError={isStatsError}
+          />
+        </Suspense>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">

@@ -96,22 +96,29 @@ describe("RequesterPanel", () => {
     expect(container.querySelector('[data-slot="skeleton"]')).toBeInTheDocument();
   });
 
-  it("shows the four status counters from the stats endpoint", async () => {
+  // The five counter cards became a donut chart. The counts are asserted
+  // through its accessible name rather than through the SVG: jsdom has no
+  // layout engine, so nivo measures the container as 0x0 and draws no slices —
+  // but the accessible name is our own markup and carries every number the
+  // chart shows, which is exactly the contract a screen reader depends on. A
+  // chart whose numbers are only in pixels would fail this test, and should.
+  it("shows the four status counts through the chart's accessible name", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
     renderPanel();
 
-    expect(
-      await screen.findByText(String(refundStatsFixture.by_status.pending.count))
-    ).toBeInTheDocument();
-    expect(screen.getByText(String(refundStatsFixture.by_status.approved.count))).toBeInTheDocument();
-    expect(screen.getByText(String(refundStatsFixture.by_status.paid.count))).toBeInTheDocument();
-    expect(screen.getByText(String(refundStatsFixture.by_status.rejected.count))).toBeInTheDocument();
+    const chart = await screen.findByRole("img", { name: /Solicitações por status/ });
+    const label = chart.getAttribute("aria-label") ?? "";
+
+    expect(label).toContain(`Pendente: ${refundStatsFixture.by_status.pending.count}`);
+    expect(label).toContain(`Aprovado: ${refundStatsFixture.by_status.approved.count}`);
+    expect(label).toContain(`Pago: ${refundStatsFixture.by_status.paid.count}`);
+    expect(label).toContain(`Rejeitado: ${refundStatsFixture.by_status.rejected.count}`);
   });
 
   // Same gap flagged and fixed on the Home in Task 2: a failed stats request
   // must not silently render as zeros, which would be indistinguishable from
   // a requester who genuinely has nothing in every status.
-  it("shows a failure state instead of false zero counters when stats fail to load", async () => {
+  it("shows a failure state instead of a false all-zero chart when stats fail to load", async () => {
     server.use(
       http.get("*/refunds", () => HttpResponse.json(requesterListResponse())),
       http.get("*/users/:id/refund-stats", () => HttpResponse.json({}, { status: 500 }))
@@ -119,8 +126,8 @@ describe("RequesterPanel", () => {
     renderPanel();
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Não foi possível carregar as estatísticas do solicitante.");
-    expect(screen.queryByText(String(refundStatsFixture.by_status.pending.count))).not.toBeInTheDocument();
+    expect(alert).toHaveTextContent("Não foi possível carregar os dados do gráfico.");
+    expect(screen.queryByRole("img", { name: /Solicitações por status/ })).not.toBeInTheDocument();
   });
 
   // Same reasoning for the refund list: a failed list request must be
@@ -194,28 +201,16 @@ describe("RequesterPanel", () => {
   });
 
   // The four per-status counters answer "how is this person's history split";
-  // the total answers "how often has this person asked at all". The fixture
-  // sums to 11 (2 + 5 + 3 + 1), a number none of the four carries, so the
-  // assertion cannot pass by accidentally matching one of them.
-  it("shows a total counter summing every status", async () => {
+  // the total answers "how often has this person asked at all". It now lives in
+  // the donut's hole instead of its own card. The fixture sums to 11
+  // (2 + 5 + 3 + 1), a number none of the four carries, so the assertion cannot
+  // pass by accidentally matching one of them.
+  it("states the total summing every status", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json(requesterListResponse())));
     renderPanel();
 
-    expect(await screen.findByText("Total")).toBeInTheDocument();
-    expect(screen.getByText("11")).toBeInTheDocument();
-  });
-
-  // A failed stats request must not render a total of 0 — same reasoning as
-  // the four counters it is derived from.
-  it("hides the total when stats fail to load", async () => {
-    server.use(
-      http.get("*/refunds", () => HttpResponse.json(requesterListResponse())),
-      http.get("*/users/:id/refund-stats", () => HttpResponse.json({}, { status: 500 }))
-    );
-    renderPanel();
-
-    await screen.findByRole("alert");
-    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+    const chart = await screen.findByRole("img", { name: /Solicitações por status/ });
+    expect(chart).toHaveAccessibleName(expect.stringContaining("11 solicitações"));
   });
 
   // aria-current is the half that a screen reader can perceive: the background

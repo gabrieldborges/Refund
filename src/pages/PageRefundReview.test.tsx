@@ -120,13 +120,18 @@ describe("PageRefundReview", () => {
   // deleting it from the page would still have left the suite green. Cover
   // the same gap here: RequesterPanel must be genuinely wired into this page,
   // not just exist as a standalone component.
-  it("wires RequesterPanel in, showing the requester's name and status counters", async () => {
+  it("wires RequesterPanel in, showing the requester's name and status chart", async () => {
     renderPageRefundReview();
 
     expect(await screen.findByText(refundFixture.user.name)).toBeInTheDocument();
-    expect(
-      await screen.findByText(String(refundStatsFixture.by_status.pending.count))
-    ).toBeInTheDocument();
+    // The status counters are a donut chart now, loaded lazily — findBy also
+    // covers waiting for its chunk to resolve. Asserting the counts through the
+    // accessible name is what makes this prove the panel is really wired to the
+    // stats endpoint, not merely mounted.
+    const chart = await screen.findByRole("img", { name: /Solicitações por status/ });
+    expect(chart).toHaveAccessibleName(
+      expect.stringContaining(`Pendente: ${refundStatsFixture.by_status.pending.count}`)
+    );
   });
 });
 
