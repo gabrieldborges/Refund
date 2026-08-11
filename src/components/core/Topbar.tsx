@@ -13,7 +13,10 @@ export default function Topbar({ title, onNewRefund }: TopbarProps) {
   return (
     // h-17.5 matches SidebarHeader's height in Sidebar.tsx so the two bottom
     // borders line up across the sidebar/topbar seam.
-    <header className="flex h-17.5 shrink-0 items-center gap-3 border-b pr-4 sm:pr-6">
+    // sticky (não fixed): o painel do conteúdo vive ao lado do sidebar, e
+    // fixed exigiria recalcular `left` a cada colapso. sticky prende o header
+    // ao topo do scroll sem sair do fluxo do SidebarInset.
+    <header className="sticky top-0 z-20 flex h-17.5 shrink-0 items-center gap-3 border-b bg-background pr-4 sm:pr-6">
       {/* shadcn ships a hardcoded English accessible name ("Toggle Sidebar"),
           which would survive a language switch. Overriding it with a catalogue
           key keeps the trigger consistent with the active locale. */}

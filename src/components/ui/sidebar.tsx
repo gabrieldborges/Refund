@@ -184,25 +184,16 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          // Altura: o SheetContent do registry vem com `inset-y-0 ... h-full`,
-          // e os dois se contradizem — com altura explícita o `bottom: 0` é
-          // ignorado, e `height: 100%` num elemento fixed resolve contra o
-          // bloco contentor inicial, que no Safari do iOS não acompanha a barra
-          // de endereço aparecendo e sumindo.
+          // Altura: o SheetContent do side left/right já traz `inset-y-0`
+          // (top + bottom = 0). Com altura explícita (`h-full` do sheet,
+          // ou `h-screen`/`h-lvh` aqui), o CSS ignora o `bottom` e o painel
+          // fica recortado no mobile — enquanto o overlay, que só usa
+          // `inset-0`, cobre a tela toda.
           //
-          // A unidade é `lvh`, a viewport GRANDE — a tela inteira, como se as
-          // barras do navegador estivessem recolhidas. `dvh` (a viewport
-          // visível AGORA) foi a tentativa anterior e está errada para este
-          // caso: ela encolhe junto com as barras, então o painel para na
-          // borda da área visível em vez de ir até a borda física da tela, que
-          // é o que se quer de um overlay. Aqui não há risco de estourar: o
-          // painel é `fixed`, não empurra nada, e o que passaria por baixo da
-          // barra do navegador é só fundo — o conteúdo fica protegido pelo
-          // padding de área segura no wrapper interno.
-          //
-          // `h-screen` (100vh) é o piso para navegadores sem `lvh`. O overlay
-          // escuro já estava certo porque só usa `inset-0`, sem altura.
-          className="h-screen supports-[height:100lvh]:h-lvh w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // `h-auto` sobrescreve o `h-full` do sheet e deixa o stretch do
+          // inset definir a altura, igual ao overlay. O conteúdo continua
+          // protegido pelo padding de área segura no wrapper interno.
+          className="h-auto w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

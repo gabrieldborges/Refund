@@ -42,14 +42,20 @@ export default function MainLayout() {
     // persisted to localStorage (Item 12). `open` is the inverse of `collapsed`.
     // `onOpenChange` receives the explicit next open state (not a request to
     // flip), so it is wired to the setter action, not `toggleSidebar`.
-    <SidebarProvider open={!collapsed} onOpenChange={(open) => setSidebarCollapsed(!open)}>
+    // h-svh (não min-h-svh): trava o shell na viewport para o scroll ficar no
+    // painel de conteúdo abaixo do Topbar, em vez de levar o header junto.
+    <SidebarProvider
+      open={!collapsed}
+      onOpenChange={(open) => setSidebarCollapsed(!open)}
+      className="h-svh"
+    >
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-h-0 overflow-hidden">
         <Topbar title={title} onNewRefund={() => setIsNewRefundOpen(true)} />
         {/* A plain div, not <main>: SidebarInset already renders as <main>
             (src/components/ui/sidebar.tsx), so a second <main> here would be
             a nested landmark — invalid HTML5 and confusing for AT navigation. */}
-        <div className="flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto">
           <Outlet
             context={{ openNewRefund: () => setIsNewRefundOpen(true) } satisfies MainLayoutOutletContext}
           />
