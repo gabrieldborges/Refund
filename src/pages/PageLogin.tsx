@@ -60,7 +60,18 @@ export default function PageLogin() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-10">
-      <div className="w-full max-w-sm rounded-xl border bg-card p-8 text-card-foreground shadow-sm">
+      {/* bg-background, e NÃO bg-card: no tema claro os dois tokens são o mesmo
+          branco puro, então o card sempre foi delimitado pela borda e por nada
+          mais. No escuro eles divergem (--background L=0.145, --card L=0.205), e o
+          card virava um retângulo ~41% mais claro — numa tela onde ele está sozinho
+          e centralizado, essa aresta era a única coisa visível, e não era intenção
+          de desenho: era o padrão do shadcn aparecendo só em um dos temas.
+          
+          `bg-background` em vez de um variante `dark:` porque no claro os dois
+          valores já coincidem: uma classe resolve o escuro sem criar divergência
+          entre os temas. text-foreground pela mesma razão — ele é idêntico a
+          text-card-foreground nos dois. */}
+      <div className="w-full max-w-sm rounded-xl border bg-background p-8 text-foreground shadow-sm">
         <div className="mb-6 flex flex-col items-center gap-2">
           <ReceiptIcon className="h-8 w-8 text-foreground" aria-hidden />
           <h1 className="text-2xl font-semibold tracking-tight">refund</h1>

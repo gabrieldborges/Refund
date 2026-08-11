@@ -30,7 +30,16 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
-      className={cn("aspect-square size-full", className)}
+      // DESVIO do registry: `object-cover` foi acrescentado.
+      //
+      // O snippet original traz só `aspect-square size-full`, o que dá à <img> uma
+      // caixa quadrada sem dizer como a imagem deve ocupá-la — e o padrão do
+      // `object-fit` é `fill`, que ESTICA. Uma foto 4:3 chegava deformada.
+      //
+      // `object-cover` escala até cobrir o quadrado e recorta o excesso, preservando
+      // a proporção. É o comportamento que se espera de um avatar; `contain` deixaria
+      // faixas vazias dentro do círculo.
+      className={cn("aspect-square size-full object-cover", className)}
       {...props}
     />
   )

@@ -69,6 +69,19 @@ Lições que devem ser preservadas:
   ponto da cadeia flex, campos lado a lado podem causar overflow mesmo com
   `w-full`.
 
+- **`Avatar` / `AvatarImage`** (shadcn): o snippet do registry traz só
+  `aspect-square size-full` no `AvatarImage`, **sem `object-fit`** — e o padrão do
+  `<img>` é `fill`, que ESTICA. Uma foto 4:3 chega deformada. Foi acrescentado
+  `object-cover`, que escala até cobrir o quadrado e recorta o excesso, preservando a
+  proporção. **Se este componente for readicionado pelo registry, o desvio se perde**;
+  não há teste que o proteja, porque o `AvatarImage` do Radix só monta depois que a
+  imagem carrega e o jsdom nunca carrega imagem.
+
+- **`InputFile`**: os padrões de `label` ("Comprovante") e `placeholder`
+  ("Nome do arquivo.pdf") são do fluxo de comprovante. Qualquer outro uso precisa
+  passar os dois — o diálogo de foto de perfil herdou os dois por engano, e o
+  placeholder anunciava justamente o formato que um avatar não aceita.
+
 Ao encontrar conteúdo cortado ou sobreposto em telas estreitas, verifique
 primeiro se um input ou outro elemento flexível mantém uma largura mínima do
 navegador em algum ponto da cadeia de flex.

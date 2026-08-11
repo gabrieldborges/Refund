@@ -85,12 +85,26 @@ export default function AvatarUploadDialog({
           <DialogDescription>{t("avatar.description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-4">
+        {/* Empilhado no mobile, lado a lado a partir de sm. O campo de arquivo é ele
+            próprio duas linhas (rótulo + campo), e ao lado de um avatar de 64px numa
+            tela de 390px sobrava largura demais pouca para o nome do arquivo. */}
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
           {/* A foto atual, no mesmo componente que o resto da aplicação usa: se ela
               renderizar errado aqui, renderiza errado em todo lugar. */}
-          <UserAvatar userId={userId} name={name} className="size-16" />
-          <div className="min-w-0 flex-1">
-            <InputFile accept={AVATAR_ACCEPT} onChange={handleChange} disabled={isBusy} />
+          <UserAvatar userId={userId} name={name} className="size-20 shrink-0 sm:size-16" />
+          {/* min-w-0 é o que permite o nome longo do arquivo encurtar em vez de
+              empurrar o campo — a armadilha que o próprio InputFile documenta. */}
+          <div className="w-full min-w-0 sm:flex-1">
+            <InputFile
+              // Sem isto o campo herdava os padrões do comprovante: rótulo
+              // "Comprovante" e placeholder "Nome do arquivo.pdf" — e PDF é
+              // justamente o formato que um avatar não aceita.
+              label={t("avatar.fileLabel")}
+              placeholder={t("avatar.filePlaceholder")}
+              accept={AVATAR_ACCEPT}
+              onChange={handleChange}
+              disabled={isBusy}
+            />
           </div>
         </div>
 
@@ -106,13 +120,18 @@ export default function AvatarUploadDialog({
           </p>
         )}
 
-        <DialogFooter className="gap-2 sm:justify-between">
+        {/* Sem `sm:justify-between` e sem <span /> de enchimento: o DialogFooter já é
+            flex-col-reverse no mobile e sm:justify-end no desktop, e o `sm:mr-auto`
+            no botão de remover é o que o empurra para a esquerda a partir de sm. O
+            placeholder vazio de antes virava um item de flex no empilhamento. */}
+        <DialogFooter>
           {/* Remover só existe quando há o que remover: um botão que apaga nada é um
               botão que só pode dar erro. */}
-          {current?.url ? (
+          {current?.url && (
             <Button
               type="button"
               variant="outline"
+              className="sm:mr-auto"
               onClick={handleRemove}
               disabled={isBusy}
               aria-busy={remove.isPending}
@@ -124,8 +143,6 @@ export default function AvatarUploadDialog({
               )}
               {t("avatar.remove")}
             </Button>
-          ) : (
-            <span />
           )}
 
           <Button

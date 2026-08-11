@@ -7,6 +7,8 @@
   "avatar.description": "JPG or PNG, up to 4 MB.",
   "avatar.errorExtension": "The picture must be JPG or PNG.",
   "avatar.errorTooLarge": "The picture must be smaller than 4 MB.",
+  "avatar.fileLabel": "Picture file",
+  "avatar.filePlaceholder": "photo.jpg or photo.png",
   "avatar.open": "Change profile picture",
   "avatar.remove": "Remove",
   "avatar.save": "Save picture",

@@ -80,3 +80,11 @@ describe("UserAvatar", () => {
     expect(await screen.findByText("AS")).toBeInTheDocument();
   });
 });
+
+// NÃO há teste para o `object-cover` do AvatarImage, e a ausência é deliberada: o
+// AvatarImage do Radix só monta depois que a imagem carrega, e o jsdom nunca carrega
+// imagem — então o elemento não existe na árvore para ter a classe inspecionada.
+//
+// O desvio do registry está registrado no AGENTS.md, junto dos outros dois
+// (`Button` sem largura padrão, `Input` precisando de `min-w-0`), que é onde este
+// projeto guarda o que não dá para prender em teste.
