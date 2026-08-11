@@ -10,6 +10,9 @@ import { readableTextOn, sliceColor, type DonutSlice } from "../lib/donutPalette
 interface RefundDonutChartProps {
   slices: DonutSlice[];
   // Rótulo da unidade sob o total, no miolo ("solicitações", "em reembolsos").
+  // A chave PRECISA ter as variantes de plural do i18next (_one/_other): o
+  // total é interpolado como `count`, e sem elas uma solicitação só era
+  // rotulada "1 solicitações".
   unitLabelKey: string;
   // Como formatar total e valores. Contagem e dinheiro não são a mesma coisa e
   // não podem compartilhar formatação: um é inteiro, o outro tem centavos e
@@ -25,8 +28,8 @@ interface RefundDonutChartProps {
 // do index.css, escrito aqui em hexadecimal porque o nivo pinta via atributo
 // SVG, onde `var(--token)` não é resolvido pelo navegador.
 const CHROME = {
-  light: { label: "#333333", muted: "#546672" },
-  dark: { label: "#FAFAFA", muted: "#A1A1A1" },
+  light: { label: "#333333", muted: "#546672", tooltipBg: "#FFFFFF", tooltipBorder: "#E5E7EB" },
+  dark: { label: "#FAFAFA", muted: "#A1A1A1", tooltipBg: "#262626", tooltipBorder: "#3F3F3F" },
 } as const;
 
 // As margens do nivo são pixels por contrato da lib. Não são medida de layout:
@@ -38,16 +41,21 @@ const CHROME = {
 // largura para a rosca.
 function chartMargin(isMobile: boolean) {
   return isMobile
-    ? // bottom maior que no desktop apesar da tela menor: aqui a legenda ocupa
-      // DUAS linhas (ver buildLegends), e a margem é o que reserva o espaço
-      // delas. Sem isto a segunda linha é cortada pela borda do SVG.
-      { top: 24, right: 40, bottom: 92, left: 40 }
+    ? // bottom bem maior que no desktop apesar da tela menor: aqui a legenda
+      // ocupa DUAS linhas (ver buildLegends) e ainda respira MOBILE_LEGEND_GAP
+      // do gráfico. A margem é o que reserva esse espaço — sem ela a segunda
+      // linha é cortada pela borda do SVG.
+      { top: 24, right: 40, bottom: 92 + MOBILE_LEGEND_GAP, left: 40 }
     : { top: 40, right: 80, bottom: 80, left: 80 };
 }
 
 // Altura de uma linha da legenda e o quanto ela desce a partir do centro.
 const LEGEND_ITEM_HEIGHT = 18;
 const LEGEND_ROW_GAP = 4;
+
+// Respiro extra entre a rosca e a legenda, só no mobile: com a legenda em duas
+// linhas logo abaixo de um gráfico menor, elas encostavam.
+const MOBILE_LEGEND_GAP = 32;
 
 // No desktop, uma linha com todos os itens. No mobile, um 2x2: quatro rótulos
 // lado a lado numa tela de 390px se sobrepõem, porque o nivo distribui os itens
@@ -77,10 +85,11 @@ function buildLegends(
 
   if (!isMobile) return [row(items, 56)];
 
+  const firstRowY = 44 + MOBILE_LEGEND_GAP;
   const half = Math.ceil(items.length / 2);
   return [
-    row(items.slice(0, half), 44),
-    row(items.slice(half), 44 + LEGEND_ITEM_HEIGHT + LEGEND_ROW_GAP),
+    row(items.slice(0, half), firstRowY),
+    row(items.slice(half), firstRowY + LEGEND_ITEM_HEIGHT + LEGEND_ROW_GAP),
   ];
 }
 
@@ -145,11 +154,16 @@ export default function RefundDonutChart({
 
   const data: ChartDatum[] = slices.map((slice) => ({ ...slice, label: t(slice.labelKey) }));
 
+  // `count` não aparece no texto — ele existe só para o i18next escolher entre
+  // as variantes _one e _other da chave. O número em si já está impresso acima,
+  // no miolo, e repeti-lo aqui daria "1 1 solicitação".
+  const unitLabel = t(unitLabelKey, { count: total });
+
   // O rótulo acessível descreve o que o gráfico mostra, com os números — quem
   // usa leitor de tela não "vê" as fatias, e "gráfico de rosca" não informa
   // nada. Traz o total e os valores no mesmo formato do miolo e das fatias, de
   // modo que nenhum número do gráfico exista só em pixel.
-  const ariaLabel = `${t(titleKey)}: ${formatValue(total)} ${t(unitLabelKey)}. ${data
+  const ariaLabel = `${t(titleKey)}: ${formatValue(total)} ${unitLabel}. ${data
     .map((slice) => `${slice.label}: ${formatValue(slice.value)}`)
     .join(", ")}.`;
 
@@ -196,7 +210,7 @@ export default function RefundDonutChart({
               centerX={layerProps.centerX}
               centerY={layerProps.centerY}
               total={formatValue(total)}
-              unit={t(unitLabelKey)}
+              unit={unitLabel}
               chrome={chrome}
             />
           ),
@@ -220,7 +234,22 @@ export default function RefundDonutChart({
           // Strings em rem, não números: o nivo trataria número como pixel, e
           // o gráfico deixaria de acompanhar a escala tipográfica do app.
           text: { fontSize: "0.8125rem", fill: chrome.label },
-          tooltip: { container: { fontSize: "0.8125rem" } },
+          // O tooltip do nivo vem com fundo #ffffff FIXO e `color: 'inherit'`.
+          // O `inherit` puxa a cor de texto do app — quase branca no tema
+          // escuro — e a joga sobre aquele fundo branco: texto branco em fundo
+          // branco. Nem o fundo nem a cor acompanhavam o tema, então os dois
+          // precisam ser declarados aqui, e não só o tamanho da fonte.
+          tooltip: {
+            container: {
+              fontSize: "0.8125rem",
+              background: chrome.tooltipBg,
+              color: chrome.label,
+              border: `1px solid ${chrome.tooltipBorder}`,
+              // A sombra padrão do nivo é preta e desaparece contra um fundo
+              // escuro; a borda é o que separa o tooltip do gráfico atrás dele.
+              boxShadow: "none",
+            },
+          },
         }}
       />
     </div>

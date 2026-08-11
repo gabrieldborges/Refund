@@ -110,6 +110,22 @@ describe("RefundDonutChart", () => {
     expect(label).toContain("Rejeitado: 1");
   });
 
+  // The unit under the centre total is pluralised through i18next's count, not
+  // hardcoded: a requester with a single refund read "1 solicitações". The
+  // fixture above sums to 11, so the plural form is covered by the test before
+  // this one; here the total is deliberately 1.
+  it("uses the singular unit when the total is one", () => {
+    renderChart({
+      slices: [{ id: "pending", labelKey: "status.pending", value: 1 }],
+    });
+
+    const chart = screen.getByRole("img", { name: /Solicitações por status/ });
+    const label = chart.getAttribute("aria-label") ?? "";
+
+    expect(label).toContain("1 solicitação");
+    expect(label).not.toContain("1 solicitações");
+  });
+
   // Money and counts cannot share a formatter: one is a whole number, the other
   // has cents and a currency symbol. The values arrive in cents.
   it("formats a currency metric as BRL", () => {

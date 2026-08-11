@@ -234,7 +234,13 @@ export default function PageHome() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("home.requests")}</h1>
+          {/* Chave própria, e não a mesma `home.requests` do card de resumo
+              abaixo: a Topbar agora carrega o título CURTO da rota
+              ("Solicitações"), para caber em 390px ao lado do botão de ação, e
+              é aqui — onde há a largura da página inteira — que o nome
+              completo aparece. Os dois textos passaram a ser decisões
+              diferentes, então não podem dividir uma chave. */}
+          <h1 className="text-2xl font-semibold tracking-tight">{t("home.pageTitle")}</h1>
           <p className="text-sm text-muted-foreground">
             {data ? t("home.requestCount", { count: data.total }) : " "}
           </p>

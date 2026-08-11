@@ -65,7 +65,7 @@ beforeEach(() => {
 describe("MainLayout", () => {
   it("renders the route title in the topbar and the child via Outlet", () => {
     renderShell();
-    expect(screen.getByRole("heading", { name: "Solicitações de reembolso" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Solicitações" })).toBeInTheDocument();
     expect(screen.getByText("home page")).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("MainLayout", () => {
     expect(await screen.findByRole("heading", { name: "Algo deu errado" })).toBeInTheDocument();
     expect(screen.queryByText("home page")).not.toBeInTheDocument();
     // ...while topbar title and sidebar profile survived.
-    expect(screen.getByRole("heading", { name: "Solicitações de reembolso" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Solicitações" })).toBeInTheDocument();
     expect(screen.getByText("@gabriel")).toBeInTheDocument();
     // And the shell still owns the single main landmark.
     expect(screen.getByRole("main")).toBeInTheDocument();
