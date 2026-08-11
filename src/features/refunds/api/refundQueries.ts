@@ -26,6 +26,11 @@ interface RefundListParams {
   status?: RefundStatus;
   sort?: RefundSort;
   order?: RefundOrder;
+  // Datas ISO "YYYY-MM-DD", inclusivas nas duas pontas do ponto de vista de quem
+  // chama: o servidor transforma createdTo em "< to + 1 dia", então pedir um dia
+  // devolve o dia inteiro (UC-004).
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 // Fonte única das chaves de cache dos reembolsos. Tudo deriva de `all`, então as
@@ -80,6 +85,8 @@ export function refundListQuery(params: RefundListParams) {
           status: params.status,
           sort: params.sort,
           order: params.order,
+          created_from: params.createdFrom,
+          created_to: params.createdTo,
         },
         signal,
       });

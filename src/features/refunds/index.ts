@@ -97,3 +97,13 @@ export { default as DashboardCharts } from "./components/DashboardCharts";
 // gráficos com o texto calculado para contraste. Exportado como dado, não como
 // componente: quem monta o card é a página.
 export { KPI_TONES } from "./lib/kpiTones";
+
+// Calendário (Ciclo 3): a contagem por dia e os dois componentes da tela. O gráfico
+// entra pelo MonthCountsChart, que faz o import() dinâmico por dentro — nenhum
+// gráfico é reexportado daqui, ver docs/performance-budget.md.
+export { refundDailyCountsQuery } from "./api/dailyCountsQueries";
+export { useDailyCounts } from "./hooks/useDailyCounts";
+export { calendarSearchParamsSchema } from "./schemas/dailyCounts";
+export type { RefundDailyCounts, RefundDayCount } from "./schemas/dailyCounts";
+export { default as DayRefundsPanel } from "./components/DayRefundsPanel";
+export { default as MonthCountsChart } from "./components/MonthCountsChart";

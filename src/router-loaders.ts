@@ -9,6 +9,8 @@ import {
   refundListSearchParamsSchema,
   refundSummaryQuery,
   refundSummarySearchParamsSchema,
+  calendarSearchParamsSchema,
+  refundDailyCountsQuery,
 } from "@/features/refunds";
 import {
   USERS_PER_PAGE,
@@ -181,6 +183,43 @@ export async function dashboardLoader({ request }: LoaderFunctionArgs) {
   await queryClient.ensureQueryData(refundSummaryQuery(year));
 
   return { year };
+}
+
+export async function calendarLoader({ request }: LoaderFunctionArgs) {
+  requireSession();
+  // SEM requireAdmin: a tela é para todos, e o escopo dos dados é decidido no
+  // servidor pelo papel no token.
+
+  const url = new URL(request.url);
+  const parsed = calendarSearchParamsSchema.parse({
+    month: url.searchParams.get("month") ?? undefined,
+    day: url.searchParams.get("day") ?? undefined,
+  });
+
+  // O mês corrente é resolvido AQUI e escrito na URL, ao contrário do ano do
+  // Dashboard. A diferença é o que o componente precisa: o `Calendar` recebe o mês
+  // como prop obrigatória, então a tela sempre tem um mês concreto — e tê-lo na URL
+  // é o que faz recarregar cair no mesmo lugar.
+  const now = new Date();
+  const month =
+    parsed.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // Um dia de outro mês não pertence a esta visão: ele viria de uma URL editada à
+  // mão ou de um mês trocado sem limpar o dia.
+  const day = parsed.day && parsed.day.startsWith(month) ? parsed.day : undefined;
+
+  const normalizedSearchParams = new URLSearchParams(url.searchParams);
+  setOrDelete(normalizedSearchParams, "month", month);
+  setOrDelete(normalizedSearchParams, "day", day);
+
+  if (normalizedSearchParams.toString() !== url.searchParams.toString()) {
+    const normalizedSearch = normalizedSearchParams.toString();
+    throw redirect(`${url.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`);
+  }
+
+  await queryClient.ensureQueryData(refundDailyCountsQuery(month));
+
+  return { month, day };
 }
 
 export async function refundDetailLoader({ params }: LoaderFunctionArgs) {

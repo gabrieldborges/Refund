@@ -1,4 +1,6 @@
 import { lazy, Suspense } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { formatCentsToBRL } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,6 +8,8 @@ import { CATEGORIES } from "../constants/categories";
 import { REFUND_STATUS } from "../constants/status";
 import type { RefundCategory } from "../constants/categories";
 import type { RefundStatus } from "../schemas/refund";
+import { monthLabel, visibleMonthTicks } from "../lib/monthLabel";
+import { scaleValue, valueScaleFor } from "../lib/valueScale";
 import type { RefundSummary } from "../schemas/summary";
 
 // O ÚNICO ponto de import() dinâmico dos gráficos, e o único módulo desta feature
@@ -77,6 +81,8 @@ export default function DashboardCharts({
   isLoading = false,
   isError = false,
 }: DashboardChartsProps) {
+  const { i18n } = useTranslation();
+  const isMobile = useIsMobile();
   // Os quatro gráficos recebem isLoading/isError e tratam internamente, em vez de
   // esta função devolver cedo: um erro não pode cair em "zero renderizado", e
   // devolver cedo aqui esconderia os títulos junto, deixando a tela sem dizer o que
@@ -95,9 +101,15 @@ export default function DashboardCharts({
     cents: summary?.by_category[category].amount_in_cents ?? 0,
   }));
 
-  const lineMonths = (summary?.by_month ?? []).map((month) => ({
-    month: month.month,
-    cents: month.amount_in_cents,
+  // A conversão para a unidade do eixo é FEITA AQUI, porque quem sabe que isto é
+  // dinheiro é esta tela — o gráfico só desenha uma série. `exact` é o que o
+  // tooltip mostra, e é ele que permite o eixo arredondar.
+  const monthlyCents = (summary?.by_month ?? []).map((month) => month.amount_in_cents);
+  const monthlyScale = valueScaleFor(monthlyCents);
+  const monthlyPoints = (summary?.by_month ?? []).map((month) => ({
+    label: monthLabel(month.month, i18n.language),
+    value: scaleValue(month.amount_in_cents, monthlyScale),
+    exact: formatCentsToBRL(month.amount_in_cents),
   }));
 
   // O ano vem da resposta, não da URL: sem ano pedido, quem escolhe é o servidor,
@@ -133,8 +145,13 @@ export default function DashboardCharts({
       <ChartCard titleKey="chart.monthlyValueTitle" period={period}>
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <RefundLineChart
-            months={lineMonths}
+            points={monthlyPoints}
             titleKey="chart.monthlyValueTitle"
+            unitLabelKey={monthlyScale.unitLabelKey}
+            visibleLabels={visibleMonthTicks(
+              monthlyPoints.map((point) => point.label),
+              isMobile
+            )}
             isLoading={isLoading}
             isError={isError}
           />

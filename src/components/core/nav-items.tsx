@@ -14,10 +14,14 @@ export interface NavItem {
   adminOnly?: boolean;
 }
 
-// Calendário segue como placeholder do ciclo 3 do panorama das três telas.
+// Nenhum item está desabilitado hoje: as três telas prometidas foram entregues.
+//
+// `enabled` FICA. Ele é a máquina do selo "em breve" que a Sidebar renderiza, e o
+// próximo item futuro vai usá-lo — sem este comentário o mecanismo parece morto e
+// alguém o remove, junto do lugar onde a próxima promessa seria feita.
 export const NAV_ITEMS: NavItem[] = [
   { labelKey: "nav.refunds", to: "/", icon: ReceiptText, enabled: true },
   { labelKey: "nav.dashboard", to: "/dashboard", icon: LayoutDashboard, enabled: true },
   { labelKey: "nav.team", to: "/team", icon: Users, enabled: true, adminOnly: true },
-  { labelKey: "nav.calendar", to: "/calendar", icon: CalendarDays, enabled: false },
+  { labelKey: "nav.calendar", to: "/calendar", icon: CalendarDays, enabled: true },
 ];

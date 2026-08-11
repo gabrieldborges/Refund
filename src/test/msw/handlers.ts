@@ -101,6 +101,21 @@ export const refundSummaryFixture = {
   }),
 };
 
+// The calendar's daily counts (UC-018). August 2026, with two days carrying data so
+// the "no badge on empty days" behaviour is exercised by the other 29 rather than
+// assumed.
+export const dailyCountsFixture = {
+  type: "RefundDailyCounts" as const,
+  scope: "user" as const,
+  month: "2026-08",
+  days: Array.from({ length: 31 }, (_, index) => {
+    const date = `2026-08-${String(index + 1).padStart(2, "0")}`;
+    if (date === "2026-08-03") return { date, count: 2 };
+    if (date === "2026-08-11") return { date, count: 1 };
+    return { date, count: 0 };
+  }),
+};
+
 // The login payload, matching loginResponseSchema.
 export const loginFixture = {
   access: true,
@@ -164,8 +179,18 @@ export const handlers = [
   // Refund list: a single-item, single-page response. `sum_amount_in_cents` is
   // derived from the returned `attributes`, so it always stays coherent with
   // the fixture data instead of being an independent hardcoded number.
-  http.get("*/refunds", () => {
-    const attributes = [refundFixture];
+  http.get("*/refunds", ({ request }) => {
+    // Honours the date filter, because a handler that ignored it would let the
+    // calendar's day panel pass while proving only that a list renders. The
+    // fixture's refund was created on 2026-07-20, so any other day is empty.
+    const url = new URL(request.url);
+    const from = url.searchParams.get("created_from");
+    const to = url.searchParams.get("created_to");
+    const createdDay = refundFixture.created_at.slice(0, 10);
+    const inRange =
+      (!from || createdDay >= from) && (!to || createdDay <= to);
+
+    const attributes = inRange ? [refundFixture] : [];
     return HttpResponse.json({
       type: "Refund",
       count: attributes.length,
@@ -229,6 +254,22 @@ export const handlers = [
       by_month: refundSummaryFixture.by_month.map((month) => ({
         ...month,
         month: `${year}-${month.month.split("-")[1]}`,
+      })),
+    });
+  }),
+
+  // Daily counts. Registered BEFORE "*/refunds/:id" for the same ordering reason the
+  // API itself has — a bare id handler would swallow "/refunds/daily-counts".
+  http.get("*/refunds/daily-counts", ({ request }) => {
+    const month = new URL(request.url).searchParams.get("month") ?? dailyCountsFixture.month;
+    return HttpResponse.json({
+      ...dailyCountsFixture,
+      month,
+      // Echoes the requested month, so a test can assert that navigating months
+      // actually changed the request instead of only the URL.
+      days: dailyCountsFixture.days.map((day) => ({
+        ...day,
+        date: `${month}-${day.date.split("-")[2]}`,
       })),
     });
   }),

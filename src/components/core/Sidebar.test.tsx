@@ -57,18 +57,27 @@ describe("Sidebar", () => {
     expect(screen.getByRole("link", { name: /Solicitações/ })).toHaveAttribute("href", "/");
   });
 
-  it("does not render coming-soon items as links", () => {
+  // The three promised screens shipped, so there is no coming-soon badge left.
+  //
+  // This replaced two tests that COUNTED badges. The count could not simply go to
+  // zero: getAllByText THROWS when it finds nothing, it does not return an empty
+  // list. And a count is the wrong assertion now anyway — what matters is that every
+  // item leads somewhere.
+  it("renders no coming-soon badge", () => {
     renderSidebar();
-    expect(screen.queryByRole("link", { name: /Calend/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("em breve")).toBeNull();
   });
 
-  it("shows the coming-soon badge on disabled items", () => {
-    renderSidebar();
-        // One badge per disabled item. Time left when the team directory shipped and
-    // Dashboard left with this cycle, so only Calendário remains — cycle 3.
-    expect(screen.getByRole("button", { name: /Calend/ })).toBeDisabled();
-    expect(screen.getAllByText("em breve")).toHaveLength(1);
+  it("renders every visible item as a link", () => {
+    renderSidebar("admin");
+
+    for (const label of ["Solicitações", "Dashboard", "Time", "Calendário"]) {
+      expect(screen.getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
+    }
+    // No inert buttons left among the nav items — the disabled branch renders one.
+    expect(screen.queryByRole("button", { name: /Dashboard|Calend/ })).toBeNull();
   });
+
 
   // Time is admin-only. It disappears for a standard user rather than rendering
   // disabled: a greyed-out item reads as "not yet", and this is "not ever, for
@@ -86,11 +95,6 @@ describe("Sidebar", () => {
   // The badge count must not change with the role: hiding an item is not the
   // same as marking it coming-soon, and conflating the two would let a
   // regression in either mechanism pass.
-  it("keeps the coming-soon count the same for an admin", () => {
-    renderSidebar("admin");
-    expect(screen.getAllByText("em breve")).toHaveLength(1);
-  });
-
   it("logs out and navigates when Sair is clicked", async () => {
     const user = userEvent.setup();
     renderSidebar();

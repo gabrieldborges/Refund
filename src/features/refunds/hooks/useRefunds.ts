@@ -14,6 +14,8 @@ interface UseRefundsParams {
   status?: RefundStatus;
   sort?: RefundSort;
   order?: RefundOrder;
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 // O default vem da constante compartilhada com o loader: até este ciclo o
@@ -36,6 +38,8 @@ export function useRefunds({
   status,
   sort,
   order,
+  createdFrom,
+  createdTo,
 }: UseRefundsParams) {
-  return useQuery(refundListQuery({ page, perPage, name, userId, status, sort, order }));
+  return useQuery(refundListQuery({ page, perPage, name, userId, status, sort, order, createdFrom, createdTo }));
 }

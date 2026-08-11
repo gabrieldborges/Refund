@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/core/ProtectedRoute";
 import ContentError from "./components/core/ContentError";
 import PageRouteError from "./pages/PageRouteError";
 import {
+  calendarLoader,
   dashboardLoader,
   homeLoader,
   refundDetailLoader,
@@ -67,6 +68,14 @@ export const router = createBrowserRouter([
                     handle: { titleKey: "routes.dashboard" },
                     lazy: async () => ({
                       Component: (await import("./pages/PageDashboard")).default,
+                    }),
+                  },
+                  {
+                    path: "/calendar",
+                    loader: calendarLoader,
+                    handle: { titleKey: "routes.calendar" },
+                    lazy: async () => ({
+                      Component: (await import("./pages/PageCalendar")).default,
                     }),
                   },
                   {
