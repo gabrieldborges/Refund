@@ -43,81 +43,128 @@ const RECEIPT_COPY: Record<ReceiptKind, { nameKey: string; buttonKey: string }> 
   },
 };
 
+// A caixa do comprovante tem proporção fixa, e é isso que impede a página de
+// pular quando o arquivo chega. Antes havia TRÊS saltos somados: o skeleton era
+// h-48 e a imagem carregada, max-h-64; o botão "tela cheia" só passava a existir
+// depois do carregamento; e, sem proporção reservada, a altura final ainda
+// dependia do formato da foto — retrato e paisagem davam páginas de tamanhos
+// diferentes.
+//
+// 4:3 em vez de quadrado: comprovante é quase sempre um recibo ou uma nota
+// fotografada, e 4:3 desperdiça menos área com faixas vazias do que 1:1 sem
+// alongar demais a coluna no mobile. `object-contain` garante que nada seja
+// cortado — o que sobra vira fundo, não recorte.
+const MEDIA_BOX = "relative aspect-[4/3] w-full overflow-hidden rounded-md border bg-muted/30";
+
 export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPreviewProps) {
   const { t } = useTranslation();
   const { data: file, isPending, isError } = useReceipt(refundId, kind);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Guarda a URL que TERMINOU de decodificar, não um booleano: quando o arquivo
+  // troca (a tela de um reembolso pago mostra dois comprovantes, e navegar entre
+  // solicitações troca a URL sem desmontar), comparar a URL faz o skeleton
+  // voltar sozinho. Um booleano ficaria preso em `true` e mostraria a caixa
+  // vazia até a imagem nova aparecer de estalo.
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
 
-  // `!file` na guarda: um refetch em segundo plano (ex.: voltar para a aba)
-  // que falhar também vira isError, mas o Query mantém a URL anterior em
-  // `data`. Sem essa condição, um blip de rede trocaria um comprovante
-  // funcionando por uma mensagem de erro.
-  if (isError && !file) {
-    return (
-      <p role="alert" className="py-4 text-center text-sm text-destructive">
-        Não foi possível carregar o comprovante.
-      </p>
-    );
-  }
-
-  if (isPending || !file) {
-    return <Skeleton className="h-48 w-full" />;
-  }
-
-  // Item 22: a URL não carrega tipo, então o backend manda `media_type` junto —
-  // derivado da extensão armazenada, nunca de um cabeçalho do cliente. Sem esse
-  // campo não daria para escolher entre <img> e <object> ANTES de buscar.
-  const isImage = file.media_type.startsWith("image/");
   const { nameKey, buttonKey } = RECEIPT_COPY[kind];
   const alt = t(nameKey, { name: refundName });
   const fullscreenButtonLabel = t(buttonKey);
 
-  return (
-    <div className="flex flex-col gap-2">
-      {isImage ? (
-        <img src={file.url} alt={alt} className="max-h-64 w-full rounded-md object-contain" />
-      ) : (
-        <object
-          data={file.url}
-          type={file.media_type}
-          className="h-64 w-full rounded-md"
-          aria-label={alt}
-          title={alt}
-        >
-          <a href={file.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-            {t("receipt.open")}
-          </a>
-        </object>
-      )}
+  // Item 22: a URL não carrega tipo, então o backend manda `media_type` junto —
+  // derivado da extensão armazenada, nunca de um cabeçalho do cliente. Sem esse
+  // campo não daria para escolher entre <img> e <object> ANTES de buscar.
+  const isImage = file?.media_type.startsWith("image/") ?? false;
+  // `!file` na guarda: um refetch em segundo plano (ex.: voltar para a aba)
+  // que falhar também vira isError, mas o Query mantém a URL anterior em
+  // `data`. Sem essa condição, um blip de rede trocaria um comprovante
+  // funcionando por uma mensagem de erro.
+  const hasFailed = isError && !file;
+  const isLoading = (isPending || !file) && !hasFailed;
+  // Só a imagem tem um evento de carregamento confiável; <object> (PDF) não
+  // avisa quando terminou, então para ele o skeleton sai assim que a URL chega.
+  const isImageDecoding = !!file && isImage && loadedUrl !== file.url;
 
-      <Button variant="outline" size="sm" className="self-end" onClick={() => setIsFullscreen(true)}>
+  return (
+    // data-slot: mesma convenção do design system (ui/*.tsx). Existe porque uma
+    // tela de reembolso pago mostra DOIS previews, e "de qual preview é este
+    // botão?" precisa de uma âncora estável — antes os testes subiam a árvore
+    // com closest("div"), que passou a apontar para a caixa da mídia assim que
+    // ela ganhou um elemento a mais.
+    <div data-slot="receipt-preview" className="flex flex-col gap-2">
+      <div className={MEDIA_BOX}>
+        {hasFailed && (
+          <p
+            role="alert"
+            className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-destructive"
+          >
+            Não foi possível carregar o comprovante.
+          </p>
+        )}
+
+        {/* O skeleton ocupa a mesma caixa por cima, em vez de substituí-la: é a
+            sobreposição que mantém a altura idêntica antes e depois. */}
+        {(isLoading || isImageDecoding) && <Skeleton className="absolute inset-0 rounded-none" />}
+
+        {file && isImage && (
+          <img
+            src={file.url}
+            alt={alt}
+            onLoad={() => setLoadedUrl(file.url)}
+            className="size-full object-contain"
+          />
+        )}
+
+        {file && !isImage && (
+          <object data={file.url} type={file.media_type} className="size-full" aria-label={alt} title={alt}>
+            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+              {t("receipt.open")}
+            </a>
+          </object>
+        )}
+      </div>
+
+      {/* Renderizado sempre, desabilitado enquanto não há arquivo: um botão que
+          só aparece depois do carregamento empurraria tudo abaixo dele. */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="self-end"
+        disabled={!file}
+        onClick={() => setIsFullscreen(true)}
+      >
         <Expand className="size-4" aria-hidden />
         {fullscreenButtonLabel}
       </Button>
 
-      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{alt}</DialogTitle>
-            <DialogDescription>{t("receipt.fullscreenDescription")}</DialogDescription>
-          </DialogHeader>
-          {isImage ? (
-            <img src={file.url} alt={alt} className="max-h-[70vh] w-full object-contain" />
-          ) : (
-            <object
-              data={file.url}
-              type={file.media_type}
-              className="h-[70vh] w-full"
-              aria-label={alt}
-              title={alt}
-            >
-              <a href={file.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                Abrir comprovante
-              </a>
-            </object>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* `file &&` em vez do antigo acesso direto: o componente agora renderiza
+          a mesma árvore em todos os estados, então aqui o arquivo pode ainda não
+          existir. O botão que abre este diálogo fica desabilitado nesse caso. */}
+      {file && (
+        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{alt}</DialogTitle>
+              <DialogDescription>{t("receipt.fullscreenDescription")}</DialogDescription>
+            </DialogHeader>
+            {isImage ? (
+              <img src={file.url} alt={alt} className="max-h-[70vh] w-full object-contain" />
+            ) : (
+              <object
+                data={file.url}
+                type={file.media_type}
+                className="h-[70vh] w-full"
+                aria-label={alt}
+                title={alt}
+              >
+                <a href={file.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+                  {t("receipt.open")}
+                </a>
+              </object>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

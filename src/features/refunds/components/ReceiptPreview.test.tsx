@@ -104,6 +104,23 @@ describe("ReceiptPreview", () => {
     );
   });
 
+  // The page used to reflow when the receipt arrived. Two things prevent it,
+  // and both are asserted here because neither is visible in a screenshot: the
+  // fullscreen button must already occupy its row while the file is still
+  // loading (it used to be mounted only afterwards, pushing everything below
+  // it down), and the media box must keep a reserved aspect ratio rather than
+  // letting the loaded image decide the height.
+  it("reserves the layout before the receipt arrives", async () => {
+    renderPreview();
+
+    const button = screen.getByRole("button", { name: "Ver comprovante em tela cheia" });
+    expect(button).toBeDisabled();
+
+    const image = await screen.findByRole("img", { name: /Almoço com cliente/ });
+    expect(image.parentElement).toHaveClass("aspect-[4/3]");
+    expect(button).toBeEnabled();
+  });
+
   // kind="payment" hits UC-012's payment-receipt endpoint and uses distinct
   // copy from kind="expense" — the fix for the fullscreen button's
   // accessible name being context-free when two previews share a screen.

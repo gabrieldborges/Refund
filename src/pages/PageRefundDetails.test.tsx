@@ -267,17 +267,23 @@ describe("PageRefundDetails", () => {
     const expenseImage = await screen.findByRole("img", {
       name: `Comprovante de ${refundFixture.name}`,
     });
-    const expensePreview = expenseImage.closest("div");
+    // [data-slot=receipt-preview], and not closest("div"): the nearest div is
+    // the media box, which by design holds only the file — the button lives one
+    // level up, next to it. The slot names the component's own root, so this
+    // stops depending on how many wrappers the preview happens to have.
+    const expensePreview = expenseImage.closest("[data-slot=receipt-preview]");
     expect(expensePreview).not.toBeNull();
     expect(
-      within(expensePreview!).getByRole("button", { name: "Ver comprovante em tela cheia" })
+      within(expensePreview as HTMLElement).getByRole("button", {
+        name: "Ver comprovante em tela cheia",
+      })
     ).toBeInTheDocument();
 
     const paymentLink = screen.getByRole("link", { name: "Abrir comprovante" });
-    const paymentPreview = paymentLink.closest("div");
+    const paymentPreview = paymentLink.closest("[data-slot=receipt-preview]");
     expect(paymentPreview).not.toBeNull();
     expect(
-      within(paymentPreview!).getByRole("button", {
+      within(paymentPreview as HTMLElement).getByRole("button", {
         name: "Ver comprovante de pagamento em tela cheia",
       })
     ).toBeInTheDocument();
