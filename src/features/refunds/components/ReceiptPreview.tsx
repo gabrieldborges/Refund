@@ -23,23 +23,38 @@ interface ReceiptPreviewProps {
 }
 
 // Copy that differs between the two files this component can show. Keeping it
-// as a lookup table (instead of inline ternaries sprinkled through the JSX)
-// is what keeps the fullscreen button's accessible name distinct between the
-// expense and payment previews — see the "Ver ... em tela cheia" trap this
-// fixes: with two previews on one screen, an unqualified "Ver em tela cheia"
-// button would be indistinguishable to a screen reader.
+// as a lookup table (instead of inline ternaries sprinkled through the JSX) is
+// what keeps the fullscreen button's accessible name distinct between the expense
+// and payment previews: with two previews on one screen, an unqualified
+// "Ver em tela cheia" would be indistinguishable to a screen reader.
+//
+// The VISIBLE text is now the short, unqualified one — the qualified version
+// ("Ver comprovante de pagamento em tela cheia") overflowed the card on a 390px
+// screen. What disambiguates is split in two:
+//   - `ariaKey`, the qualified string, on aria-label — so the accessible name
+//     stays distinct even though the two buttons look identical;
+//   - `headingKey`, a visible heading above each preview, so a sighted person
+//     also knows which file is which without reading the button.
+// Dropping the qualifier from the button WITHOUT one of those would have undone
+// the reason this table exists.
+//
 // Catalogue keys, not copy: this Record is evaluated at import time, before a
 // locale exists. The name key interpolates {{name}} rather than concatenating,
 // so a language that puts the qualifier first can reorder it in the catalogue
 // without touching this file.
-const RECEIPT_COPY: Record<ReceiptKind, { nameKey: string; buttonKey: string }> = {
+const RECEIPT_COPY: Record<
+  ReceiptKind,
+  { nameKey: string; headingKey: string; ariaKey: string }
+> = {
   expense: {
     nameKey: "receipt.expenseName",
-    buttonKey: "receipt.viewFullscreen",
+    headingKey: "receipt.expenseLabel",
+    ariaKey: "receipt.viewFullscreen",
   },
   payment: {
     nameKey: "receipt.paymentName",
-    buttonKey: "receipt.viewPaymentFullscreen",
+    headingKey: "receipt.paymentLabel",
+    ariaKey: "receipt.viewPaymentFullscreen",
   },
 };
 
@@ -67,9 +82,11 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
   // vazia até a imagem nova aparecer de estalo.
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
 
-  const { nameKey, buttonKey } = RECEIPT_COPY[kind];
+  const { nameKey, headingKey, ariaKey } = RECEIPT_COPY[kind];
   const alt = t(nameKey, { name: refundName });
-  const fullscreenButtonLabel = t(buttonKey);
+  // Curto no visível, qualificado no acessível — ver RECEIPT_COPY.
+  const fullscreenLabel = t("receipt.viewFullscreenShort");
+  const fullscreenAriaLabel = t(ariaKey);
 
   // Item 22: a URL não carrega tipo, então o backend manda `media_type` junto —
   // derivado da extensão armazenada, nunca de um cabeçalho do cliente. Sem esse
@@ -92,6 +109,10 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
     // com closest("div"), que passou a apontar para a caixa da mídia assim que
     // ela ganhou um elemento a mais.
     <div data-slot="receipt-preview" className="flex flex-col gap-2">
+      {/* Diz QUAL dos dois comprovantes é este. Com o botão de tela cheia
+          encurtado, é o que sobra identificando o arquivo para quem vê a tela. */}
+      <h3 className="text-sm font-medium">{t(headingKey)}</h3>
+
       <div className={MEDIA_BOX}>
         {hasFailed && (
           <p
@@ -131,10 +152,13 @@ export default function ReceiptPreview({ refundId, refundName, kind }: ReceiptPr
         size="sm"
         className="self-end"
         disabled={!file}
+        // O nome acessível continua qualificado, mesmo com os dois botões da tela
+        // mostrando o mesmo texto curto.
+        aria-label={fullscreenAriaLabel}
         onClick={() => setIsFullscreen(true)}
       >
         <Expand className="size-4" aria-hidden />
-        {fullscreenButtonLabel}
+        {fullscreenLabel}
       </Button>
 
       {/* `file &&` em vez do antigo acesso direto: o componente agora renderiza

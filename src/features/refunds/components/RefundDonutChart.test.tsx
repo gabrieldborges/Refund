@@ -171,4 +171,39 @@ describe("RefundDonutChart", () => {
     expect(screen.getByText("Nada para exibir ainda.")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
+
+  // The mobile clipping this fixes: nivo draws the leader-line label INSIDE the
+  // side margin, and the SVG clips whatever exceeds it. On a 390px screen the
+  // margin that fits is narrower than the longest label ("Rejeitado", ~60px at
+  // 13px), so the word was cut off — the reported symptom.
+  //
+  // Asserting the accessible name and not SVG geometry, for the reason recorded at
+  // the top of this file: jsdom has no layout engine, so nivo measures the
+  // container as 0x0 and draws no marks at all. What this pins is that turning the
+  // leader lines off on mobile loses NO information — every slice is still named,
+  // with its value, in the accessible name, and the legend carries identity
+  // visually.
+  it("still names every slice on a narrow viewport, with no leader lines", () => {
+    const original = window.innerWidth;
+    // use-mobile reads innerWidth on mount, so this has to be set before render.
+    window.innerWidth = 390;
+
+    try {
+      render(
+        <RefundDonutChart
+          slices={SLICES}
+          unitLabelKey="chart.requestsUnit"
+          titleKey="chart.statusTitle"
+          metric="count"
+        />
+      );
+
+      const chart = screen.getByRole("img");
+      for (const label of ["Pendente", "Aprovado", "Pago", "Rejeitado"]) {
+        expect(chart).toHaveAccessibleName(new RegExp(label));
+      }
+    } finally {
+      window.innerWidth = original;
+    }
+  });
 });

@@ -144,4 +144,41 @@ describe("ReceiptPreview", () => {
       screen.getByRole("button", { name: "Ver comprovante de pagamento em tela cheia" })
     ).toBeInTheDocument();
   });
+
+  // The qualified string overflowed the card on a 390px screen, so the VISIBLE
+  // text is now short. What must not change is the accessible name: with two
+  // previews on one screen, two buttons reading "Ver em tela cheia" would be
+  // indistinguishable to a screen reader. Hence short text, qualified aria-label.
+  it("shows short text on the fullscreen button but keeps the accessible name qualified", async () => {
+    renderPreview();
+
+    const button = await screen.findByRole("button", {
+      name: "Ver comprovante em tela cheia",
+    });
+    expect(button).toHaveTextContent("Ver em tela cheia");
+    expect(button).not.toHaveTextContent("Ver comprovante em tela cheia");
+  });
+
+  // A visible heading is what tells a sighted person which of the two files this
+  // is, now that the button no longer says so.
+  it("labels the expense preview as a receipt", async () => {
+    renderPreview();
+
+    expect(
+      await screen.findByRole("heading", { name: "Recibo" })
+    ).toBeInTheDocument();
+  });
+
+  it("labels the payment preview as a payment receipt", async () => {
+    render(
+      <QueryWrapper>
+        <ReceiptPreview refundId="1" refundName="Almoço com cliente" kind="payment" />
+      </QueryWrapper>
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Comprovante de pagamento" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Recibo" })).toBeNull();
+  });
 });

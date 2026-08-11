@@ -41,11 +41,17 @@ const CHROME = {
 // largura para a rosca.
 function chartMargin(isMobile: boolean) {
   return isMobile
-    ? // bottom bem maior que no desktop apesar da tela menor: aqui a legenda
+    ? // Laterais mínimas no mobile porque ali NÃO há leader line: quem identifica
+      // as fatias é a legenda (ver enableArcLinkLabels abaixo). Antes eram 40px
+      // reservados para os rótulos, e "Rejeitado" a 13px mede ~60px — o SVG
+      // cortava a palavra na borda da margem. Sem leader line, esses 80px
+      // somados voltam para o diâmetro da rosca.
+      //
+      // bottom bem maior que no desktop apesar da tela menor: aqui a legenda
       // ocupa DUAS linhas (ver buildLegends) e ainda respira MOBILE_LEGEND_GAP
       // do gráfico. A margem é o que reserva esse espaço — sem ela a segunda
       // linha é cortada pela borda do SVG.
-      { top: 24, right: 40, bottom: 92 + MOBILE_LEGEND_GAP, left: 40 }
+      { top: 12, right: 8, bottom: 92 + MOBILE_LEGEND_GAP, left: 8 }
     : { top: 40, right: 80, bottom: 80, left: 80 };
 }
 
@@ -189,6 +195,13 @@ export default function RefundDonutChart({
         // nivo já resolveu a partir do dado, para a tradução continuar tendo
         // uma origem só.
         arcLinkLabel={(slice: Slice) => String(slice.label)}
+        // Desligadas no mobile. Em 390px a margem lateral que caberia é menor que
+        // a palavra mais longa ("Rejeitado", ~60px), então o rótulo era cortado
+        // pela borda do SVG — o sintoma de "as palavras das setas estão cortadas".
+        // A legenda embaixo já identifica as quatro fatias ali, e o VALOR de cada
+        // uma continua impresso dentro do próprio arco (arcLabels), então nada se
+        // perde: a leader line era redundante além de cortada.
+        enableArcLinkLabels={!isMobile}
         arcLinkLabelsSkipAngle={10}
         arcLinkLabelsTextColor={chrome.label}
         arcLinkLabelsThickness={2}

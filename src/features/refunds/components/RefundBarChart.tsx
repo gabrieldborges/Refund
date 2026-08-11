@@ -24,12 +24,14 @@ interface RefundBarChartProps {
 }
 
 // UMA cor para todas as barras, e isso é decisão, não economia. A identidade de
-// cada barra já está no eixo X, como rótulo de texto — pintar cada uma de uma cor
+// cada barra já está no eixo Y, como rótulo de texto — pintar cada uma de uma cor
 // seria codificação redundante, e a paleta tem 4 slots para 5 categorias, então
 // ciclar repetiria a primeira cor sem erro nenhum. Ver o comentário de sliceColor.
 const BAR_COLOR = PALETTE[1];
 
-// Barras VERTICAIS: categoria no eixo X, valor no eixo Y.
+// Barras HORIZONTAIS: categoria no eixo Y, valor no eixo X. Os rótulos são texto
+// ("Alimentação", "Hospedagem"), e no eixo vertical eles ficam legíveis sem rotação
+// e sem colidir — inclusive no mobile, que foi o que decidiu a orientação.
 export default function RefundBarChart({
   bars,
   titleKey,
@@ -47,11 +49,16 @@ export default function RefundBarChart({
   const scale = valueScaleFor(bars.map((bar) => bar.cents));
   const integer = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 0 });
 
-  const data = bars.map((bar) => ({
-    label: t(bar.labelKey),
-    value: scaleValue(bar.cents, scale),
-    cents: bar.cents,
-  }));
+  // Ordenado do menor para o maior. O nivo desenha a primeira linha do array em
+  // BAIXO no layout horizontal, então crescente aqui produz a maior barra no topo —
+  // que é a ordem em que se lê "qual é a maior" sem varrer o eixo.
+  const data = [...bars]
+    .sort((a, b) => a.cents - b.cents)
+    .map((bar) => ({
+      label: t(bar.labelKey),
+      value: scaleValue(bar.cents, scale),
+      cents: bar.cents,
+    }));
 
   const total = bars.reduce((sum, bar) => sum + bar.cents, 0);
 
@@ -78,25 +85,23 @@ export default function RefundBarChart({
           data={data}
           keys={["value"]}
           indexBy="label"
-          layout="vertical"
-          margin={{ top: 8, right: 12, bottom: isMobile ? 60 : 40, left: 44 }}
+          layout="horizontal"
+          // left generoso: é onde os nomes das categorias vivem. 96px cabe
+          // "Alimentação" a 13px; menos que isso o nivo corta a palavra, que é o
+          // mesmo defeito que a rosca tinha no mobile.
+          margin={{ top: 8, right: 16, bottom: 32, left: isMobile ? 88 : 96 }}
           colors={BAR_COLOR}
           padding={0.3}
           borderRadius={4}
-          enableGridX={false}
-          enableGridY
-          axisLeft={{
-            tickSize: 0,
-            tickPadding: 8,
-            format: (value: number) => integer.format(value),
-          }}
+          // Grade na horizontal, que é a direção em que se compara valor agora.
+          enableGridX
+          enableGridY={false}
+          // Sem format: aqui o eixo carrega os NOMES das categorias.
+          axisLeft={{ tickSize: 0, tickPadding: 8 }}
           axisBottom={{
             tickSize: 0,
             tickPadding: 8,
-            // No mobile os cinco rótulos de categoria não cabem lado a lado, então
-            // eles giram em vez de colidir ou serem cortados. No desktop cabem
-            // retos.
-            tickRotation: isMobile ? -45 : 0,
+            format: (value: number) => integer.format(value),
           }}
           enableLabel={false}
           tooltip={({ indexValue, data: datum }) => (
