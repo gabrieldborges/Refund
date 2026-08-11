@@ -142,45 +142,55 @@ export default function PageCalendar() {
           </CardContent>
         </Card>
 
+        {/* O painel do dia fica AO LADO da grade, e o gráfico do mês desceu para
+            baixo dele — a ordem que se lê é: escolher o dia, ver o que houve nele, e
+            só então o mês inteiro como contexto.
+            
+            O card existe mesmo sem dia escolhido, com uma dica no lugar do conteúdo:
+            antes a segunda coluna ficava vazia até alguém clicar, e nada na tela
+            dizia que clicar era possível. */}
         <Card>
           <CardHeader>
             <CardTitle>
               <h2 className="text-sm font-medium">
-                {t("calendar.monthChartTitle")}{" "}
-                <span className="font-normal text-muted-foreground">
-                  {monthTitle(month, i18n.language)}
-                </span>
+                {day
+                  ? t("calendar.dayTitle", {
+                      date: new Intl.DateTimeFormat(i18n.language, {
+                        dateStyle: "long",
+                      }).format(toLocalDate(day)),
+                    })
+                  : t("calendar.dayPickPrompt")}
               </h2>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <MonthCountsChart
-              days={data?.days ?? []}
-              isLoading={isLoading}
-              isError={isError}
-            />
+            {day ? (
+              <DayRefundsPanel day={day} viewer={viewer} />
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("calendar.dayPickHint")}</p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {day && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2 className="text-sm font-medium">
-                {t("calendar.dayTitle", {
-                  date: new Intl.DateTimeFormat(i18n.language, { dateStyle: "long" }).format(
-                    toLocalDate(day)
-                  ),
-                })}
-              </h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DayRefundsPanel day={day} viewer={viewer} />
-          </CardContent>
-        </Card>
-      )}
+      {/* Largura inteira: o gráfico é o único elemento com eixo de tempo, e 31 dias
+          num meio de tela ficam apertados. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h2 className="text-sm font-medium">
+              {t("calendar.monthChartTitle")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {monthTitle(month, i18n.language)}
+              </span>
+            </h2>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MonthCountsChart days={data?.days ?? []} isLoading={isLoading} isError={isError} />
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

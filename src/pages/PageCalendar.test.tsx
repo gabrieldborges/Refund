@@ -106,11 +106,33 @@ describe("PageCalendar", () => {
     expect(await screen.findByText("Nenhuma solicitação neste dia.")).toBeInTheDocument();
   });
 
-  it("shows no day panel until a day is chosen", async () => {
+  // The card is present even with no day chosen, showing a hint instead of a list:
+  // before, the second column was simply empty until somebody clicked, and nothing on
+  // screen said clicking was possible.
+  it("invites choosing a day before one is chosen", async () => {
     renderCalendar();
     await screen.findByRole("button", { name: /Dia 3, 2 solicitações/ });
 
+    expect(
+      screen.getByText("Escolha um dia no calendário para ver as solicitações dele.")
+    ).toBeInTheDocument();
+    // And no list of a day's requests yet — the heading names a day only once one is
+    // picked.
     expect(screen.queryByText(/Solicitações de /)).toBeNull();
+  });
+
+  // The order the screen reads in: pick a day, see what happened on it, and only then
+  // the whole month as context. Asserted on document position, because "below" is the
+  // request and CSS order would not show up in the tree.
+  it("puts the month chart below the day's requests", async () => {
+    renderCalendar("2026-08", "2026-08-03");
+    await screen.findByRole("button", { name: /Dia 3, 2 solicitações/ });
+
+    const dayHeading = screen.getByText(/Solicitações de /);
+    const chartHeading = screen.getByText("Solicitações por dia");
+
+    // Node.compareDocumentPosition: 4 means the argument FOLLOWS the reference node.
+    expect(dayHeading.compareDocumentPosition(chartHeading) & 4).toBeTruthy();
   });
 
   it("names the scope the server returned", async () => {

@@ -37,6 +37,7 @@ export default function AvatarUploadDialog({
   const { t } = useTranslation();
   const [rejectionKey, setRejectionKey] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const { data: current } = useAvatarUrl(userId);
   const upload = useUploadAvatar(userId);
@@ -90,8 +91,22 @@ export default function AvatarUploadDialog({
             tela de 390px sobrava largura demais pouca para o nome do arquivo. */}
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
           {/* A foto atual, no mesmo componente que o resto da aplicação usa: se ela
-              renderizar errado aqui, renderiza errado em todo lugar. */}
-          <UserAvatar userId={userId} name={name} className="size-20 shrink-0 sm:size-16" />
+              renderizar errado aqui, renderiza errado em todo lugar.
+              
+              Clicável só quando HÁ foto: um botão que amplia as iniciais não amplia
+              nada. Sem foto ela é só a imagem, sem afordância de clique. */}
+          {current?.url ? (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              aria-label={t("avatar.viewFullscreen")}
+              className="shrink-0 rounded-full ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <UserAvatar userId={userId} name={name} className="size-20 sm:size-16" />
+            </button>
+          ) : (
+            <UserAvatar userId={userId} name={name} className="size-20 shrink-0 sm:size-16" />
+          )}
           {/* min-w-0 é o que permite o nome longo do arquivo encurtar em vez de
               empurrar o campo — a armadilha que o próprio InputFile documenta. */}
           <div className="w-full min-w-0 sm:flex-1">
@@ -156,6 +171,30 @@ export default function AvatarUploadDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Diálogo IRMÃO, não aninhado dentro do DialogContent acima: dois
+          DialogContent na mesma árvore disputam o foco e o scroll-lock do Radix, e o
+          de dentro herda o `max-w` do de fora. Como irmãos do mesmo <Dialog> raiz,
+          cada um controla o seu próprio estado.
+          
+          Mesma forma do tela cheia do comprovante: sm:max-w-3xl com object-contain,
+          que aqui é o certo — ampliar é para VER a foto inteira, ao contrário do
+          avatar, onde cover recorta para preencher o círculo. */}
+      {current?.url && (
+        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{name}</DialogTitle>
+              <DialogDescription>{t("avatar.fullscreenDescription")}</DialogDescription>
+            </DialogHeader>
+            <img
+              src={current.url}
+              alt={name}
+              className="max-h-[70vh] w-full rounded-lg object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }

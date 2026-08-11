@@ -114,3 +114,35 @@ describe("AvatarUploadDialog", () => {
     await waitFor(() => expect(uploaded).toBe(true));
   });
 });
+
+describe("AvatarUploadDialog fullscreen", () => {
+  // Enlarging exists to SEE the whole photo, so the fullscreen image uses
+  // object-contain — the opposite of the avatar itself, where cover crops to fill the
+  // circle. Two different jobs, two different fits.
+  it("opens the photo enlarged when it is clicked", async () => {
+    server.use(
+      http.get("*/users/:id/avatar", () =>
+        HttpResponse.json({ url: "http://localhost/foto.png", media_type: "image/png" })
+      )
+    );
+    renderDialog();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Ver a foto em tela cheia" })
+    );
+
+    const enlarged = await screen.findByAltText("Ana Souza");
+    expect(enlarged).toHaveAttribute("src", "http://localhost/foto.png");
+    expect(enlarged.className).toContain("object-contain");
+  });
+
+  // No photo, nothing to enlarge: a button that magnifies the initials magnifies
+  // nothing, so the avatar is not clickable at all in that state.
+  it("offers no way to enlarge when there is no photo", async () => {
+    server.use(http.get("*/users/:id/avatar", () => new HttpResponse(null, { status: 404 })));
+    renderDialog();
+
+    await screen.findByText("Arquivo da foto");
+    expect(screen.queryByRole("button", { name: "Ver a foto em tela cheia" })).toBeNull();
+  });
+});
