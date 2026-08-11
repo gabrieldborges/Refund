@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Sidebar from "./Sidebar";
 import { AuthContext } from "@/context/auth-context";
 import { useUiStore, DEFAULT_LOCALE } from "@/stores/ui";
@@ -74,6 +74,63 @@ describe("Sidebar", () => {
     renderSidebar();
     await user.click(screen.getByRole("button", { name: "Sair" }));
     expect(logout).toHaveBeenCalledOnce();
+  });
+});
+
+// On mobile the sidebar is an overlay drawer, so navigating without closing it
+// leaves the new page hidden behind the panel: the user has to tap a second
+// time just to see the result of the first.
+describe("Sidebar on mobile", () => {
+  const originalInnerWidth = window.innerWidth;
+
+  // useIsMobile reads window.innerWidth on mount, so the width has to be set
+  // before render — not after.
+  beforeEach(() => {
+    window.innerWidth = 390;
+  });
+
+  afterEach(() => {
+    window.innerWidth = originalInnerWidth;
+  });
+
+  // SidebarTrigger is rendered here only to open the drawer: it lives in the
+  // Topbar in the real app, and without it there is no way to reach the open
+  // state this test is about.
+  function renderMobileSidebar() {
+    return render(
+      <MemoryRouter>
+        <AuthContext.Provider
+          value={{
+            user: { id: 1, name: "Gabriel Dantas", email: "gabriel@x.com", role: "standard" },
+            isAuthenticated: true,
+            login: vi.fn(),
+            register: vi.fn(),
+            logout,
+          }}
+        >
+          <SidebarProvider>
+            <SidebarTrigger />
+            <Sidebar />
+          </SidebarProvider>
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+  }
+
+  it("closes the drawer when a navigation link is followed", async () => {
+    const user = userEvent.setup();
+    renderMobileSidebar();
+
+    await user.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+    const link = await screen.findByRole("link", { name: /Solicitações/ });
+    // Asserted explicitly so the test cannot pass vacuously: without this, a
+    // drawer that never opened would also satisfy the "closed" check below.
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.click(link);
+
+    // The drawer is a Radix dialog: closed means unmounted, not hidden.
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });
 
