@@ -13,12 +13,12 @@ const logout = vi.fn();
 // The shadcn sidebar reads its open/collapsed state from context, so the
 // component under test needs a SidebarProvider, plus the router wrapper it
 // already needed for its <Link> items.
-function renderSidebar() {
+function renderSidebar(role: "standard" | "admin" = "standard") {
   return render(
     <MemoryRouter>
       <AuthContext.Provider
         value={{
-          user: { id: 1, name: "Gabriel Dantas", email: "gabriel@x.com", role: "standard" },
+          user: { id: 1, name: "Gabriel Dantas", email: "gabriel@x.com", role },
           isAuthenticated: true,
           login: vi.fn(),
           register: vi.fn(),
@@ -65,8 +65,30 @@ describe("Sidebar", () => {
   it("shows the coming-soon badge on disabled items", () => {
     renderSidebar();
     expect(screen.getByRole("button", { name: /Dashboard/ })).toBeDisabled();
-    // One badge per disabled item (Dashboard, Time, Calendário).
-    expect(screen.getAllByText("em breve")).toHaveLength(3);
+    // One badge per disabled item. Time left this list when the team directory
+    // shipped, so two remain: Dashboard and Calendário, cycles 2 and 3.
+    expect(screen.getAllByText("em breve")).toHaveLength(2);
+  });
+
+  // Time is admin-only. It disappears for a standard user rather than rendering
+  // disabled: a greyed-out item reads as "not yet", and this is "not ever, for
+  // you". The route guards itself too, and the API refuses regardless (BR-025).
+  it("hides admin-only items from a standard user", () => {
+    renderSidebar("standard");
+    expect(screen.queryByText("Time")).not.toBeInTheDocument();
+  });
+
+  it("shows admin-only items to an admin, as a real link", () => {
+    renderSidebar("admin");
+    expect(screen.getByRole("link", { name: /Time/ })).toHaveAttribute("href", "/team");
+  });
+
+  // The badge count must not change with the role: hiding an item is not the
+  // same as marking it coming-soon, and conflating the two would let a
+  // regression in either mechanism pass.
+  it("keeps the coming-soon count the same for an admin", () => {
+    renderSidebar("admin");
+    expect(screen.getAllByText("em breve")).toHaveLength(2);
   });
 
   it("logs out and navigates when Sair is clicked", async () => {

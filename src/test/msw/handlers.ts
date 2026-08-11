@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { REFUNDS_PER_PAGE } from "@/features/refunds";
+import { USERS_PER_PAGE } from "@/features/team";
 
 // Shared fixtures. Tests import these to assert against the exact data the
 // mocked network returned, instead of duplicating literals. Shapes mirror the
@@ -16,6 +17,28 @@ export const refundFixture = {
   created_at: "2026-07-20T12:00:00.000Z",
   user: { id: 1, name: "Ana Souza", has_avatar: false },
 };
+
+// The team directory (UC-015 / UC-016). Two people with different roles, so a
+// test can tell the two badges apart, and one with a null created_at, because
+// the column is nullable and one row without a date must not break the table.
+export const usersFixture = [
+  {
+    id: 1,
+    name: "Ana Souza",
+    email: "ana@example.com",
+    role: "standard" as const,
+    has_avatar: false,
+    created_at: "2026-01-02T03:04:05",
+  },
+  {
+    id: 2,
+    name: "Chefe Silva",
+    email: "chefe@example.com",
+    role: "admin" as const,
+    has_avatar: false,
+    created_at: null,
+  },
+];
 
 // The login payload, matching loginResponseSchema.
 export const loginFixture = {
@@ -153,5 +176,42 @@ export const handlers = [
   // Refund stats: counts and cent sums grouped by status for a user.
   http.get("*/users/:id/refund-stats", ({ params }) => {
     return HttpResponse.json({ ...refundStatsFixture, user_id: Number(params.id) });
+  }),
+
+  // Users listing (UC-015). Honours `name`, `page` and `per_page` instead of
+  // always answering the whole array: a handler that ignored the search would
+  // let a debounce test pass while proving only that a list renders.
+  //
+  // Declared AFTER "*/users/:id/refund-stats" — MSW resolves in registration
+  // order, and a bare "*/users/:id" registered first would swallow it.
+  http.get("*/users", ({ request }) => {
+    const url = new URL(request.url);
+    const name = url.searchParams.get("name")?.toLowerCase();
+    const page = Number(url.searchParams.get("page") ?? 1);
+    const perPage = Number(url.searchParams.get("per_page") ?? USERS_PER_PAGE);
+
+    const filtered = name
+      ? usersFixture.filter((user) => user.name.toLowerCase().includes(name))
+      : usersFixture;
+    const start = (page - 1) * perPage;
+    const attributes = filtered.slice(start, start + perPage);
+
+    return HttpResponse.json({
+      type: "User",
+      count: attributes.length,
+      total: filtered.length,
+      page,
+      per_page: perPage,
+      // 0 and not 1 for an empty set, matching the API (UC-015).
+      total_pages: filtered.length ? Math.ceil(filtered.length / perPage) : 0,
+      attributes,
+    });
+  }),
+
+  // A single user (UC-016). 404 for an unknown id, like the API.
+  http.get("*/users/:id", ({ params }) => {
+    const user = usersFixture.find((candidate) => candidate.id === Number(params.id));
+    if (!user) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json({ type: "User", count: 1, attributes: user });
   }),
 ];

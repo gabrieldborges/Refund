@@ -3,7 +3,13 @@ import MainLayout from "./components/core/MainLayout";
 import ProtectedRoute from "./components/core/ProtectedRoute";
 import ContentError from "./components/core/ContentError";
 import PageRouteError from "./pages/PageRouteError";
-import { homeLoader, refundDetailLoader, reviewLoader } from "./router-loaders";
+import {
+  homeLoader,
+  refundDetailLoader,
+  reviewLoader,
+  teamLoader,
+  teamMemberLoader,
+} from "./router-loaders";
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +58,20 @@ export const router = createBrowserRouter([
                     handle: { titleKey: "routes.detail" },
                     lazy: async () => ({
                       Component: (await import("./pages/PageRefundDetails")).default,
+                    }),
+                  },
+                  {
+                    path: "/team",
+                    loader: teamLoader,
+                    handle: { titleKey: "routes.team" },
+                    lazy: async () => ({ Component: (await import("./pages/PageTeam")).default }),
+                  },
+                  {
+                    path: "/team/:id",
+                    loader: teamMemberLoader,
+                    handle: { titleKey: "routes.teamMember" },
+                    lazy: async () => ({
+                      Component: (await import("./pages/PageTeamMember")).default,
                     }),
                   },
                   {

@@ -124,7 +124,11 @@ export default function AppSidebar() {
               centers a 16px icon exactly) — what needs centering is the whole
               button *within* the wider 48px rail, so that centering belongs
               on the row (SidebarMenuItem), not inside the button. */}
-          {NAV_ITEMS.map((item) => {
+          {/* Itens admin-only somem para quem não é admin, em vez de aparecerem
+              desabilitados: um item cinza sugere "ainda não", e este não é o
+              caso — a pessoa nunca vai poder abri-lo. O selo "em breve" continua
+              sendo para o que ainda não existe. */}
+          {NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === "admin").map((item) => {
             const Icon = item.icon;
             return (
               <SidebarMenuItem key={item.to}  className="h-17.5 flex items-center group-data-[collapsible=icon]:justify-center">

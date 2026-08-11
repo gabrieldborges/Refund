@@ -8,6 +8,12 @@ import {
   refundListQuery,
   refundListSearchParamsSchema,
 } from "@/features/refunds";
+import {
+  USERS_PER_PAGE,
+  userDetailQuery,
+  userListQuery,
+  userListSearchParamsSchema,
+} from "@/features/team";
 
 // Devolve a sessão salva já validada por storedUserSchema, ou null se não
 // houver usuário salvo ou o valor salvo não bater com o schema (JSON
@@ -45,6 +51,21 @@ function requireSession() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     throw redirect("/login");
+  }
+}
+
+// Guarda de papel para as rotas do diretório (BR-025). Guarda de UI, não de
+// segurança — a mesma ressalva do reviewLoader: quem protege os dados é a API,
+// respondendo 403 na listagem e 404 na consulta. Isto só evita OFERECER uma
+// página que seria recusada.
+//
+// NÃO serve para o reviewLoader, e a diferença não é estilo: ali o destino do
+// redirecionamento é o detalhe da solicitação, e a condição inclui a regra de o
+// admin não revisar a própria (BR-016). Unificar as duas trocaria o destino de
+// uma delas em silêncio.
+function requireAdmin() {
+  if (readStoredUser()?.role !== "admin") {
+    throw redirect("/");
   }
 }
 
@@ -93,6 +114,45 @@ export async function homeLoader({ request }: LoaderFunctionArgs) {
   await queryClient.ensureQueryData(refundListQuery(queryParams));
 
   return queryParams;
+}
+
+export async function teamLoader({ request }: LoaderFunctionArgs) {
+  requireSession();
+  requireAdmin();
+
+  const url = new URL(request.url);
+  const { page, name } = userListSearchParamsSchema.parse({
+    page: url.searchParams.get("page") ?? undefined,
+    name: url.searchParams.get("name") ?? undefined,
+  });
+
+  const normalizedSearchParams = new URLSearchParams(url.searchParams);
+  setOrDelete(normalizedSearchParams, "page", page > 1 ? String(page) : undefined);
+  setOrDelete(normalizedSearchParams, "name", name);
+
+  if (normalizedSearchParams.toString() !== url.searchParams.toString()) {
+    const normalizedSearch = normalizedSearchParams.toString();
+    throw redirect(`${url.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`);
+  }
+
+  const queryParams = { page, perPage: USERS_PER_PAGE, name };
+
+  await queryClient.ensureQueryData(userListQuery(queryParams));
+
+  return queryParams;
+}
+
+export async function teamMemberLoader({ params }: LoaderFunctionArgs) {
+  requireSession();
+  requireAdmin();
+
+  if (!params.id) {
+    throw new Response("User ID is required", { status: 400 });
+  }
+
+  await queryClient.ensureQueryData(userDetailQuery(params.id));
+
+  return { id: params.id };
 }
 
 export async function refundDetailLoader({ params }: LoaderFunctionArgs) {

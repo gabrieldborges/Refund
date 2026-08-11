@@ -84,7 +84,13 @@ export default function RequesterPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{requester.name}</CardTitle>
+        {/* <h2> aninhado porque o CardTitle do registry é uma <div>: ela dá o
+            estilo, não a semântica. Sem isto, o <h3> "Solicitações" do painel
+            abaixo seria um heading sem nada acima dele. Mesma correção da página
+            do membro do time, que renderiza o mesmo painel. */}
+        <CardTitle>
+          <h2>{requester.name}</h2>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <RefundStatsPanel
