@@ -64,10 +64,6 @@ export default function PageDashboard() {
 
   const byStatus = summary?.by_status;
 
-  const totalRequests = byStatus
-    ? Object.values(byStatus).reduce((sum, bucket) => sum + bucket.count, 0)
-    : 0;
-
   // Aprovado + pago, e NÃO a soma dos quatro. Somar os quatro juntaria previsão
   // (pendente), passivo (aprovado), despesa realizada (paga) e nada (rejeitada) —
   // a decisão registrada em UC-014. Este é o número que o card da Home deveria
@@ -88,27 +84,20 @@ export default function PageDashboard() {
         {summary && <YearPicker summary={summary} />}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label={t("dashboard.totalRequests")}
-          value={String(totalRequests)}
-          tone={KPI_TONES.total}
-          isLoading={isLoading}
-          isError={isError}
-          errorMessage={t("dashboard.loadError")}
-        />
+      {/* UM indicador, não três. A contagem total e a de pendentes saíram porque a
+          rosca de status já as mostra — as fatias são as contagens por status, e o
+          total ocupa o miolo do gráfico. Repetir um número que está dois
+          centímetros abaixo não informa; ocupa espaço e convida a comparar dois
+          lugares que dizem a mesma coisa.
+      
+          Aprovado + pago fica porque NÃO está em gráfico nenhum: os quatro gráficos
+          mostram contagem por status, valor por categoria, valor por mês e status
+          por mês. Nenhum deles responde "quanto a empresa já assumiu e pagou". */}
+      <div className="grid gap-4 sm:max-w-xs">
         <StatCard
           label={t("dashboard.settledValue")}
           value={formatCentsToBRL(settled)}
           tone={KPI_TONES.settled}
-          isLoading={isLoading}
-          isError={isError}
-          errorMessage={t("dashboard.loadError")}
-        />
-        <StatCard
-          label={t("dashboard.pending")}
-          value={String(byStatus?.pending.count ?? 0)}
-          tone={KPI_TONES.pending}
           isLoading={isLoading}
           isError={isError}
           errorMessage={t("dashboard.loadError")}

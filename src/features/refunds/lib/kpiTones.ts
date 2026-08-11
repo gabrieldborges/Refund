@@ -18,9 +18,10 @@ function tone(background: string) {
   return { background, foreground: readableTextOn(background) };
 }
 
-// A sequência dos três indicadores, usada tanto pelo Dashboard quanto pela Home —
-// as duas telas mostram os mesmos três números na mesma ordem, então mostram as
-// mesmas três cores na mesma ordem.
+// As cores dos indicadores. A Home mostra os três, na ordem em que estão aqui. O
+// Dashboard mostra só `settled`: a contagem total e a de pendentes saíram de lá
+// porque a rosca de status já as mostra — as fatias são as contagens, e o total fica
+// no miolo do gráfico.
 //
 // "Aprovado + pago" e "Pendentes" ficam com as cores que a rosca usa para aprovado
 // e pendente: mesma entidade, mesma cor. "Solicitações" é um total, que não é
@@ -36,11 +37,3 @@ export const KPI_TONES = {
   settled: tone(sliceColor(STATUS_SLICES, "approved")),
   pending: tone(sliceColor(STATUS_SLICES, "pending")),
 } as const;
-
-// A mesma sequência como lista, para a Home percorrer os cards na ordem sem
-// repetir os nomes das chaves.
-export const KPI_TONE_SEQUENCE = [
-  KPI_TONES.total,
-  KPI_TONES.settled,
-  KPI_TONES.pending,
-] as const;

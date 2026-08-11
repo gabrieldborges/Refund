@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KPI_TONES, KPI_TONE_SEQUENCE } from "./kpiTones";
+import { KPI_TONES } from "./kpiTones";
 import { PALETTE, sliceColor, type DonutSlice } from "./chartPalette";
 
 // WCAG relative luminance, which is NOT the weighted average readableTextOn uses
@@ -19,6 +19,11 @@ function contrastRatio(a: string, b: string): number {
   return (high + 0.05) / (low + 0.05);
 }
 
+// A ordem em que a Home desenha os cards. Enumerada aqui em vez de exportada do
+// módulo: o Dashboard passou a usar só um dos três, então uma "sequência" exportada
+// existiria apenas para este teste.
+const CARD_ORDER = [KPI_TONES.total, KPI_TONES.settled, KPI_TONES.pending];
+
 const STATUS_SLICES: DonutSlice[] = [
   { id: "pending", labelKey: "status.pending", value: 0 },
   { id: "approved", labelKey: "status.approved", value: 0 },
@@ -31,7 +36,7 @@ describe("KPI_TONES", () => {
   // and collided — the total and "Pendentes" both landed on #1D3557, two cards of
   // the same colour side by side. Three cards, three colours.
   it("gives each of the three cards a distinct background", () => {
-    const backgrounds = KPI_TONE_SEQUENCE.map((tone) => tone.background);
+    const backgrounds = CARD_ORDER.map((tone) => tone.background);
 
     expect(new Set(backgrounds).size).toBe(3);
   });
@@ -48,7 +53,7 @@ describe("KPI_TONES", () => {
   });
 
   it("draws every background from the chart palette", () => {
-    for (const tone of KPI_TONE_SEQUENCE) {
+    for (const tone of CARD_ORDER) {
       expect(PALETTE).toContain(tone.background);
     }
   });
@@ -58,18 +63,14 @@ describe("KPI_TONES", () => {
   // large, but the uppercase label above them is small, so the stricter bar is the
   // right one.
   it("keeps every card's text at AA contrast or better", () => {
-    for (const tone of KPI_TONE_SEQUENCE) {
+    for (const tone of CARD_ORDER) {
       expect(contrastRatio(tone.background, tone.foreground)).toBeGreaterThanOrEqual(4.5);
     }
   });
 
-  // The sequence is what both screens iterate, so its order is part of the
-  // contract: the dashboard and the Home must not drift apart.
-  it("exposes the three tones in card order", () => {
-    expect(KPI_TONE_SEQUENCE).toEqual([
-      KPI_TONES.total,
-      KPI_TONES.settled,
-      KPI_TONES.pending,
-    ]);
+  // The Home draws all three; the dashboard draws only `settled`, because the
+  // status donut already carries the other two numbers.
+  it("names a tone for each of the home's three cards", () => {
+    expect(Object.keys(KPI_TONES).sort()).toEqual(["pending", "settled", "total"]);
   });
 });

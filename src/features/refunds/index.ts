@@ -96,4 +96,4 @@ export { default as DashboardCharts } from "./components/DashboardCharts";
 // As cores de fundo dos três indicadores do Dashboard, derivadas da paleta dos
 // gráficos com o texto calculado para contraste. Exportado como dado, não como
 // componente: quem monta o card é a página.
-export { KPI_TONES, KPI_TONE_SEQUENCE } from "./lib/kpiTones";
+export { KPI_TONES } from "./lib/kpiTones";

@@ -46,13 +46,6 @@ beforeEach(() => {
 });
 
 describe("PageDashboard", () => {
-  it("shows the request count summed across every status", async () => {
-    renderPage();
-
-    // 2 + 3 + 1 + 4 from the fixture.
-    expect(await screen.findByText("10")).toBeInTheDocument();
-  });
-
   // The number the Home never had. Approved + paid, NOT the sum of all four:
   // summing the four would mix a forecast, a liability, a settled expense and
   // nothing. The fixture is built so the two arithmetics differ.
@@ -65,11 +58,24 @@ describe("PageDashboard", () => {
     expect(screen.queryByText("R$ 180,00")).toBeNull();
   });
 
-  it("shows the pending count", async () => {
+  // The status donut already carries both of these: its slices ARE the counts per
+  // status, and its centre holds the total. A card repeating a number that sits two
+  // centimetres below it does not inform — it invites comparing two places that say
+  // the same thing.
+  it("does not repeat what the status chart already shows", async () => {
     renderPage();
-    await screen.findByText("10");
+    await screen.findByText("R$ 60,00");
 
-    expect(screen.getByText("Pendentes")).toBeInTheDocument();
+    expect(screen.queryByText("Pendentes")).toBeNull();
+    expect(screen.queryByText("Solicitações")).toBeNull();
+  });
+
+  // And exactly one indicator remains, so nobody re-adds them without this failing.
+  it("keeps a single indicator card", async () => {
+    renderPage();
+    await screen.findByText("R$ 60,00");
+
+    expect(screen.getByText("Aprovado + pago")).toBeInTheDocument();
   });
 
   // The same charts mean different things for an admin and a requester, so the
@@ -95,7 +101,7 @@ describe("PageDashboard", () => {
   // twelve ticks, and on the axis it would spend the width mobile does not have.
   it("renders the four chart cards, each naming the year", async () => {
     renderPage();
-    await screen.findByText("10");
+    await screen.findByText("R$ 60,00");
 
     for (const title of [
       /Solicitações por status 2026/,
@@ -112,7 +118,7 @@ describe("PageDashboard", () => {
   // thousands scale would show 0 for everything here.
   it("labels the value charts with the unit the data deserves", async () => {
     renderPage();
-    await screen.findByText("10");
+    await screen.findByText("R$ 60,00");
 
     expect(screen.getAllByText("em reais").length).toBeGreaterThan(0);
     expect(screen.queryByText("em milhares de reais")).toBeNull();
@@ -120,7 +126,7 @@ describe("PageDashboard", () => {
 
   it("offers a year picker with the years that have data", async () => {
     renderPage();
-    await screen.findByText("10");
+    await screen.findByText("R$ 60,00");
 
     expect(screen.getByLabelText("Ano")).toBeInTheDocument();
   });
@@ -142,7 +148,7 @@ describe("PageDashboard", () => {
       )
     );
     renderPage();
-    await screen.findByText("10");
+    await screen.findByText("R$ 60,00");
 
     expect(screen.queryByLabelText("Ano")).toBeNull();
   });

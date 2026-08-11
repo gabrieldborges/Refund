@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
@@ -107,12 +107,19 @@ describe("RequesterPanel", () => {
     renderPanel();
 
     const chart = await screen.findByRole("img", { name: /Solicitações por status/ });
-    const label = chart.getAttribute("aria-label") ?? "";
 
-    expect(label).toContain(`Pendente: ${refundStatsFixture.by_status.pending.count}`);
-    expect(label).toContain(`Aprovado: ${refundStatsFixture.by_status.approved.count}`);
-    expect(label).toContain(`Pago: ${refundStatsFixture.by_status.paid.count}`);
-    expect(label).toContain(`Rejeitado: ${refundStatsFixture.by_status.rejected.count}`);
+    // waitFor and not a single read of the attribute: the name matches the regex
+    // as soon as the chart mounts, which can be BEFORE the stats query has filled
+    // the counts in — the chart is lazy-loaded behind Suspense, so the two arrive
+    // independently. Reading once made this flake under load; waiting retries
+    // until the label is complete instead of failing on a partial one.
+    await waitFor(() => {
+      const label = chart.getAttribute("aria-label") ?? "";
+      expect(label).toContain(`Pendente: ${refundStatsFixture.by_status.pending.count}`);
+      expect(label).toContain(`Aprovado: ${refundStatsFixture.by_status.approved.count}`);
+      expect(label).toContain(`Pago: ${refundStatsFixture.by_status.paid.count}`);
+      expect(label).toContain(`Rejeitado: ${refundStatsFixture.by_status.rejected.count}`);
+    });
   });
 
   // Same gap flagged and fixed on the Home in Task 2: a failed stats request
