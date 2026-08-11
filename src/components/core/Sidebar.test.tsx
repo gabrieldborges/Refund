@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Sidebar from "./Sidebar";
 import { AuthContext } from "@/context/auth-context";
-import { useUiStore } from "@/stores/ui";
+import { useUiStore, DEFAULT_LOCALE } from "@/stores/ui";
+import { setTestLocale } from "@/test/i18n";
 
 const logout = vi.fn();
 
@@ -34,8 +35,14 @@ function renderSidebar() {
 
 beforeEach(() => {
   localStorage.clear();
-  useUiStore.setState({ theme: "light", sidebarCollapsed: false });
+  useUiStore.setState({ theme: "light", locale: DEFAULT_LOCALE, sidebarCollapsed: false });
   logout.mockClear();
+});
+
+// i18next is module-level state shared across every test file, so a test that
+// switches language has to switch back or it leaks into whatever runs next.
+afterEach(async () => {
+  await setTestLocale(DEFAULT_LOCALE);
 });
 
 describe("Sidebar", () => {
@@ -67,5 +74,43 @@ describe("Sidebar", () => {
     renderSidebar();
     await user.click(screen.getByRole("button", { name: "Sair" }));
     expect(logout).toHaveBeenCalledOnce();
+  });
+});
+
+// These two controls used to live in the Topbar, where they crowded the title
+// on narrow screens. The behaviour did not change with the move, so neither did
+// the assertions — only the component they run against.
+describe("Sidebar preferences", () => {
+  it("toggles the theme in the store", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+    await user.click(screen.getByRole("button", { name: "Alternar tema" }));
+    expect(useUiStore.getState().theme).toBe("dark");
+  });
+
+  // The click has to do two things: record the choice in the store AND load
+  // the catalogue. Asserting only the store would pass even if the interface
+  // never changed language, which is the whole point of the control.
+  it("switches the store and the rendered copy to English", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: "Alternar idioma" }));
+
+    expect(useUiStore.getState().locale).toBe("en-US");
+    expect(await screen.findByRole("button", { name: "Sign out" })).toBeInTheDocument();
+  });
+
+  // Toggling twice must land back where it started, which is what makes a
+  // single button usable as a switch with two locales.
+  it("switches back to Portuguese on a second toggle", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByRole("button", { name: "Alternar idioma" }));
+    await user.click(await screen.findByRole("button", { name: "Change language" }));
+
+    expect(useUiStore.getState().locale).toBe("pt-BR");
+    expect(await screen.findByRole("button", { name: "Sair" })).toBeInTheDocument();
   });
 });

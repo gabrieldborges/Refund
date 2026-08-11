@@ -41,15 +41,18 @@ describe("Topbar", () => {
     expect(onNewRefund).toHaveBeenCalledOnce();
   });
 
-  it("toggles the theme in the store", async () => {
-    const user = userEvent.setup();
+  // Language and theme moved to the sidebar footer so the title and the primary
+  // action stop competing for the narrow mobile header. Asserting their ABSENCE
+  // here is what keeps them from quietly coming back and re-truncating the
+  // title — their behaviour is covered in Sidebar.test.tsx now.
+  it("no longer renders the language and theme controls", () => {
     render(
       <SidebarProvider>
         <Topbar title="X" onNewRefund={() => {}} />
       </SidebarProvider>,
     );
-    await user.click(screen.getByRole("button", { name: "Alternar tema" }));
-    expect(useUiStore.getState().theme).toBe("dark");
+    expect(screen.queryByRole("button", { name: "Alternar tema" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Alternar idioma" })).not.toBeInTheDocument();
   });
 
   it("gives the sidebar trigger a Portuguese accessible name", () => {
@@ -64,38 +67,3 @@ describe("Topbar", () => {
   });
 });
 
-describe("Topbar language switcher", () => {
-  // The click has to do two things: record the choice in the store AND load
-  // the catalogue. Asserting only the store would pass even if the interface
-  // never changed language, which is the whole point of the control.
-  it("switches the store and the rendered copy to English", async () => {
-    const user = userEvent.setup();
-    render(
-      <SidebarProvider>
-        <Topbar title="X" onNewRefund={() => {}} />
-      </SidebarProvider>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Alternar idioma" }));
-
-    expect(useUiStore.getState().locale).toBe("en-US");
-    expect(await screen.findByRole("button", { name: "New request" })).toBeInTheDocument();
-  });
-
-  // Toggling twice must land back where it started, which is what makes a
-  // single button usable as a switch with two locales.
-  it("switches back to Portuguese on a second toggle", async () => {
-    const user = userEvent.setup();
-    render(
-      <SidebarProvider>
-        <Topbar title="X" onNewRefund={() => {}} />
-      </SidebarProvider>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Alternar idioma" }));
-    await user.click(await screen.findByRole("button", { name: "Change language" }));
-
-    expect(useUiStore.getState().locale).toBe("pt-BR");
-    expect(await screen.findByRole("button", { name: "Nova solicitação" })).toBeInTheDocument();
-  });
-});

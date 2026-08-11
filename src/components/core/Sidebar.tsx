@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { Languages, LogOut, Moon, Sun } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Sidebar,
@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/useAuth";
+import { changeLocale } from "@/lib/i18n";
 import { initialsFromName, usernameFromEmail } from "@/lib/profile";
+import { useUiStore, resolveTheme } from "@/stores/ui";
 import { NAV_ITEMS } from "./nav-items";
 
 export default function AppSidebar() {
@@ -20,10 +22,24 @@ export default function AppSidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const locale = useUiStore((s) => s.locale);
+  const setLocale = useUiStore((s) => s.setLocale);
+  const theme = useUiStore((s) => s.theme);
+  const toggleTheme = useUiStore((s) => s.toggleTheme);
+  const isDark = resolveTheme(theme) === "dark";
 
   function handleLogout() {
     logout();
     navigate("/login");
+  }
+
+  // The store records the choice; lib/i18n.ts loads the catalogue. Both are
+  // needed, and in this order: persisting first means a failed download still
+  // leaves the preference for the next boot, where it is awaited properly.
+  async function handleToggleLocale() {
+    const next = locale === "pt-BR" ? "en-US" : "pt-BR";
+    setLocale(next);
+    await changeLocale(next);
   }
 
   return (
@@ -83,8 +99,29 @@ export default function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
+      {/* Idioma e tema moraram na Topbar até aqui. São preferências, não a ação
+          principal de nenhuma tela, e disputavam espaço com o título e com
+          "Nova solicitação" — no iPhone 12 Pro isso truncava o título da rota
+          ("Revis…"). No rodapé do menu eles ficam junto do Sair, que é da mesma
+          natureza, e a Topbar sobra inteira para título + ação. */}
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              type="button"
+              onClick={handleToggleLocale}
+              tooltip={t("shell.toggleLocale")}
+            >
+              <Languages aria-hidden />
+              <span>{t("shell.toggleLocale")}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton type="button" onClick={toggleTheme} tooltip={t("shell.toggleTheme")}>
+              {isDark ? <Moon aria-hidden /> : <Sun aria-hidden />}
+              <span>{t("shell.toggleTheme")}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton type="button" onClick={handleLogout} tooltip={t("shell.logout")}>
               <LogOut aria-hidden />
