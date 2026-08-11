@@ -187,13 +187,22 @@ function Sidebar({
           // Altura: o SheetContent do registry vem com `inset-y-0 ... h-full`,
           // e os dois se contradizem — com altura explícita o `bottom: 0` é
           // ignorado, e `height: 100%` num elemento fixed resolve contra o
-          // bloco contentor inicial, que no Safari do iOS NÃO acompanha a barra
-          // de endereço aparecendo e sumindo. Daí a faixa de fundo da página
-          // sobrando embaixo do painel. `h-screen` (100vh) é o piso e
-          // `100dvh` — a altura da viewport VISÍVEL agora — assume onde houver
-          // suporte. O overlay escuro já estava certo porque só usa `inset-0`,
-          // sem altura explícita.
-          className="h-screen supports-[height:100dvh]:h-dvh w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // bloco contentor inicial, que no Safari do iOS não acompanha a barra
+          // de endereço aparecendo e sumindo.
+          //
+          // A unidade é `lvh`, a viewport GRANDE — a tela inteira, como se as
+          // barras do navegador estivessem recolhidas. `dvh` (a viewport
+          // visível AGORA) foi a tentativa anterior e está errada para este
+          // caso: ela encolhe junto com as barras, então o painel para na
+          // borda da área visível em vez de ir até a borda física da tela, que
+          // é o que se quer de um overlay. Aqui não há risco de estourar: o
+          // painel é `fixed`, não empurra nada, e o que passaria por baixo da
+          // barra do navegador é só fundo — o conteúdo fica protegido pelo
+          // padding de área segura no wrapper interno.
+          //
+          // `h-screen` (100vh) é o piso para navegadores sem `lvh`. O overlay
+          // escuro já estava certo porque só usa `inset-0`, sem altura.
+          className="h-screen supports-[height:100lvh]:h-lvh w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
