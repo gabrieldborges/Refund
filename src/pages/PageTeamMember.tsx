@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/context/useAuth";
 import { RefundStatsPanel } from "@/features/refunds";
+import { UserAvatar } from "@/features/profile";
 import { USER_ROLE, useUser } from "@/features/team";
 
 export default function PageTeamMember() {
@@ -49,7 +50,13 @@ export default function PageTeamMember() {
               de verdade — necessário porque o painel abaixo tem um <h3>
               ("Solicitações"), e um h3 sem nada acima dele deixa a página sem
               hierarquia para quem navega por headings. */}
-          <CardTitle>
+          <CardTitle className="flex items-center gap-3">
+            <UserAvatar
+              userId={member.id}
+              name={member.name}
+              hasAvatar={member.has_avatar}
+              className="size-12"
+            />
             <h2>{member.name}</h2>
           </CardTitle>
         </CardHeader>

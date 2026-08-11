@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import {
   createColumnHelper,
@@ -21,6 +22,14 @@ import type { TeamUser } from "../schemas/user";
 
 interface UsersTableProps {
   users: TeamUser[];
+  // A foto entra por SLOT, e não por import: `features/team` não pode importar
+  // `features/profile` — irmãs são proibidas pelo eslint-plugin-boundaries, e a
+  // regra pegou esta tentativa. Quem compõe as duas features é a página, que é a
+  // camada `app`, a única com essa permissão.
+  //
+  // Ausente = sem foto, que é o que os testes desta tabela usam: eles são sobre
+  // colunas e links, não sobre avatar.
+  renderAvatar?: (user: TeamUser) => ReactNode;
 }
 
 const columnHelper = createColumnHelper<TeamUser>();
@@ -29,7 +38,7 @@ const columnHelper = createColumnHelper<TeamUser>();
 // (UC-015), então um cabeçalho que parecesse ordenável ou não faria nada, ou
 // ordenaria apenas as 10 linhas da página atual — que é pior, porque parece
 // funcionar.
-export default function UsersTable({ users }: UsersTableProps) {
+export default function UsersTable({ users, renderAvatar }: UsersTableProps) {
   const { t } = useTranslation();
 
   const columns = [
@@ -40,8 +49,9 @@ export default function UsersTable({ users }: UsersTableProps) {
       cell: (info) => (
         <Link
           to={`/team/${info.row.original.id}`}
-          className="font-medium underline-offset-2 hover:underline"
+          className="flex items-center gap-2 font-medium underline-offset-2 hover:underline"
         >
+          {renderAvatar?.(info.row.original)}
           {info.getValue()}
         </Link>
       ),

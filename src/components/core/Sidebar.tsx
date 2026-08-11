@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Languages, LogOut, Moon, Sun } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -14,7 +15,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/useAuth";
 import { changeLocale } from "@/lib/i18n";
-import { initialsFromName, usernameFromEmail } from "@/lib/profile";
+import { usernameFromEmail } from "@/lib/profile";
+import { AvatarUploadDialog, UserAvatar } from "@/features/profile";
 import { cn } from "@/lib/utils";
 import { useUiStore, resolveTheme } from "@/stores/ui";
 import { NAV_ITEMS } from "./nav-items";
@@ -61,6 +63,7 @@ function PreferenceCard({
 export default function AppSidebar() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const locale = useUiStore((s) => s.locale);
@@ -102,9 +105,17 @@ export default function AppSidebar() {
       >
         {user && (
           <>
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {initialsFromName(user.name)}
-            </span>
+            {/* A própria foto, e o caminho para trocá-la. Um botão e não um link:
+                não há rota de perfil — a troca é um diálogo, e inventar uma rota
+                para hospedar um formulário de um campo seria navegação a mais. */}
+            <button
+              type="button"
+              onClick={() => setIsAvatarDialogOpen(true)}
+              aria-label={t("avatar.open")}
+              className="shrink-0 rounded-full ring-offset-2 ring-offset-sidebar focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+            >
+              <UserAvatar userId={user.id} name={user.name} className="size-8" />
+            </button>
             <span className="min-w-0 group-data-[collapsible=icon]:hidden">
               <span className="block truncate text-sm font-semibold text-sidebar-foreground">{user.name}</span>
               <span className="block truncate text-xs text-muted-foreground">{usernameFromEmail(user.email)}</span>
@@ -112,6 +123,15 @@ export default function AppSidebar() {
           </>
         )}
       </SidebarHeader>
+
+      {user && (
+        <AvatarUploadDialog
+          userId={user.id}
+          name={user.name}
+          open={isAvatarDialogOpen}
+          onOpenChange={setIsAvatarDialogOpen}
+        />
+      )}
 
       <SidebarContent>
         <SidebarMenu>

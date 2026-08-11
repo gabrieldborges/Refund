@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { UserAvatar } from "@/features/profile";
 import { UsersTable, useUsers } from "@/features/team";
 import type { teamLoader } from "../router-loaders";
 
@@ -109,7 +110,22 @@ export default function PageTeam() {
         </p>
       )}
 
-      {!isLoading && !isError && <UsersTable users={data?.attributes ?? []} />}
+      {!isLoading && !isError && (
+        <UsersTable
+          users={data?.attributes ?? []}
+          // A composição das duas features acontece aqui, na camada `app`.
+          // `has_avatar` do payload evita uma requisição por linha: sem ele, dez
+          // linhas sem foto seriam dez respostas 404.
+          renderAvatar={(user) => (
+            <UserAvatar
+              userId={user.id}
+              name={user.name}
+              hasAvatar={user.has_avatar}
+              className="size-7"
+            />
+          )}
+        />
+      )}
 
       {data && data.total_pages > 0 && (
         <div className="flex items-center justify-end gap-3">

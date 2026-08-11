@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import { AuthContext } from "@/context/auth-context";
 import { useUiStore, DEFAULT_LOCALE } from "@/stores/ui";
 import { setTestLocale } from "@/test/i18n";
+import { QueryWrapper } from "@/test/utils";
 
 const logout = vi.fn();
 
@@ -14,7 +15,11 @@ const logout = vi.fn();
 // component under test needs a SidebarProvider, plus the router wrapper it
 // already needed for its <Link> items.
 function renderSidebar(role: "standard" | "admin" = "standard") {
+  // QueryWrapper agora é necessário: a sidebar passou a mostrar a foto do usuário, e
+  // com isso a shell virou consumidora de server state. Sem o provider, useQuery
+  // lança e todos os testes deste arquivo caem de uma vez — foi o que aconteceu.
   return render(
+    <QueryWrapper>
     <MemoryRouter>
       <AuthContext.Provider
         value={{
@@ -29,7 +34,8 @@ function renderSidebar(role: "standard" | "admin" = "standard") {
           <Sidebar />
         </SidebarProvider>
       </AuthContext.Provider>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryWrapper>,
   );
 }
 
@@ -124,6 +130,7 @@ describe("Sidebar on mobile", () => {
   // state this test is about.
   function renderMobileSidebar() {
     return render(
+      <QueryWrapper>
       <MemoryRouter>
         <AuthContext.Provider
           value={{
@@ -139,7 +146,8 @@ describe("Sidebar on mobile", () => {
             <Sidebar />
           </SidebarProvider>
         </AuthContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </QueryWrapper>,
     );
   }
 
