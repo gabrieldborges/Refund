@@ -1,32 +1,13 @@
-import { lazy, Suspense } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { REFUNDS_PER_PAGE } from "../constants/pagination";
-import { REFUND_STATUS } from "../constants/status";
-import { useRefundStats } from "../hooks/useRefundStats";
 import { useRefunds } from "../hooks/useRefunds";
 import { getRefundHref, type RefundViewer } from "../lib/getRefundHref";
-import type { Refund, RefundStatus } from "../schemas/refund";
+import type { Refund } from "../schemas/refund";
 import { useTranslation } from "react-i18next";
-
-// Fixed render order for the four counters — the same four keys UC-014
-// always returns, zeros included, so this never needs a data-driven length.
-const STATUS_ORDER: readonly RefundStatus[] = ["pending", "approved", "paid", "rejected"];
-
-// Carregado sob demanda porque o @nivo/pie e sua árvore (react-spring, sete
-// pacotes d3, lodash) pesam na mesma ordem de grandeza que TODO o bundle atual
-// da aplicação — ver docs/performance-budget.md. Esta tela não é a rota
-// inicial, então quem só usa a Home nunca baixa nada disso.
-//
-// A importação dinâmica só rende chunk separado enquanto NINGUÉM importar este
-// módulo estaticamente: por isso ele não é reexportado pela fachada da feature
-// (index.ts) — se fosse, o bundler o traria de volta para o pacote principal.
-const RefundDonutChart = lazy(() => import("./RefundDonutChart"));
+import RefundStatsPanel from "./RefundStatsPanel";
 
 interface RequesterPanelProps {
   requester: { id: number; name: string };
@@ -36,7 +17,7 @@ interface RequesterPanelProps {
   // getRefundHref.ts) — so the page passes it down.
   viewer: RefundViewer | null;
   // Qual linha desta lista é a solicitação aberta agora. Também é a âncora
-  // das setas de navegação (Task 11).
+  // das setas de navegação.
   currentRefundId: number;
 }
 
@@ -68,27 +49,32 @@ function NavigationArrow({
   );
 }
 
-// The requester's context for a review: who they are, their counts by
-// status (UC-014), and their own refunds (UC-004, first page only — see
-// "No pagination" below). Gives the admin the history to judge one request
-// against instead of in isolation.
+// O painel do solicitante NA TELA DE REVISÃO: o núcleo compartilhado
+// (RefundStatsPanel) mais as três coisas que só existem quando se está revisando
+// uma solicitação específica — o cabeçalho com o nome de quem pediu, o destaque
+// da linha aberta e as setas para andar entre as solicitações daquela pessoa.
 //
-// No avatar: `has_avatar` is always false today (upload doesn't exist yet),
-// so a photo would render as initials for everyone — deferred to the
-// profile-picture cycle.
-export default function RequesterPanel({ requester, viewer, currentRefundId }: RequesterPanelProps) {
+// O núcleo saiu daqui quando a página do membro do time passou a precisar dele
+// sem nada disso. As setas ficaram: são navegação de revisão, não de
+// estatísticas.
+export default function RequesterPanel({
+  requester,
+  viewer,
+  currentRefundId,
+}: RequesterPanelProps) {
   const { t } = useTranslation();
-  const { data: stats, isLoading: isStatsLoading, isError: isStatsError } = useRefundStats(requester.id);
-  const {
-    data: list,
-    isLoading: isListLoading,
-    isError: isListError,
-  } = useRefunds({ page: 1, perPage: REFUNDS_PER_PAGE, userId: requester.id });
+  // A MESMA query que o núcleo usa, então o React Query serve as duas da mesma
+  // entrada de cache — nenhuma requisição extra. Ela é lida aqui porque as setas
+  // precisam saber quem são os vizinhos da linha aberta.
+  const { data: list } = useRefunds({
+    page: 1,
+    perPage: REFUNDS_PER_PAGE,
+    userId: requester.id,
+  });
 
-  // Posição derivada da lista já carregada — sem estado novo. -1 significa que
-  // a solicitação aberta não está nesta página (o painel carrega só a
-  // primeira, por decisão do ciclo anterior); nesse caso não há vizinho em
-  // nenhuma direção.
+  // Posição derivada da lista já carregada — sem estado novo. -1 significa que a
+  // solicitação aberta não está nesta página (o painel carrega só a primeira);
+  // nesse caso não há vizinho em nenhuma direção e as duas setas desabilitam.
   const rows = list?.attributes ?? [];
   const currentIndex = rows.findIndex((refund) => refund.id === currentRefundId);
   const previousRefund = currentIndex > 0 ? rows[currentIndex - 1] : null;
@@ -100,41 +86,13 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
       <CardHeader>
         <CardTitle>{requester.name}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {/* Os cinco cards (total + quatro status) viraram uma rosca. O total
-            deixou de ser um card e passou a ocupar o miolo do gráfico; os
-            quatro status viraram fatias, com o percentual em cada leader line.
-
-            Contagem, não valor: somar dinheiro dos quatro status juntaria
-            previsão, passivo, despesa liquidada e nada — é o que o comentário
-            de refundStatsResponseSchema registra, e ele já prevê esta soma de
-            CONTAGENS no cliente.
-
-            Carregamento e erro são delegados ao gráfico (props isLoading /
-            isError) em vez de tratados aqui: um erro de estatísticas não pode
-            cair em "zero renderizado", porque uma rosca zerada seria
-            indistinguível de um solicitante que de fato não tem nada. */}
-        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-          <RefundDonutChart
-            slices={STATUS_ORDER.map((status) => ({
-              id: status,
-              labelKey: REFUND_STATUS[status].labelKey,
-              value: stats?.by_status[status].count ?? 0,
-              // O vermelho da paleta é desta fatia por significado, não por
-              // tamanho — mesmo quando "rejeitado" é a maior de todas.
-              isNegative: status === "rejected",
-            }))}
-            unitLabelKey="chart.requestsUnit"
-            titleKey="chart.statusTitle"
-            metric="count"
-            isLoading={isStatsLoading}
-            isError={isStatsError}
-          />
-        </Suspense>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-medium">Solicitações</h3>
+      <CardContent>
+        <RefundStatsPanel
+          userId={requester.id}
+          userName={requester.name}
+          viewer={viewer}
+          currentRefundId={currentRefundId}
+          headerActions={
             <div className="flex items-center gap-1">
               <NavigationArrow
                 refund={previousRefund}
@@ -151,69 +109,8 @@ export default function RequesterPanel({ requester, viewer, currentRefundId }: R
                 <ChevronRight className="size-4" aria-hidden />
               </NavigationArrow>
             </div>
-          </div>
-
-          {isListLoading && (
-            <ul className="flex flex-col gap-2">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="h-10 w-full" />
-              ))}
-            </ul>
-          )}
-
-          {/* Same reasoning as the stats error above: silence here would be
-              indistinguishable from a requester with no refunds at all. */}
-          {isListError && !isListLoading && (
-            <p role="alert" className="text-sm text-destructive">
-              Não foi possível carregar as solicitações do solicitante.
-            </p>
-          )}
-
-          {list && !isListLoading && !isListError && (
-            <>
-              <ul className="flex flex-col overflow-hidden rounded-lg border">
-                {list.attributes.length === 0 && (
-                  <li className="py-3 text-center text-sm text-muted-foreground">
-                    Nenhuma solicitação encontrada.
-                  </li>
-                )}
-                {list.attributes.map((refund) => {
-                  const isCurrent = refund.id === currentRefundId;
-                  return (
-                    <li key={refund.id} className="border-b last:border-b-0">
-                      <Link
-                        to={getRefundHref(refund, viewer)}
-                        // Cor sozinha não é sinal acessível; aria-current é o
-                        // que um leitor de tela anuncia.
-                        aria-current={isCurrent ? "page" : undefined}
-                        className={cn(
-                          "flex items-center justify-between gap-3 px-3 py-2 text-sm transition hover:bg-accent/50",
-                          isCurrent && "bg-accent font-medium"
-                        )}
-                      >
-                        <span className="truncate">{refund.name}</span>
-                        <Badge variant={REFUND_STATUS[refund.status].variant}>
-                          {t(REFUND_STATUS[refund.status].labelKey)}
-                        </Badge>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {/* No pagination here on purpose (see file header) — the Home
-                  already paginates, so point there instead of reimplementing
-                  it. Reuses the Home's existing `name` search (there is no
-                  `user_id` filter in its UI) rather than adding one. */}
-              <Link
-                to={`/?name=${encodeURIComponent(requester.name)}`}
-                className="text-sm text-primary underline-offset-2 hover:underline"
-              >
-                Ver todas as solicitações de {requester.name} na Home
-              </Link>
-            </>
-          )}
-        </div>
+          }
+        />
       </CardContent>
     </Card>
   );

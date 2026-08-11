@@ -132,12 +132,18 @@ describe("RequesterPanel", () => {
 
   // Same reasoning for the refund list: a failed list request must be
   // visibly distinct from "this requester has no refunds".
+  //
+  // The wording lost "do solicitante" when this message moved into the locale
+  // catalogues: the panel that renders it is now shared with the team member
+  // page, where the person is not being looked at as the requester of one
+  // specific refund. The behaviour under test — an alert, distinct from the
+  // empty state — is unchanged; only the copy is more general.
   it("shows a failure state, distinct from empty, when the list fails to load", async () => {
     server.use(http.get("*/refunds", () => HttpResponse.json({}, { status: 500 })));
     renderPanel();
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Não foi possível carregar as solicitações do solicitante.");
+    expect(alert).toHaveTextContent("Não foi possível carregar as solicitações.");
   });
 
   // The bug Task 8's review caught twice: a test must confirm what was

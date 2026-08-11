@@ -60,6 +60,17 @@ export { default as ReviewTimeline } from "./components/ReviewTimeline";
 // against that person's history instead of in isolation (UC-014).
 export { default as RequesterPanel } from "./components/RequesterPanel";
 
+// O núcleo compartilhado do painel acima: a rosca de contagens por status e a
+// primeira página das solicitações de uma pessoa, sem cabeçalho e sem as setas
+// de revisão. A página do membro do time o usa direto.
+//
+// Este é o único caminho pelo qual o gráfico entra na aplicação. O
+// RefundDonutChart NÃO é reexportado aqui de propósito: este painel faz o
+// import() dinâmico dele por dentro, e uma reexportação estática do gráfico
+// traria os 74,2 kB gzip do chunk de volta ao bundle de entrada sem erro nenhum
+// — ver docs/performance-budget.md.
+export { default as RefundStatsPanel } from "./components/RefundStatsPanel";
+
 // A listagem da Home como tabela (Item 13). Ordenação e filtro são
 // server-side: o componente não ordena nada por conta própria.
 export { default as RefundsTable } from "./components/RefundsTable";
